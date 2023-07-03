@@ -1,0 +1,6 @@
+.vscode/
+*.o
+*.d
+*.exe
+launch.ps1
+src/konc4/
