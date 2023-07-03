@@ -1,0 +1,90 @@
+#include <windows.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "logging.h"
+
+#define LOG_MUTEX "konc4_log_mutex"
+#define LOG_FILE_NAME "konc4log.txt"
+
+
+
+enum LOGGING_LEVEL logging_level = LOG_INFO;
+static HANDLE mutex;
+
+
+static ReturnCode outputLogMessage(char *message, unsigned int length)
+{
+    HANDLE logFile = CreateFile(
+        LOG_FILE_NAME, FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE,
+        NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL
+    );
+    if(logFile == INVALID_HANDLE_VALUE)
+        return RET_ERROR;
+
+    DWORD bytesWritten;
+    WriteFile(logFile, message, length, &bytesWritten, NULL);
+    CloseHandle(logFile);
+
+    if(bytesWritten != length)
+        return RET_ERROR;
+    return RET_SUCCESS;
+}
+
+
+static char* getMessage(SYSTEMTIME currentTime, int *messageLength, char *format, va_list args)
+{
+    va_list args2;
+    va_copy(args2, args);
+
+    int len = vsnprintf(NULL, 0, format, args) + 15; // 14 chars for the time, 1 for \n
+    char *buffer = malloc(len * sizeof(char));
+    if(!buffer)
+        return (char*) NULL;
+    *messageLength = len;
+
+    sprintf(buffer, "%02d:%02d:%02d.%03d: ", currentTime.wHour, currentTime.wMinute,
+            currentTime.wSecond, currentTime.wMilliseconds);
+    vsprintf(buffer + 14, format, args2);
+    buffer[len - 1] = '\n';
+
+    va_end(args2);
+    return buffer;
+}
+
+
+static ReturnCode writeLog(char *format, va_list args)
+{
+    SYSTEMTIME currentTime;
+    GetLocalTime(&currentTime);
+
+    int messageLength;
+    char *message = getMessage(currentTime, &messageLength, format, args);
+    if(!message)
+        return RET_ERROR;
+
+    ENSURE(outputLogMessage(message, messageLength));
+    free(message);
+
+    return RET_SUCCESS;
+}
+
+
+ReturnCode logLine(enum LOGGING_LEVEL level, char *format, ...)
+{
+    if(level < logging_level)
+        return RET_SUCCESS;
+
+    if(!mutex)
+        mutex = CreateMutex(NULL, FALSE, LOG_MUTEX);
+    if(WaitForSingleObject(mutex, 5000) != WAIT_OBJECT_0)
+        return RET_ERROR;
+
+    va_list args;
+    va_start(args, format);
+    ENSURE(writeLog(format, args));
+    va_end(args);
+
+    ReleaseMutex(mutex);
+    return RET_SUCCESS;
+}
