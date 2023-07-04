@@ -4,10 +4,7 @@
 
 
 #define ASSERT_EQUAL(first, second) \
-    ASSERT((first).timestamp.date.day == (second).timestamp.date.day); \
-    ASSERT((first).timestamp.date.month == (second).timestamp.date.month); \
-    ASSERT((first).timestamp.time.hour == (second).timestamp.time.hour); \
-    ASSERT((first).timestamp.time.minute == (second).timestamp.time.minute); \
+    ASSERT(basicCompareTimestamp((first).timestamp, (second).timestamp) == 0); \
     ASSERT((first).type == (second).type); \
     ASSERT((first).args.shutdown.delay == (second).args.shutdown.delay)
 
@@ -122,10 +119,7 @@ ReturnCode testParseActionNoDateReset(void)
     ASSERT_NOTHROW(parseAction("22:30 reset", &parsed,
                    (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 1234}));
     ASSERT(parsed.type == RESET);
-    ASSERT(parsed.timestamp.date.day == 21);
-    ASSERT(parsed.timestamp.date.month == 1);
-    ASSERT(parsed.timestamp.time.hour == 22);
-    ASSERT(parsed.timestamp.time.minute == 30);
+    ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{21, 1}, {22, 30}}) == 0);
     ASSERT(parsed.repeated == true);
     return RET_SUCCESS;
 }
@@ -137,10 +131,7 @@ ReturnCode testParseActionNoDateShutdown(void)
     ASSERT_NOTHROW(parseAction("  11:30 \tshutdown  35  \v \t", &parsed,
                    (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
     ASSERT(parsed.type == SHUTDOWN);
-    ASSERT(parsed.timestamp.date.day == 22);
-    ASSERT(parsed.timestamp.date.month == 1);
-    ASSERT(parsed.timestamp.time.hour == 11);
-    ASSERT(parsed.timestamp.time.minute == 30);
+    ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{22, 1}, {11, 30}}) == 0);
     ASSERT(parsed.args.shutdown.delay == 35);
     ASSERT(parsed.repeated == true);
     return RET_SUCCESS;
@@ -153,10 +144,7 @@ ReturnCode testParseActionNoDateNotify(void)
     ASSERT_NOTHROW(parseAction("  11:30 \tnotify   hehexd.wav  35  \v \t", &parsed,
                    (struct YearTimestamp) {{.date = {28, 2}, .time = {12, 30}}, .currentYear = 2011}));
     ASSERT(parsed.type == NOTIFY);
-    ASSERT(parsed.timestamp.date.day == 1);
-    ASSERT(parsed.timestamp.date.month == 3);
-    ASSERT(parsed.timestamp.time.hour == 11);
-    ASSERT(parsed.timestamp.time.minute == 30);
+    ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 3}, {11, 30}}) == 0);
     ASSERT(strcmp(parsed.args.notify.fileName, "hehexd.wav") == 0);
     ASSERT(parsed.args.notify.repeats == 35);
     ASSERT(parsed.repeated == true);
@@ -170,10 +158,7 @@ ReturnCode testParseActionNoDateNotifyNoNumber(void)
     ASSERT_NOTHROW(parseAction("  11:30 \tnotify   hehexd.wav   \v \t", &parsed,
                    (struct YearTimestamp) {{.date = {28, 2}, .time = {12, 30}}, .currentYear = 2011}));
     ASSERT(parsed.type == NOTIFY);
-    ASSERT(parsed.timestamp.date.day == 1);
-    ASSERT(parsed.timestamp.date.month == 3);
-    ASSERT(parsed.timestamp.time.hour == 11);
-    ASSERT(parsed.timestamp.time.minute == 30);
+    ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 3}, {11, 30}}) == 0);
     ASSERT(strcmp(parsed.args.notify.fileName, "hehexd.wav") == 0);
     ASSERT(parsed.args.notify.repeats == 1);
     ASSERT(parsed.repeated == true);
@@ -187,10 +172,7 @@ ReturnCode testParseActionNoDateNotifyNoFileName(void)
     ASSERT_NOTHROW(parseAction("  11:30 \tnotify    \v \t", &parsed,
                    (struct YearTimestamp) {{.date = {28, 2}, .time = {12, 30}}, .currentYear = 2011}));
     ASSERT(parsed.type == NOTIFY);
-    ASSERT(parsed.timestamp.date.day == 1);
-    ASSERT(parsed.timestamp.date.month == 3);
-    ASSERT(parsed.timestamp.time.hour == 11);
-    ASSERT(parsed.timestamp.time.minute == 30);
+    ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 3}, {11, 30}}) == 0);
     ASSERT(strcmp(parsed.args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
     ASSERT(parsed.args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
     ASSERT(parsed.repeated == true);
@@ -204,10 +186,7 @@ ReturnCode testParseActionNoDateNotifySpacesFileName(void)
     ASSERT_NOTHROW(parseAction("  11:30 \tnotify    \v \"Hehe Xd.wav\" \t", &parsed,
                    (struct YearTimestamp) {{.date = {28, 2}, .time = {12, 30}}, .currentYear = 2011}));
     ASSERT(parsed.type == NOTIFY);
-    ASSERT(parsed.timestamp.date.day == 1);
-    ASSERT(parsed.timestamp.date.month == 3);
-    ASSERT(parsed.timestamp.time.hour == 11);
-    ASSERT(parsed.timestamp.time.minute == 30);
+    ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 3}, {11, 30}}) == 0);
     ASSERT(strcmp(parsed.args.notify.fileName, "Hehe Xd.wav") == 0);
     ASSERT(parsed.args.notify.repeats == 1);
     ASSERT(parsed.repeated == true);
@@ -221,10 +200,7 @@ ReturnCode testParseActionWithDateReset(void)
     ASSERT_NOTHROW(parseAction("12.09 22:30 reset", &parsed,
                    (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 1234}));
     ASSERT(parsed.type == RESET);
-    ASSERT(parsed.timestamp.date.day == 12);
-    ASSERT(parsed.timestamp.date.month == 9);
-    ASSERT(parsed.timestamp.time.hour == 22);
-    ASSERT(parsed.timestamp.time.minute == 30);
+    ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{12, 9}, {22, 30}}) == 0);
     ASSERT(parsed.repeated == false);
     return RET_SUCCESS;
 }
@@ -236,10 +212,7 @@ ReturnCode testParseActionWithDateShutdown(void)
     ASSERT_NOTHROW(parseAction("    29.02  11:30 \tshutdown  35  \v \t", &parsed,
                    (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
     ASSERT(parsed.type == SHUTDOWN);
-    ASSERT(parsed.timestamp.date.day == 29);
-    ASSERT(parsed.timestamp.date.month == 2);
-    ASSERT(parsed.timestamp.time.hour == 11);
-    ASSERT(parsed.timestamp.time.minute == 30);
+    ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{29, 2}, {11, 30}}) == 0);
     ASSERT(parsed.args.shutdown.delay == 35);
     ASSERT(parsed.repeated == false);
     return RET_SUCCESS;
@@ -252,10 +225,7 @@ ReturnCode testParseActionWithDateNotify(void)
     ASSERT_NOTHROW(parseAction("   1.1  15:00 \tnotify   hehexd.wav  35  \v \t", &parsed,
                    (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
     ASSERT(parsed.type == NOTIFY);
-    ASSERT(parsed.timestamp.date.day == 1);
-    ASSERT(parsed.timestamp.date.month == 1);
-    ASSERT(parsed.timestamp.time.hour == 15);
-    ASSERT(parsed.timestamp.time.minute == 0);
+    ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 1}, {15, 0}}) == 0);
     ASSERT(strcmp(parsed.args.notify.fileName, "hehexd.wav") == 0);
     ASSERT(parsed.args.notify.repeats == 35);
     return RET_SUCCESS;
@@ -268,10 +238,7 @@ ReturnCode testParseActionWithDateNotifyNoNumber(void)
     ASSERT_NOTHROW(parseAction("   1.1  15:00 \tnotify   hehexd.wav  \v \t", &parsed,
                    (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
     ASSERT(parsed.type == NOTIFY);
-    ASSERT(parsed.timestamp.date.day == 1);
-    ASSERT(parsed.timestamp.date.month == 1);
-    ASSERT(parsed.timestamp.time.hour == 15);
-    ASSERT(parsed.timestamp.time.minute == 0);
+    ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 1}, {15, 0}}) == 0);
     ASSERT(strcmp(parsed.args.notify.fileName, "hehexd.wav") == 0);
     ASSERT(parsed.args.notify.repeats == 1);
     return RET_SUCCESS;
@@ -284,10 +251,7 @@ ReturnCode testParseActionWithDateNotifyNoFileName(void)
     ASSERT_NOTHROW(parseAction("   1.1  15:00 \tnotify  \v \t", &parsed,
                    (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
     ASSERT(parsed.type == NOTIFY);
-    ASSERT(parsed.timestamp.date.day == 1);
-    ASSERT(parsed.timestamp.date.month == 1);
-    ASSERT(parsed.timestamp.time.hour == 15);
-    ASSERT(parsed.timestamp.time.minute == 0);
+    ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 1}, {15, 0}}) == 0);
     ASSERT(strcmp(parsed.args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
     ASSERT(parsed.args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
     return RET_SUCCESS;

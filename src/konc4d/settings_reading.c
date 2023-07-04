@@ -83,9 +83,12 @@ ReturnCode getNextAction(struct BufferedFile *settingsFile, struct Action *toWri
                          struct YearTimestamp now)
 {
     ReturnCode lineReading;
-    RETHROW(lineReading = getLine(settingsFile, buffer));
-    if(lineReading == RET_FAILURE)
-        return RET_FAILURE;
+    do {
+        buffer->size = 0;
+        RETHROW(lineReading = getLine(settingsFile, buffer));
+        if(lineReading == RET_FAILURE)
+            return RET_FAILURE;
+    } while(strcmp(buffer->data, "") == 0);
     ENSURE(parseAction(buffer->data, toWrite, now));
     return RET_SUCCESS;
 }
