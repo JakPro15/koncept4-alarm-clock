@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 #include "test_konc4d.h"
 #include "actions.h"
 
@@ -16,17 +17,17 @@ ReturnCode testAddActionRegular(void)
     struct Action action2 = {{{2, 1}, {10, 0}}, SHUTDOWN, .args.shutdown = {2}};
 
     addAction(&head, &action, (struct Timestamp) {{3, 1}, {23, 0}});
-    ASSERT_EQUAL(action, head->action);
+    ASSERT_EQUAL(action, AQ_FIRST(head));
     ASSERT(head->next == NULL);
 
     addAction(&head, &action2, (struct Timestamp) {{3, 1}, {23, 0}});
-    ASSERT_EQUAL(action, head->action);
+    ASSERT_EQUAL(action, AQ_FIRST(head));
     ASSERT(head->next != NULL);
-    ASSERT_EQUAL(action2, head->next->action);
+    ASSERT_EQUAL(action2, AQ_SECOND(head));
     ASSERT(head->next->next == NULL);
 
     action.timestamp.time.hour = 12;
-    ASSERT(head->action.timestamp.time.hour == 0);
+    ASSERT(AQ_FIRST(head).timestamp.time.hour == 0);
 
     return RET_SUCCESS;
 }
@@ -89,7 +90,7 @@ ReturnCode testAddActionAtHead(void)
     addAction(&head, &toAdd, (struct Timestamp) {{1, 1}, {5, 0}});
     ASSERT(head->next == &first);
     ASSERT(first.next == NULL);
-    ASSERT_EQUAL(head->action, toAdd);
+    ASSERT_EQUAL(AQ_FIRST(head), toAdd);
 
     return RET_SUCCESS;
 }
@@ -267,6 +268,43 @@ ReturnCode testParseActionNotifyTooLongFileName(void)
 }
 
 
+ReturnCode testSkipUntilTimestamp(void)
+{
+    struct YearTimestamp now = {{{4, 7}, {14, 16}}, 2023};
+    struct YearTimestamp until = {{{4, 7}, {14, 21}}, 2023};
+    struct Action actions[] = {
+        {{{4, 7}, {14, 20}}, RESET, {{0}}, false},
+        {{{4, 7}, {14, 21}}, RESET, {{0}}, true},
+        {{{4, 7}, {14, 22}}, RESET, {{0}}, false},
+        {{{3, 7}, {14, 15}}, RESET, {{0}}, false},
+        {{{5, 7}, {14, 15}}, RESET, {{0}}, true}
+    };
+    struct ActionQueue *head = NULL;
+    for(int i = 0; i < 5; i++)
+        ASSERT_ENSURE(addAction(&head, &actions[i], now.timestamp));
+    ASSERT_ENSURE(skipUntilTimestamp(&head, until.timestamp, now));
+
+    ASSERT(AQ_FIRST(head).type == RESET);
+    ASSERT(basicCompareTimestamp(AQ_FIRST(head).timestamp, actions[2].timestamp) == 0);
+    ASSERT(AQ_FIRST(head).repeated == false);
+
+    ASSERT(AQ_SECOND(head).type == RESET);
+    ASSERT(basicCompareTimestamp(AQ_SECOND(head).timestamp, actions[4].timestamp) == 0);
+    ASSERT(AQ_SECOND(head).repeated == true);
+
+    ASSERT(AQ_THIRD(head).type == RESET);
+    ASSERT(basicCompareTimestamp(AQ_THIRD(head).timestamp, (struct Timestamp) {{5, 7}, {14, 21}}) == 0);
+    ASSERT(AQ_THIRD(head).repeated == true);
+
+    ASSERT(AQ_FOURTH(head).type == RESET);
+    ASSERT(basicCompareTimestamp(AQ_FOURTH(head).timestamp, actions[3].timestamp) == 0);
+    ASSERT(AQ_FOURTH(head).repeated == false);
+
+    ASSERT(head->next->next->next->next == NULL);
+    return RET_SUCCESS;
+}
+
+
 PREPARE_TESTING(actions,
     testAddActionRegular,
     testAddActionAtEnd,
@@ -284,5 +322,6 @@ PREPARE_TESTING(actions,
     testParseActionWithDateNotify,
     testParseActionWithDateNotifyNoNumber,
     testParseActionWithDateNotifyNoFileName,
-    testParseActionNotifyTooLongFileName
+    testParseActionNotifyTooLongFileName,
+    testSkipUntilTimestamp
 )

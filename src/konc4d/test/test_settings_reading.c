@@ -88,23 +88,20 @@ ReturnCode testLoadActionsFromFile(void)
     ASSERT_ENSURE(loadActionsFromFile(&results, "test/test_get_next_action.txt",
                   (struct YearTimestamp) {{{1, 4}, {12, 0}}, 2020}));
 
-    struct Action actionRead = results->action;
-    ASSERT(actionRead.type == NOTIFY);
-    ASSERT(basicCompareTimestamp(actionRead.timestamp, (struct Timestamp) {{2, 4}, {11, 30}}) == 0);
-    ASSERT(strcmp(actionRead.args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
-    ASSERT(actionRead.args.notify.repeats == 5);
-    ASSERT(actionRead.repeated == true);
+    ASSERT(AQ_FIRST(results).type == NOTIFY);
+    ASSERT(basicCompareTimestamp(AQ_FIRST(results).timestamp, (struct Timestamp) {{2, 4}, {11, 30}}) == 0);
+    ASSERT(strcmp(AQ_FIRST(results).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
+    ASSERT(AQ_FIRST(results).args.notify.repeats == 5);
+    ASSERT(AQ_FIRST(results).repeated == true);
 
-    actionRead = results->next->action;
-    ASSERT(actionRead.type == RESET);
-    ASSERT(basicCompareTimestamp(actionRead.timestamp, (struct Timestamp) {{12, 9}, {22, 30}}) == 0);
-    ASSERT(actionRead.repeated == false);
+    ASSERT(AQ_SECOND(results).type == RESET);
+    ASSERT(basicCompareTimestamp(AQ_SECOND(results).timestamp, (struct Timestamp) {{12, 9}, {22, 30}}) == 0);
+    ASSERT(AQ_SECOND(results).repeated == false);
 
-    actionRead = results->next->next->action;
-    ASSERT(actionRead.type == SHUTDOWN);
-    ASSERT(basicCompareTimestamp(actionRead.timestamp, (struct Timestamp) {{29, 2}, {11, 30}}) == 0);
-    ASSERT(actionRead.args.shutdown.delay == 35);
-    ASSERT(actionRead.repeated == false);
+    ASSERT(AQ_THIRD(results).type == SHUTDOWN);
+    ASSERT(basicCompareTimestamp(AQ_THIRD(results).timestamp, (struct Timestamp) {{29, 2}, {11, 30}}) == 0);
+    ASSERT(AQ_THIRD(results).args.shutdown.delay == 35);
+    ASSERT(AQ_THIRD(results).repeated == false);
 
     ASSERT(results->next->next->next == NULL);
 

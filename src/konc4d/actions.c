@@ -85,7 +85,7 @@ static ReturnCode createNewNode(struct Action *action, struct ActionQueue **toWr
         LOG_LINE(LOG_ERROR, "Failed to allocate memory for a new ActionQueue node");
         return RET_ERROR;
     }
-    (*toWrite)->action = *action;
+    AQ_FIRST(*toWrite) = *action;
     return RET_SUCCESS;
 }
 
@@ -99,7 +99,7 @@ static ReturnCode checkActionAtHead(struct ActionQueue **head, struct ActionQueu
         return RET_SUCCESS;
     }
 
-    if(compareTimestamp(newNode->action.timestamp, (*head)->action.timestamp, now) < 0)
+    if(compareTimestamp(newNode->action.timestamp, AQ_FIRST(*head).timestamp, now) < 0)
     {
         newNode->next = *head;
         *head = newNode;
@@ -139,7 +139,7 @@ ReturnCode addAction(struct ActionQueue **head, struct Action *action, struct Ti
 
 ReturnCode removeFirstOfType(struct ActionQueue **head, enum ActionType type)
 {
-    (*head)->action.type = type;
+    AQ_FIRST(*head).type = type;
     return RET_SUCCESS;
 }
 
@@ -147,7 +147,7 @@ ReturnCode removeFirstOfType(struct ActionQueue **head, enum ActionType type)
 ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite)
 {
     struct ActionQueue *oldHead = *head;
-    *toWrite = (*head)->action;
+    *toWrite = AQ_FIRST(*head);
     *head = (*head)->next;
     free(oldHead);
     return RET_SUCCESS;
@@ -367,5 +367,24 @@ ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestam
     ENSURE(getActionArguments(&currentString, toWrite));
     if(*currentString != '\0')
         LOG_LINE(LOG_WARNING, "Settings line contains extra tokens: %s", string);
+    return RET_SUCCESS;
+}
+
+
+ReturnCode skipUntilTimestamp(struct ActionQueue **head, struct Timestamp time, struct YearTimestamp now)
+{
+    while(compareTimestamp(AQ_FIRST(*head).timestamp, time, now.timestamp) <= 0)
+    {
+        struct Action popped;
+        ENSURE(popAction(head, &popped));
+        if(popped.repeated)
+        {
+            int actionYear = now.currentYear;
+            if(basicCompareTimestamp(now.timestamp, popped.timestamp) >= 0)
+                actionYear += 1;
+            popped.timestamp.date = getNextDay((struct YearTimestamp) {popped.timestamp, actionYear});
+            ENSURE(addAction(head, &popped, now.timestamp));
+        }
+    }
     return RET_SUCCESS;
 }
