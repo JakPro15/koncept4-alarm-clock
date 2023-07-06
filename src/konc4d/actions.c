@@ -146,6 +146,11 @@ ReturnCode removeFirstOfType(struct ActionQueue **head, enum ActionType type)
 
 ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite)
 {
+    if(*head == NULL)
+    {
+        LOG_LINE(LOG_ERROR, "Attempted access to empty ActionQueue");
+        return RET_ERROR;
+    }
     struct ActionQueue *oldHead = *head;
     *toWrite = AQ_FIRST(*head);
     *head = (*head)->next;
@@ -371,20 +376,27 @@ ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestam
 }
 
 
+ReturnCode popActionWithRepeat(struct ActionQueue **head, struct Action *toWrite, struct YearTimestamp now)
+{
+    struct Action popped;
+    ENSURE(popAction(head, &popped));
+    if(toWrite != NULL)
+        *toWrite = popped;
+    if(popped.repeated)
+    {
+        int actionYear = now.currentYear;
+        if(basicCompareTimestamp(now.timestamp, popped.timestamp) >= 0)
+            actionYear += 1;
+        popped.timestamp.date = getNextDay((struct YearTimestamp) {popped.timestamp, actionYear});
+        ENSURE(addAction(head, &popped, now.timestamp));
+    }
+    return RET_SUCCESS;
+}
+
+
 ReturnCode skipUntilTimestamp(struct ActionQueue **head, struct Timestamp time, struct YearTimestamp now)
 {
     while(compareTimestamp(AQ_FIRST(*head).timestamp, time, now.timestamp) <= 0)
-    {
-        struct Action popped;
-        ENSURE(popAction(head, &popped));
-        if(popped.repeated)
-        {
-            int actionYear = now.currentYear;
-            if(basicCompareTimestamp(now.timestamp, popped.timestamp) >= 0)
-                actionYear += 1;
-            popped.timestamp.date = getNextDay((struct YearTimestamp) {popped.timestamp, actionYear});
-            ENSURE(addAction(head, &popped, now.timestamp));
-        }
-    }
+        popActionWithRepeat(head, NULL, now);
     return RET_SUCCESS;
 }

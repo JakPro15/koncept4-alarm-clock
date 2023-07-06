@@ -7,7 +7,8 @@
 #define ASSERT_EQUAL(first, second) \
     ASSERT(basicCompareTimestamp((first).timestamp, (second).timestamp) == 0); \
     ASSERT((first).type == (second).type); \
-    ASSERT((first).args.shutdown.delay == (second).args.shutdown.delay)
+    ASSERT((first).args.shutdown.delay == (second).args.shutdown.delay); \
+    ASSERT((first).repeated == (second).repeated)
 
 
 ReturnCode testAddActionRegular(void)
@@ -109,6 +110,41 @@ ReturnCode testPopAction(void)
     popAction(&head, &toWrite);
     ASSERT_EQUAL(toWrite, second);
     ASSERT(head == NULL);
+
+    return RET_SUCCESS;
+}
+
+
+ReturnCode testPopActionEmpty(void)
+{
+    struct ActionQueue *head = NULL;
+    ASSERT_THROW(popAction(&head, NULL));
+    return RET_SUCCESS;
+}
+
+
+ReturnCode testPopActionWithRepeat(void)
+{
+    struct ActionQueue *head = NULL;
+    struct Action toWrite, first = {{{6, 3}, {11, 0}}, SHUTDOWN, .args.shutdown = {1}, .repeated = true};
+    struct Action second = {{{6, 3}, {12, 0}}, SHUTDOWN, .args.shutdown = {5}, .repeated = false};
+    struct YearTimestamp now = {{{6, 3}, {5, 0}}, 2015};
+    addAction(&head, &first, now.timestamp);
+    addAction(&head, &second, now.timestamp);
+
+    popActionWithRepeat(&head, &toWrite, now);
+    ASSERT_EQUAL(toWrite, first);
+    popActionWithRepeat(&head, &toWrite, now);
+    ASSERT_EQUAL(toWrite, second);
+
+    for(int i = 0; i < 5; i++)
+    {
+        ASSERT_ENSURE(popActionWithRepeat(&head, &toWrite, now));
+        ASSERT(toWrite.type == SHUTDOWN);
+        ASSERT(basicCompareTimestamp(toWrite.timestamp, (struct Timestamp) {{7 + i, 3}, {11, 0}}) == 0);
+        ASSERT(toWrite.args.shutdown.delay == 1);
+        ASSERT(toWrite.repeated == true);
+    }
 
     return RET_SUCCESS;
 }
@@ -311,6 +347,8 @@ PREPARE_TESTING(actions,
     testAddActionInTheMiddle,
     testAddActionAtHead,
     testPopAction,
+    testPopActionEmpty,
+    testPopActionWithRepeat,
     testParseActionNoDateReset,
     testParseActionNoDateShutdown,
     testParseActionNoDateNotify,

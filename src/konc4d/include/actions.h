@@ -49,6 +49,7 @@ struct ActionQueue
 ReturnCode addAction(struct ActionQueue **head, struct Action *action, struct Timestamp now);
 ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite);
 ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestamp now);
+ReturnCode popActionWithRepeat(struct ActionQueue **head, struct Action *toWrite, struct YearTimestamp now);
 ReturnCode skipUntilTimestamp(struct ActionQueue **head, struct Timestamp time, struct YearTimestamp now);
 
 #endif
