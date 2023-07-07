@@ -260,6 +260,28 @@ ReturnCode testParseActionWithDateShutdown(void)
 }
 
 
+ReturnCode testParseAction29February(void)
+{
+    struct Action parsed1, parsed2;
+    ASSERT(parseAction("29.02 11:30 reset", &parsed1, (struct YearTimestamp) {{{1, 1}, {11, 30}}, 2021}) == RET_FAILURE);
+    ASSERT(parseAction("29.02 11:30 reset", &parsed1, (struct YearTimestamp) {{{1, 1}, {11, 30}}, 2022}) == RET_FAILURE);
+    ASSERT(parseAction("29.02 11:30 reset", &parsed1, (struct YearTimestamp) {{{1, 1}, {11, 30}}, 2023}) == RET_FAILURE);
+    ASSERT(parseAction("29.02 11:30 reset", &parsed1, (struct YearTimestamp) {{{1, 1}, {11, 30}}, 2024}) == RET_SUCCESS);
+    ASSERT(parsed1.type == RESET);
+    ASSERT(basicCompareTimestamp(parsed1.timestamp, (struct Timestamp) {{29, 2}, {11, 30}}) == 0);
+    ASSERT(parsed1.repeated == false);
+
+    ASSERT(parseAction("29.02 11:30 reset", &parsed2, (struct YearTimestamp) {{{1, 12}, {11, 30}}, 2020}) == RET_FAILURE);
+    ASSERT(parseAction("29.02 11:30 reset", &parsed2, (struct YearTimestamp) {{{1, 12}, {11, 30}}, 2021}) == RET_FAILURE);
+    ASSERT(parseAction("29.02 11:30 reset", &parsed2, (struct YearTimestamp) {{{1, 12}, {11, 30}}, 2022}) == RET_FAILURE);
+    ASSERT(parseAction("29.02 11:30 reset", &parsed2, (struct YearTimestamp) {{{1, 12}, {11, 30}}, 2023}) == RET_SUCCESS);
+    ASSERT(parsed2.type == RESET);
+    ASSERT(basicCompareTimestamp(parsed2.timestamp, (struct Timestamp) {{29, 2}, {11, 30}}) == 0);
+    ASSERT(parsed2.repeated == false);
+    return RET_SUCCESS;
+}
+
+
 ReturnCode testParseActionWithDateNotify(void)
 {
     struct Action parsed;
@@ -361,6 +383,7 @@ PREPARE_TESTING(actions,
     testParseActionNoDateNotifySpacesFileName,
     testParseActionWithDateReset,
     testParseActionWithDateShutdown,
+    testParseAction29February,
     testParseActionWithDateNotify,
     testParseActionWithDateNotifyNoNumber,
     testParseActionWithDateNotifyNoFileName,

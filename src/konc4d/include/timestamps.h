@@ -46,6 +46,11 @@ int basicCompareTime(const struct TimeOfDay first, const struct TimeOfDay second
 int compareTime(const struct TimeOfDay first, const struct TimeOfDay second, const struct TimeOfDay now);
 
 
+/* Returns 1 if first is later, -1 if first is earlier, 0 if they're equal,
+ * without respect of the current time */
+int basicCompareDate(const struct DateOfYear first, const struct DateOfYear second);
+
+
 /* Returns 1 if first is later, -1 if first is earlier, 0 if they're equal.
  * Considers times before current time and after midnight to be tomorrow's. */
 int basicCompareTimestamp(const struct Timestamp first, const struct Timestamp second);

@@ -166,7 +166,7 @@ static void skipWhitespace(char **string)
 }
 
 
-static ReturnCode getActionDate(char **string, struct Action *toWrite, unsigned currentYear)
+static ReturnCode getActionDate(char **string, struct Action *toWrite, struct YearTimestamp now)
 {
     unsigned day, month;
     int size;
@@ -179,7 +179,12 @@ static ReturnCode getActionDate(char **string, struct Action *toWrite, unsigned 
     *string += size;
     skipWhitespace(string);
     LOG_LINE(LOG_DEBUG, "Determined action date to be %u.%u", day, month);
-    if(!isDateValid((struct DateOfYear) {day, month}, currentYear))
+
+    unsigned actionYear = now.currentYear;
+    if(basicCompareDate(now.timestamp.date, (struct DateOfYear) {day, month}) >= 0)
+        actionYear += 1;
+
+    if(!isDateValid((struct DateOfYear) {day, month}, actionYear))
     {
         if(day != 29 || month != 2)
         {
@@ -368,7 +373,7 @@ ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestam
     skipWhitespace(&currentString);
 
     ReturnCode dateParsing;
-    RETHROW(dateParsing = getActionDate(&currentString, toWrite, now.currentYear));
+    RETHROW(dateParsing = getActionDate(&currentString, toWrite, now));
     ENSURE(getActionTime(&currentString, toWrite));
     if(dateParsing == RET_FAILURE)
     {

@@ -124,6 +124,17 @@ int compareTime(const struct TimeOfDay first, const struct TimeOfDay second, con
 }
 
 
+int basicCompareDate(const struct DateOfYear first, const struct DateOfYear second)
+{
+    if(first.month > second.month || (first.month == second.month && first.day > second.day))
+        return 1;
+    else if(first.month == second.month && first.day == second.day)
+        return 0;
+    else
+        return -1;
+}
+
+
 int basicCompareTimestamp(const struct Timestamp first, const struct Timestamp second)
 {
     if(first.date.month > second.date.month)

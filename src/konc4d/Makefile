@@ -11,6 +11,7 @@ TEST_DEPENDS=$(TEST_SRC:test/%.c=output/%.d)
 TEST_EXE=output/test_konc4d.exe
 
 all: $(OBJ)
+	$(CC) $(CFLAGS) -o output/konc4d.exe $(OBJ) $(COMMONS_OBJ) $(LDFLAGS)
 
 test: $(TEST_EXE)
 	$(TEST_EXE)

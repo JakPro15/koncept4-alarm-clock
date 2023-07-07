@@ -52,7 +52,7 @@ ReturnCode testGetNextAction(void)
     struct BufferedFile file;
     struct SizedString lineBuffer;
     struct Action actionRead;
-    struct YearTimestamp now = {{.date = {29, 2}, .time = {12, 30}}, .currentYear = 2012};
+    struct YearTimestamp now = {{.date = {1, 3}, .time = {12, 30}}, .currentYear = 2011};
     ASSERT_ENSURE(createSizedString(&lineBuffer));
     ASSERT_ENSURE(openBufferedFile(&file, "test/test_get_next_action.txt"));
 
@@ -69,7 +69,7 @@ ReturnCode testGetNextAction(void)
 
     ASSERT_ENSURE(getNextAction(&file, &actionRead, &lineBuffer, now));
     ASSERT(actionRead.type == NOTIFY);
-    ASSERT(basicCompareTimestamp(actionRead.timestamp, (struct Timestamp) {{1, 3}, {11, 30}}) == 0);
+    ASSERT(basicCompareTimestamp(actionRead.timestamp, (struct Timestamp) {{2, 3}, {11, 30}}) == 0);
     ASSERT(strcmp(actionRead.args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
     ASSERT(actionRead.args.notify.repeats == 5);
     ASSERT(actionRead.repeated == true);
@@ -98,12 +98,19 @@ ReturnCode testLoadActionsFromFile(void)
     ASSERT(basicCompareTimestamp(AQ_SECOND(results).timestamp, (struct Timestamp) {{12, 9}, {22, 30}}) == 0);
     ASSERT(AQ_SECOND(results).repeated == false);
 
-    ASSERT(AQ_THIRD(results).type == SHUTDOWN);
-    ASSERT(basicCompareTimestamp(AQ_THIRD(results).timestamp, (struct Timestamp) {{29, 2}, {11, 30}}) == 0);
-    ASSERT(AQ_THIRD(results).args.shutdown.delay == 35);
-    ASSERT(AQ_THIRD(results).repeated == false);
+    ASSERT(results->next->next == NULL);
 
-    ASSERT(results->next->next->next == NULL);
+    return RET_SUCCESS;
+}
+
+
+ReturnCode testLoadActionsFromFile29FebLast(void)
+{
+    struct ActionQueue *results = NULL;
+    ASSERT_ENSURE(loadActionsFromFile(&results, "test/test_load_actions_from_file.txt",
+                  (struct YearTimestamp) {{{1, 4}, {12, 0}}, 2020}));
+
+    ASSERT(results == NULL);
 
     return RET_SUCCESS;
 }
@@ -113,5 +120,6 @@ PREPARE_TESTING(settings_reading,
     testGetCharacter,
     testGetLine,
     testGetNextAction,
-    testLoadActionsFromFile
+    testLoadActionsFromFile,
+    testLoadActionsFromFile29FebLast
 )

@@ -87,9 +87,15 @@ ReturnCode getNextAction(struct BufferedFile *settingsFile, struct Action *toWri
         buffer->size = 0;
         RETHROW(lineReading = getLine(settingsFile, buffer));
         if(lineReading == RET_FAILURE)
+        {
+            toWrite->timestamp.date = (struct DateOfYear) {0, 0};
             return RET_FAILURE;
+        }
     } while(strcmp(buffer->data, "") == 0);
-    ENSURE(parseAction(buffer->data, toWrite, now));
+    ReturnCode parsed;
+    RETHROW(parsed = parseAction(buffer->data, toWrite, now));
+    if(parsed == RET_FAILURE)
+        return RET_FAILURE;
     return RET_SUCCESS;
 }
 
@@ -102,13 +108,19 @@ ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, str
     ENSURE_EXIT(createSizedString(&lineBuffer), closeBufferedFile(&settingsFile));
 
     struct Action newAction;
-    ReturnCode readLine = getNextAction(&settingsFile, &newAction, &lineBuffer, now);
-    *toWrite = NULL;
-    while(readLine == RET_SUCCESS)
+    ReturnCode readLine;
+    do
     {
+        RETHROW(readLine = getNextAction(&settingsFile, &newAction, &lineBuffer, now));
+        if(readLine == RET_FAILURE)
+        {
+            if(newAction.timestamp.date.day == 29 && newAction.timestamp.date.month == 2)
+                continue;
+            else
+                break;
+        }
         addAction(toWrite, &newAction, now.timestamp);
-        readLine = getNextAction(&settingsFile, &newAction, &lineBuffer, now);
-    }
+    } while(true);
 
     freeSizedString(&lineBuffer);
     ENSURE(closeBufferedFile(&settingsFile));
@@ -117,3 +129,6 @@ ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, str
     else
         return RET_SUCCESS;
 }
+
+
+ReturnCode loadActions(struct ActionQueue **toWrite);

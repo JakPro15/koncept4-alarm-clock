@@ -2,6 +2,7 @@
 #include "timestamps.h"
 
 #define TOD(h, m) (struct TimeOfDay) {(h), (m)}
+#define DOY(d, m) (struct DateOfYear) {(d), (m)}
 #define TSP(d, mon, h, m) (struct Timestamp) {{(d), (mon)}, {(h), (m)}}
 
 #define YDATE(d, m, y) (struct YearTimestamp) {{{(d), (m)}, {0, 0}}, (y)}
@@ -20,8 +21,6 @@
     ASSERT(yts.timestamp.time.minute == (unsigned) (m)); \
     ASSERT(yts.currentYear == (unsigned) (y)); \
 }
-#define COMMA ,
-
 
 
 ReturnCode testBasicCompareTime(void)
@@ -60,6 +59,19 @@ ReturnCode testCompareTimeCurrentBetween(void)
 
     ASSERT(compareTime(TOD(23, 59), TOD(0, 0), TOD(0, 1)) == -1);
     ASSERT(compareTime(TOD(0, 0), TOD(23, 59), TOD(0, 1)) == 1);
+    return RET_SUCCESS;
+}
+
+
+ReturnCode testBasicCompareDate(void)
+{
+    ASSERT(basicCompareDate(DOY(1, 1), DOY(12, 1)) == -1);
+    ASSERT(basicCompareDate(DOY(12, 12), DOY(31, 1)) == 1);
+    ASSERT(basicCompareDate(DOY(3, 3), DOY(3, 3)) == 0);
+
+    ASSERT(basicCompareDate(DOY(7, 10), DOY(7, 10)) == 0);
+    ASSERT(basicCompareDate(DOY(7, 9), DOY(8, 9)) == -1);
+    ASSERT(basicCompareDate(DOY(7, 8), DOY(6, 8)) == 1);
     return RET_SUCCESS;
 }
 
@@ -179,6 +191,7 @@ PREPARE_TESTING(timestamps,
     testBasicCompareTime,
     testCompareTimeRegular,
     testCompareTimeCurrentBetween,
+    testBasicCompareDate,
     testBasicCompareTimestamp,
     testCompareTimestampRegular,
     testCompareTimestampCurrentBetween,
