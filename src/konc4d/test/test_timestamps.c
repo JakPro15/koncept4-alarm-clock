@@ -4,6 +4,25 @@
 #define TOD(h, m) (struct TimeOfDay) {(h), (m)}
 #define TSP(d, mon, h, m) (struct Timestamp) {{(d), (mon)}, {(h), (m)}}
 
+#define YDATE(d, m, y) (struct YearTimestamp) {{{(d), (m)}, {0, 0}}, (y)}
+#define DATE_EQUAL(date1, d, m) { \
+    struct DateOfYear firstDate = (date1); \
+    ASSERT(firstDate.day == (unsigned) (d)); \
+    ASSERT(firstDate.month == (unsigned) (m)) \
+}
+
+#define YTS(d, mon, h, m, y) (struct YearTimestamp) {{{(d), (mon)}, {(h), (m)}}, (y)}
+#define YTS_EQUAL(yeartimestamp1, d, mon, h, m, y) { \
+    struct YearTimestamp yts = (yeartimestamp1); \
+    ASSERT(yts.timestamp.date.day == (unsigned) (d)); \
+    ASSERT(yts.timestamp.date.month == (unsigned) (mon)); \
+    ASSERT(yts.timestamp.time.hour == (unsigned) (h)); \
+    ASSERT(yts.timestamp.time.minute == (unsigned) (m)); \
+    ASSERT(yts.currentYear == (unsigned) (y)); \
+}
+#define COMMA ,
+
+
 
 ReturnCode testBasicCompareTime(void)
 {
@@ -102,11 +121,68 @@ ReturnCode testCompareTimestampCurrentBetween(void)
 }
 
 
+ReturnCode testIsDateValid(void)
+{
+    ASSERT(isDateValid((struct DateOfYear) {0, 3}, 2020) == false);
+    ASSERT(isDateValid((struct DateOfYear) {0, 12}, 2020) == false);
+    ASSERT(isDateValid((struct DateOfYear) {6, 0}, 2020) == false);
+    ASSERT(isDateValid((struct DateOfYear) {12, 13}, 2020) == false);
+    ASSERT(isDateValid((struct DateOfYear) {1, 1}, 2020) == true);
+    ASSERT(isDateValid((struct DateOfYear) {8, 10}, 2019) == true);
+    unsigned endings[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    for(int i = 0; i < 12; i++)
+    {
+        ASSERT(isDateValid((struct DateOfYear) {endings[i], i + 1}, 2018) == true);
+        ASSERT(isDateValid((struct DateOfYear) {endings[i] + 1, i + 1}, 2018) == false);
+    }
+    ASSERT(isDateValid((struct DateOfYear) {29, 2}, 2020) == true);
+    ASSERT(isDateValid((struct DateOfYear) {30, 2}, 2020) == false);
+    return RET_SUCCESS;
+}
+
+
+ReturnCode testGetNextDay(void)
+{
+    DATE_EQUAL(getNextDay(YDATE(1, 1, 2020)), 2, 1);
+    DATE_EQUAL(getNextDay(YDATE(8, 10, 2019)), 9, 10);
+    unsigned endings[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    for(int i = 0; i < 12; i++)
+    {
+        DATE_EQUAL(getNextDay(YDATE(endings[i] - 1, i + 1, 2018)), endings[i], i + 1);
+        DATE_EQUAL(getNextDay(YDATE(endings[i], i + 1, 2018)), 1, (i + 1) % 12 + 1);
+    }
+    DATE_EQUAL(getNextDay(YDATE(28, 2, 2020)), 29, 2);
+    DATE_EQUAL(getNextDay(YDATE(29, 2, 2020)), 1, 3);
+    return RET_SUCCESS;
+}
+
+
+ReturnCode testAddMinutes(void)
+{
+    YTS_EQUAL(addMinutes(YTS(1, 1, 12, 0, 2020), 5), 1, 1, 12, 5, 2020);
+    YTS_EQUAL(addMinutes(YTS(8, 8, 4, 49, 2020), 11), 8, 8, 5, 0, 2020);
+    YTS_EQUAL(addMinutes(YTS(20, 11, 21, 12, 2020), 4), 20, 11, 21, 16, 2020);
+    YTS_EQUAL(addMinutes(YTS(30, 12, 23, 50, 2020), 15), 31, 12, 0, 5, 2020);
+
+    YTS_EQUAL(addMinutes(YTS(28, 2, 3, 59, 2021), 50), 28, 2, 4, 49, 2021);
+    YTS_EQUAL(addMinutes(YTS(28, 2, 23, 59, 2021), 50), 1, 3, 0, 49, 2021);
+    YTS_EQUAL(addMinutes(YTS(28, 2, 23, 59, 2024), 50), 29, 2, 0, 49, 2024);
+    YTS_EQUAL(addMinutes(YTS(28, 2, 23, 59, 2024), 50 + 24 * 60), 1, 3, 0, 49, 2024);
+
+    YTS_EQUAL(addMinutes(YTS(31, 12, 12, 0, 2020), 13 * 60), 1, 1, 1, 0, 2021);
+    YTS_EQUAL(addMinutes(YTS(2, 1, 12, 0, 2020), 3 * 365 * 24 * 60), 1, 1, 12, 0, 2023);
+    return RET_SUCCESS;
+}
+
+
 PREPARE_TESTING(timestamps,
     testBasicCompareTime,
     testCompareTimeRegular,
     testCompareTimeCurrentBetween,
     testBasicCompareTimestamp,
     testCompareTimestampRegular,
-    testCompareTimestampCurrentBetween
+    testCompareTimestampCurrentBetween,
+    testIsDateValid,
+    testGetNextDay,
+    testAddMinutes
 )

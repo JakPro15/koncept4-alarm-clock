@@ -31,8 +31,9 @@ struct YearTimestamp
 
 
 struct YearTimestamp getCurrentTimestamp(void);
-bool isDateValid(struct DateOfYear toValidate);
+bool isDateValid(struct DateOfYear toValidate, unsigned year);
 struct DateOfYear getNextDay(struct YearTimestamp time);
+struct YearTimestamp addMinutes(struct YearTimestamp now, unsigned delay);
 
 
 /* Returns 1 if first is later, -1 if first is earlier, 0 if they're equal,

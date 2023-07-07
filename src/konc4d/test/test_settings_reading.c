@@ -52,7 +52,7 @@ ReturnCode testGetNextAction(void)
     struct BufferedFile file;
     struct SizedString lineBuffer;
     struct Action actionRead;
-    struct YearTimestamp now = {{.date = {28, 2}, .time = {12, 30}}, .currentYear = 2011};
+    struct YearTimestamp now = {{.date = {29, 2}, .time = {12, 30}}, .currentYear = 2012};
     ASSERT_ENSURE(createSizedString(&lineBuffer));
     ASSERT_ENSURE(openBufferedFile(&file, "test/test_get_next_action.txt"));
 

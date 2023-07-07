@@ -246,8 +246,12 @@ ReturnCode testParseActionWithDateReset(void)
 ReturnCode testParseActionWithDateShutdown(void)
 {
     struct Action parsed;
+    ASSERT_THROW(parseAction("    30.02  11:30 \tshutdown  35  \v \t", &parsed,
+                 (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2020}));
+    ASSERT(parseAction("    29.02  11:30 \tshutdown  35  \v \t", &parsed,
+           (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}) == RET_FAILURE);
     ASSERT_NOTHROW(parseAction("    29.02  11:30 \tshutdown  35  \v \t", &parsed,
-                   (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
+                   (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2012}));
     ASSERT(parsed.type == SHUTDOWN);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{29, 2}, {11, 30}}) == 0);
     ASSERT(parsed.args.shutdown.delay == 35);

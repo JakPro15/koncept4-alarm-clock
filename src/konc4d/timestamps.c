@@ -21,7 +21,7 @@ inline static bool does29FebruaryExist(unsigned currentYear)
 }
 
 
-bool isDateValid(struct DateOfYear toValidate)
+bool isDateValid(struct DateOfYear toValidate, unsigned year)
 {
     if(toValidate.month < 1 || toValidate.month > 12 || toValidate.day < 1)
         return false;
@@ -32,8 +32,16 @@ bool isDateValid(struct DateOfYear toValidate)
             return true;
         break;
     case 2:
-        if(toValidate.day <= 29)
-            return true;
+        if(does29FebruaryExist(year))
+        {
+            if(toValidate.day <= 29)
+                return true;
+        }
+        else
+        {
+            if(toValidate.day <= 28)
+                return true;
+        }
         break;
     default:
         if(toValidate.day <= 31)
@@ -43,9 +51,9 @@ bool isDateValid(struct DateOfYear toValidate)
 }
 
 
-struct DateOfYear getNextDay(struct YearTimestamp time)
+struct DateOfYear getNextDay(struct YearTimestamp now)
 {
-    struct DateOfYear current = time.timestamp.date;
+    struct DateOfYear current = now.timestamp.date;
     switch(current.month)
     {
     case 4: case 6: case 9: case 11:
@@ -53,7 +61,7 @@ struct DateOfYear getNextDay(struct YearTimestamp time)
             return (struct DateOfYear) {.day = 1, .month = current.month + 1};
         break;
     case 2:
-        if(does29FebruaryExist(time.currentYear))
+        if(does29FebruaryExist(now.currentYear))
         {
             if(current.day == 29)
                 return (struct DateOfYear) {.day = 1, .month = 3};
@@ -66,6 +74,23 @@ struct DateOfYear getNextDay(struct YearTimestamp time)
             return (struct DateOfYear) {.day = 1, .month = current.month % 12 + 1};
     }
     return (struct DateOfYear) {.day = current.day + 1, .month = current.month};
+}
+
+
+struct YearTimestamp addMinutes(struct YearTimestamp now, unsigned delay)
+{
+    struct YearTimestamp result = now;
+    result.timestamp.time.minute += delay;
+    result.timestamp.time.hour += result.timestamp.time.minute / 60;
+    result.timestamp.time.minute %= 60;
+    while(result.timestamp.time.hour > 23)
+    {
+        result.timestamp.time.hour -= 24;
+        result.timestamp.date = getNextDay(result);
+        if(result.timestamp.date.day == 1 && result.timestamp.date.month == 1)
+            result.currentYear += 1;
+    }
+    return result;
 }
 
 

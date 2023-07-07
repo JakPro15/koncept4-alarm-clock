@@ -166,21 +166,30 @@ static void skipWhitespace(char **string)
 }
 
 
-static ReturnCode getActionDate(char **string, struct Action *toWrite)
+static ReturnCode getActionDate(char **string, struct Action *toWrite, unsigned currentYear)
 {
     unsigned day, month;
     int size;
     int itemsRead = sscanf(*string, "%u.%u%n", &day, &month, &size);
     if(itemsRead < 2)
-        return RET_FAILURE;
-    if(!isDateValid((struct DateOfYear) {day, month}))
     {
-        LOG_LINE(LOG_ERROR, "Invalid action date: %u.%u", day, month);
-        return RET_ERROR;
+        toWrite->timestamp.date = (struct DateOfYear) {0, 0};
+        return RET_FAILURE;
     }
     *string += size;
     skipWhitespace(string);
     LOG_LINE(LOG_DEBUG, "Determined action date to be %u.%u", day, month);
+    if(!isDateValid((struct DateOfYear) {day, month}, currentYear))
+    {
+        if(day != 29 || month != 2)
+        {
+            LOG_LINE(LOG_ERROR, "Invalid action date: %u.%u", day, month);
+            return RET_ERROR;
+        }
+        LOG_LINE(LOG_INFO, "Skipping action, because 29.02 does not exist this year", day, month);
+        toWrite->timestamp.date = (struct DateOfYear) {day, month};
+        return RET_FAILURE;
+    }
 
     toWrite->timestamp.date.day = day;
     toWrite->timestamp.date.month = month;
@@ -359,10 +368,12 @@ ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestam
     skipWhitespace(&currentString);
 
     ReturnCode dateParsing;
-    RETHROW(dateParsing = getActionDate(&currentString, toWrite));
+    RETHROW(dateParsing = getActionDate(&currentString, toWrite, now.currentYear));
     ENSURE(getActionTime(&currentString, toWrite));
     if(dateParsing == RET_FAILURE)
     {
+        if(toWrite->timestamp.date.day == 29 && toWrite->timestamp.date.month == 2)
+            return RET_FAILURE;
         toWrite->repeated = true;
         addCurrentDate(toWrite, now);
     }
