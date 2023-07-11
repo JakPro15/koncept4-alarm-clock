@@ -24,6 +24,7 @@ endef
 SRC_DIR=src
 COMMONS_DIR=$(SRC_DIR)/commons
 TESTING_DIR=$(SRC_DIR)/testing
+ACTIVE_DIR=active
 KONC4_DIR=$(SRC_DIR)/konc4
 KONC4D_DIR=$(SRC_DIR)/konc4d
 
@@ -53,3 +54,6 @@ test:
 	@$(MAKE) -C $(COMMONS_DIR)
 	@$(MAKE) -C $(TESTING_DIR)
 	@$(MAKE) -C $(KONC4D_DIR) test
+
+active: all
+	powershell.exe rm -Recurse -Force active; mkdir $(ACTIVE_DIR); mv $(KONC4D_DIR)/output/konc4d.exe active/; cp -Recurse asset/ active/ | exit 0

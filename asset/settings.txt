@@ -1,0 +1,4 @@
+22:00 notify
+22:30 notify
+23:00 shutdown
+15.08 12:00 notify

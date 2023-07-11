@@ -26,6 +26,10 @@ ReturnCode initialize(struct ActionQueue **actions)
 {
     logging_level = LOG_DEBUG;
     LOG_LINE(LOG_INFO, "konc4d started");
+
+    HWND console = GetConsoleWindow();
+    ShowWindow(console, SW_HIDE);
+
     ENSURE(loadActions(actions));
 
     struct YearTimestamp now = getCurrentTimestamp();

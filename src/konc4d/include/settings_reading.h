@@ -5,7 +5,7 @@
 #include "actions.h"
 #include "sizedstring.h"
 
-#define SETTINGS_FILE_NAME "settings.txt"
+#define SETTINGS_FILE_NAME "asset\\settings.txt"
 
 
 struct BufferedFile
