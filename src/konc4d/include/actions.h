@@ -5,7 +5,7 @@
 #include "timestamps.h"
 
 #define ASSET_DIRECTORY "asset\\"
-#define DEFAULT_NOTIFY_SOUND "asset\\ring.wav"
+#define DEFAULT_NOTIFY_SOUND "ring.wav"
 #define DEFAULT_NOTIFY_SOUND_REPEATS 5
 #define MAX_NOTIFY_FILE_NAME_SIZE 30
 

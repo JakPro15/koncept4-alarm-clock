@@ -11,6 +11,7 @@
 
 enum LOGGING_LEVEL logging_level = LOG_INFO;
 static HANDLE mutex;
+static const char *level_strings[5] = {"DEB", "INF", "WAR", "ERR", "SIL"};
 
 
 static ReturnCode outputLogMessage(char *message, unsigned int length)
@@ -32,20 +33,20 @@ static ReturnCode outputLogMessage(char *message, unsigned int length)
 }
 
 
-static char* getMessage(SYSTEMTIME currentTime, int *messageLength, char *format, va_list args)
+static char* getMessage(enum LOGGING_LEVEL level, SYSTEMTIME currentTime, int *messageLength, char *format, va_list args)
 {
     va_list args2;
     va_copy(args2, args);
 
-    int len = vsnprintf(NULL, 0, format, args) + 15; // 14 chars for the time, 1 for \n
+    int len = vsnprintf(NULL, 0, format, args) + 21; // 6 chars for "[ERR] ", 14 chars for the time, 1 for \n
     char *buffer = malloc(len * sizeof(char));
     if(!buffer)
         return (char*) NULL;
     *messageLength = len;
 
-    sprintf(buffer, "%02d:%02d:%02d.%03d: ", currentTime.wHour, currentTime.wMinute,
-            currentTime.wSecond, currentTime.wMilliseconds);
-    vsprintf(buffer + 14, format, args2);
+    sprintf(buffer, "[%3s] %02d:%02d:%02d.%03d: ", level_strings[level], currentTime.wHour,
+            currentTime.wMinute, currentTime.wSecond, currentTime.wMilliseconds);
+    vsprintf(buffer + 20, format, args2);
     buffer[len - 1] = '\n';
 
     va_end(args2);
@@ -53,13 +54,13 @@ static char* getMessage(SYSTEMTIME currentTime, int *messageLength, char *format
 }
 
 
-static ReturnCode writeLog(char *format, va_list args)
+static ReturnCode writeLog(enum LOGGING_LEVEL level, char *format, va_list args)
 {
     SYSTEMTIME currentTime;
     GetLocalTime(&currentTime);
 
     int messageLength;
-    char *message = getMessage(currentTime, &messageLength, format, args);
+    char *message = getMessage(level, currentTime, &messageLength, format, args);
     if(!message)
         return RET_ERROR;
 
@@ -82,7 +83,7 @@ ReturnCode logLine(enum LOGGING_LEVEL level, char *format, ...)
 
     va_list args;
     va_start(args, format);
-    ENSURE(writeLog(format, args));
+    ENSURE(writeLog(level, format, args));
     va_end(args);
 
     ReleaseMutex(mutex);

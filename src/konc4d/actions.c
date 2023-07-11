@@ -47,7 +47,6 @@ static ReturnCode actionNotify(int repeats, char *actionArgument)
         char fileName[argumentLength + sizeof(ASSET_DIRECTORY)];
         strcpy(fileName, ASSET_DIRECTORY);
         strcat(fileName, actionArgument);
-        free(actionArgument);
         ENSURE(playSoundFile(fileName, repeats));
     }
     else
@@ -69,6 +68,7 @@ ReturnCode doAction(struct Action *action)
         ENSURE(actionNotify(action->args.notify.repeats, action->args.notify.fileName));
         break;
     case RESET:
+        LOG_LINE(LOG_INFO, "Resetting konc4d");
         return RET_FAILURE;
     default:
         LOG_LINE(LOG_WARNING, "Unknown action: %d", action->type);
@@ -178,7 +178,7 @@ static ReturnCode getActionDate(char **string, struct Action *toWrite, struct Ye
     }
     *string += size;
     skipWhitespace(string);
-    LOG_LINE(LOG_DEBUG, "Determined action date to be %u.%u", day, month);
+    LOG_LINE(LOG_DEBUG, "Determined action date to be %02u.%02u", day, month);
 
     unsigned actionYear = now.currentYear;
     if(basicCompareDate(now.timestamp.date, (struct DateOfYear) {day, month}) >= 0)
@@ -191,7 +191,7 @@ static ReturnCode getActionDate(char **string, struct Action *toWrite, struct Ye
             LOG_LINE(LOG_ERROR, "Invalid action date: %u.%u", day, month);
             return RET_ERROR;
         }
-        LOG_LINE(LOG_INFO, "Skipping action, because 29.02 does not exist this year", day, month);
+        LOG_LINE(LOG_WARNING, "Skipping action, because 29.02 does not exist this year", day, month);
         toWrite->timestamp.date = (struct DateOfYear) {day, month};
         return RET_FAILURE;
     }
@@ -209,12 +209,12 @@ static ReturnCode getActionTime(char **string, struct Action *toWrite)
     int itemsRead = sscanf(*string, "%u:%u%n", &hour, &minute, &size);
     if(itemsRead < 2 || hour > 23 || minute > 59)
     {
-        LOG_LINE(LOG_ERROR, "Failed to parse time in settings line: %s", string);
+        LOG_LINE(LOG_ERROR, "Failed to parse time in settings line: %s", *string);
         return RET_ERROR;
     }
     *string += size;
     skipWhitespace(string);
-    LOG_LINE(LOG_DEBUG, "Determined action time to be %u.%u", hour, minute);
+    LOG_LINE(LOG_DEBUG, "Determined action time to be %02u:%02u", hour, minute);
 
     toWrite->timestamp.time.hour = hour;
     toWrite->timestamp.time.minute = minute;
@@ -222,7 +222,7 @@ static ReturnCode getActionTime(char **string, struct Action *toWrite)
 }
 
 
-void addCurrentDate(struct Action *toWrite, struct YearTimestamp time)
+void writeCurrentDate(struct Action *toWrite, struct YearTimestamp time)
 {
     if(basicCompareTime(toWrite->timestamp.time, time.timestamp.time) <= 0)
         toWrite->timestamp.date = getNextDay(time);
@@ -231,13 +231,13 @@ void addCurrentDate(struct Action *toWrite, struct YearTimestamp time)
 }
 
 
-#define checkActionType(checkedType) \
+#define checkActionType(checkedType)                                  \
     if(memicmp(#checkedType, *string, sizeof(#checkedType) - 1) == 0) \
-    { \
-        toWrite->type = (checkedType); \
-        *string += sizeof(#checkedType) - 1; \
-        skipWhitespace(string); \
-        return RET_SUCCESS; \
+    {                                                                 \
+        toWrite->type = (checkedType);                                \
+        *string += sizeof(#checkedType) - 1;                          \
+        skipWhitespace(string);                                       \
+        return RET_SUCCESS;                                           \
     }
 
 
@@ -246,7 +246,7 @@ static ReturnCode getActionType(char **string, struct Action *toWrite)
     checkActionType(SHUTDOWN);
     checkActionType(NOTIFY);
     checkActionType(RESET);
-    LOG_LINE(LOG_ERROR, "Unknown action type to parse: %s", string);
+    LOG_LINE(LOG_ERROR, "Unknown action type to parse: %s", *string);
     return RET_ERROR;
 }
 
@@ -260,7 +260,7 @@ static ReturnCode getShutdownActionArgs(char **string, struct Action *toWrite)
         delay = 30;
     else
         *string += size;
-    LOG_LINE(LOG_DEBUG, "Determined shutdown action delay to be %u", delay);
+    LOG_LINE(LOG_DEBUG, "Determined shutdown action delay to be %u seconds", delay);
 
     toWrite->args.shutdown.delay = delay;
     return RET_SUCCESS;
@@ -359,6 +359,7 @@ static ReturnCode getActionArguments(char **string, struct Action *toWrite)
     case RESET:
         ; // do nothing
     }
+    skipWhitespace(string);
     return RET_SUCCESS;
 }
 
@@ -380,7 +381,7 @@ ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestam
         if(toWrite->timestamp.date.day == 29 && toWrite->timestamp.date.month == 2)
             return RET_FAILURE;
         toWrite->repeated = true;
-        addCurrentDate(toWrite, now);
+        writeCurrentDate(toWrite, now);
     }
     else
         toWrite->repeated = false;

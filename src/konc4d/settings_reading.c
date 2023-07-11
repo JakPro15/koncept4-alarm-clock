@@ -92,10 +92,7 @@ ReturnCode getNextAction(struct BufferedFile *settingsFile, struct Action *toWri
             return RET_FAILURE;
         }
     } while(strcmp(buffer->data, "") == 0);
-    ReturnCode parsed;
-    RETHROW(parsed = parseAction(buffer->data, toWrite, now));
-    if(parsed == RET_FAILURE)
-        return RET_FAILURE;
+    RETURN_FAIL(parseAction(buffer->data, toWrite, now));
     return RET_SUCCESS;
 }
 
