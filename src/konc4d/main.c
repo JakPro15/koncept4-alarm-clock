@@ -3,7 +3,10 @@
 
 #include <stdio.h>
 
-#define INITIAL_DELAY_MINUTES 0 /* should be at least 1 */
+#define INITIAL_DELAY_MINUTES 1
+#if INITIAL_DELAY_MINUTES < 1
+    #error("INITIAL_DELAY_MINUTES should be at least 1")
+#endif
 #define WAIT_CHECK_PERIOD_SECONDS 30
 
 
@@ -25,11 +28,10 @@ ReturnCode initialize(struct ActionQueue **actions)
     LOG_LINE(LOG_INFO, "konc4d started");
     ENSURE(loadActions(actions));
 
-#if INITIAL_DELAY_MINUTES > 0
     struct YearTimestamp now = getCurrentTimestamp();
     struct YearTimestamp until = addMinutes(now, INITIAL_DELAY_MINUTES);
     ENSURE(skipUntilTimestamp(actions, until.timestamp, now));
-#endif
+
     return RET_SUCCESS;
 }
 
@@ -37,7 +39,7 @@ ReturnCode initialize(struct ActionQueue **actions)
 ReturnCode actionLoop(struct ActionQueue **actions)
 {
     struct Action current;
-    while(actions != NULL)
+    while(*actions != NULL)
     {
         struct YearTimestamp now = getCurrentTimestamp();
         ENSURE(popActionWithRepeat(actions, &current, now));
@@ -57,10 +59,12 @@ int main(void)
         switch(actionLoop(&actions))
         {
         case RET_SUCCESS:
+            LOG_LINE(LOG_INFO, "All actions done, exiting");
             return 0;
         case RET_FAILURE: /* RESET */
             continue;
         case RET_ERROR:
+            LOG_LINE(LOG_ERROR, "Exiting on error");
             return 1;
         }
     }
