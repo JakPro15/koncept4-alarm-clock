@@ -146,7 +146,7 @@ ReturnCode sendMessage(struct SharedMemoryFile *sharedMemory, char *message)
     }
 
     ENSURE(waitMutex(*sharedMemory));
-    unsigned next = getNextFreeIndex(sharedMemory->shared);
+    int next = getNextFreeIndex(sharedMemory->shared);
     if(next == NO_NODE)
     {
         ReleaseMutex(sharedMemory->mutex);

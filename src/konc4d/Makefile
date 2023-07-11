@@ -17,7 +17,7 @@ test: $(TEST_EXE)
 	$(TEST_EXE)
 
 $(TEST_EXE): $(OBJ) $(TEST_OBJ)
-	$(CC) $(CFLAGS) -o output/test_konc4d.exe $(filter-out output/main.o,$(OBJ)) $(TEST_OBJ) $(COMMONS_OBJ) $(TESTING_OBJ) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(filter-out output/main.o,$(OBJ)) $(TEST_OBJ) $(COMMONS_OBJ) $(TESTING_OBJ) $(LDFLAGS)
 
 clean:
 	$(call remove,$(OBJ) $(DEPENDS) $(TEST_OBJ) $(TEST_DEPENDS))

@@ -1,10 +1,8 @@
 #include "testing.h"
-#include "logging.h"
 
 
 void doTesting(char *fileName, unsigned numberOfFunctions, ...)
 {
-    logging_level = LOG_SILENT;
     printf("Testing of file %s\n", fileName);
     va_list functions;
     va_start(functions, numberOfFunctions);

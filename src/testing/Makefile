@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Iinclude -I$(COMMONS_INCLUDE) $(GLOBAL_CFLAGS)
+CFLAGS=-Iinclude $(GLOBAL_CFLAGS)
 SRC=$(wildcard *.c)
 OBJ=$(SRC:%.c=output/%.o)
 DEPENDS=$(SRC:%.c=output/%.d)

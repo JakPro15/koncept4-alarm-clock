@@ -1,7 +1,17 @@
+#ifndef TESTING_H
+#define TESTING_H
+
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "error_handling.h"
+#ifndef ERROR_HANDLING_H
+typedef enum _ReturnCodeEnum
+{
+    RET_SUCCESS=0,
+    RET_FAILURE,
+    RET_ERROR
+} ReturnCode;
+#endif
 
 #define COLOR_RESET "\x1B[0m"
 #define COLOR_RED "\x1B[31m"
@@ -41,3 +51,5 @@ void doTesting(char *fileName, unsigned numberOfFunctions, ...);
     printf(COLOR_RED "%s(%s:%d) Function %s did not throw error\n" COLOR_RESET, __func__, __FILE__, __LINE__, #expression); \
     return RET_ERROR; \
 }
+
+#endif

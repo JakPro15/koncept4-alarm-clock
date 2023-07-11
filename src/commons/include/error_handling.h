@@ -1,12 +1,14 @@
 #ifndef ERROR_HANDLING_H
 #define ERROR_HANDLING_H
 
+#ifndef TESTING_H
 typedef enum _ReturnCodeEnum
 {
     RET_SUCCESS=0,
     RET_FAILURE,
     RET_ERROR
 } ReturnCode;
+#endif
 
 #define ENSURE(expr) if((expr) != RET_SUCCESS) return RET_ERROR
 #define RETHROW(expr) if((expr) == RET_ERROR) return RET_ERROR

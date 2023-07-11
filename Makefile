@@ -50,9 +50,8 @@ clean:
 	@$(MAKE) -C $(TESTING_DIR) clean
 	@$(MAKE) -C $(KONC4D_DIR) clean
 
-test:
-	@$(MAKE) -C $(COMMONS_DIR)
-	@$(MAKE) -C $(TESTING_DIR)
+test: all
+	@$(MAKE) -C $(COMMONS_DIR) test
 	@$(MAKE) -C $(KONC4D_DIR) test
 
 active: all
