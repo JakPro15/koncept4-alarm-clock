@@ -119,7 +119,7 @@ ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, str
         addAction(toWrite, &newAction, now.timestamp);
     } while(true);
 
-    freeSizedString(&lineBuffer);
+    freeSizedString(lineBuffer);
     ENSURE(closeBufferedFile(&settingsFile));
     if(readLine == RET_ERROR)
         return RET_ERROR;

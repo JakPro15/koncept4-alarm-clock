@@ -17,7 +17,7 @@ struct SizedString
 
 ReturnCode createSizedString(struct SizedString *string);
 ReturnCode appendToSizedString(struct SizedString *string, char character);
-void freeSizedString(struct SizedString *string);
+void freeSizedString(struct SizedString string);
 
 
 inline static bool isWhitespace(char character)

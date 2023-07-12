@@ -42,7 +42,7 @@ ReturnCode testGetLine(void)
     ASSERT(strcmp(lineRead.data, "last line") == 0);
     ASSERT(getLine(&file, &lineRead) == RET_FAILURE);
     ASSERT_ENSURE(closeBufferedFile(&file));
-    freeSizedString(&lineRead);
+    freeSizedString(lineRead);
     return RET_SUCCESS;
 }
 
@@ -77,7 +77,7 @@ ReturnCode testGetNextAction(void)
     ASSERT(getNextAction(&file, &actionRead, &lineBuffer, now) == RET_FAILURE);
 
     ASSERT_ENSURE(closeBufferedFile(&file));
-    freeSizedString(&lineBuffer);
+    freeSizedString(lineBuffer);
     return RET_SUCCESS;
 }
 

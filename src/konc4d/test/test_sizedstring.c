@@ -15,6 +15,7 @@ ReturnCode testCreateSizedString(void)
     ASSERT(string.data != NULL);
     for(unsigned i = 0; i < string.capacity; i++)
         string.data[i] = 'A';
+    freeSizedString(string);
     return RET_SUCCESS;
 }
 
@@ -34,6 +35,7 @@ ReturnCode testAppendToSizedStringNormal(void)
     ASSERT(strcmp(string.data, "A\tC") == 0);
     ASSERT(string.size == 3);
     ASSERT(string.capacity == STARTING_CAPACITY);
+    freeSizedString(string);
     return RET_SUCCESS;
 }
 
@@ -50,6 +52,7 @@ ReturnCode testAppendToSizedStringReallocStarting(void)
     for(int i = 0; i < STARTING_CAPACITY; i++)
         ASSERT(string.data[i] == 'A');
     ASSERT(string.data[STARTING_CAPACITY] == 'B');
+    freeSizedString(string);
     return RET_SUCCESS;
 }
 
@@ -69,6 +72,7 @@ ReturnCode testAppendToSizedStringReallocLarger(void)
     for(int i = 0; i < STARTING_CAPACITY + CAPACITY_INCREMENT * 3; i++)
         ASSERT(string.data[i] == 'A');
     ASSERT(string.data[string.size - 1] == 'B');
+    freeSizedString(string);
     return RET_SUCCESS;
 }
 

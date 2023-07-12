@@ -34,7 +34,7 @@ ReturnCode appendToSizedString(struct SizedString *string, char character)
 }
 
 
-void freeSizedString(struct SizedString *string)
+void freeSizedString(struct SizedString string)
 {
-    free(string->data);
+    free(string.data);
 }
