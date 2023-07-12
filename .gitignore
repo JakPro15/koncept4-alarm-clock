@@ -3,7 +3,6 @@
 *.d
 *.exe
 launch.ps1
-src/konc4/
 old_src/
 *konc4log.txt
 active/

@@ -3,13 +3,13 @@ CFLAGS=-Iinclude -I$(COMMONS_INCLUDE) -I$(TESTING_INCLUDE) $(GLOBAL_CFLAGS)
 LDFLAGS=-lwinmm
 SRC=$(wildcard *.c)
 OBJ=$(SRC:%.c=output/%.o)
-EXE=output/konc4d.exe
+EXE=output/konc4.exe
 DEPENDS=$(SRC:%.c=output/%.d)
 
 TEST_SRC=$(wildcard test/*.c)
 TEST_OBJ=$(TEST_SRC:test/%.c=output/%.o)
 TEST_DEPENDS=$(TEST_SRC:test/%.c=output/%.d)
-TEST_EXE=output/test_konc4d.exe
+TEST_EXE=output/test_konc4.exe
 
 all: $(EXE)
 
