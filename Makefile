@@ -50,9 +50,13 @@ clean:
 	@$(MAKE) -C $(TESTING_DIR) clean
 	@$(MAKE) -C $(KONC4D_DIR) clean
 
-test: all
+test_commons: all
 	@$(MAKE) -C $(COMMONS_DIR) test
+
+test_konc4d: all
 	@$(MAKE) -C $(KONC4D_DIR) test
+
+test: test_commons test_konc4d
 
 active: all
 	powershell.exe rm -Recurse -Force active; mkdir $(ACTIVE_DIR); mv $(KONC4D_DIR)/output/konc4d.exe active/; cp -Recurse asset/ active/ | exit 0

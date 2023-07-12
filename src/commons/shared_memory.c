@@ -16,7 +16,7 @@ static ReturnCode initializeMutex(HANDLE *mutex)
 
 static ReturnCode waitMutex(struct SharedMemoryFile sharedMemory)
 {
-    if(!WaitForSingleObject(sharedMemory.mutex, 5000))
+    if(WaitForSingleObject(sharedMemory.mutex, 5000) != WAIT_OBJECT_0)
     {
         LOG_LINE(LOG_ERROR, "Failed to lock mutex");
         closeSharedMemory(sharedMemory);
@@ -92,28 +92,28 @@ ReturnCode openSharedMemory(struct SharedMemoryFile *sharedMemory)
 }
 
 
-ReturnCode receiveMessage(struct SharedMemoryFile *sharedMemory, char *buffer)
+ReturnCode receiveMessage(struct SharedMemoryFile sharedMemory, char *buffer)
 {
-    ENSURE(waitMutex(*sharedMemory));
-    int received = sharedMemory->shared->queueFirst;
+    ENSURE(waitMutex(sharedMemory));
+    int received = sharedMemory.shared->queueFirst;
     if(received == NO_NODE)
     {
-        ReleaseMutex(sharedMemory->mutex);
+        ReleaseMutex(sharedMemory.mutex);
         return RET_FAILURE;
     }
 
-    memcpy(buffer, sharedMemory->shared->messageQueue[received], SHMEM_MESSAGE_LENGTH);
+    memcpy(buffer, sharedMemory.shared->messageQueue[received], SHMEM_MESSAGE_LENGTH);
 
-    if(received == sharedMemory->shared->queueLast)
-        sharedMemory->shared->queueFirst = NO_NODE;
+    if(received == sharedMemory.shared->queueLast)
+        sharedMemory.shared->queueFirst = NO_NODE;
     else
     {
-        ++sharedMemory->shared->queueFirst;
-        sharedMemory->shared->queueFirst %= SHMEM_QUEUE_LENGTH;
+        ++sharedMemory.shared->queueFirst;
+        sharedMemory.shared->queueFirst %= SHMEM_QUEUE_LENGTH;
     }
 
     LOG_LINE(LOG_DEBUG, "Received message: %s", buffer);
-    ReleaseMutex(sharedMemory->mutex);
+    ReleaseMutex(sharedMemory.mutex);
     return RET_SUCCESS;
 }
 
@@ -136,7 +136,7 @@ static int getNextFreeIndex(struct SharedMemory *shared)
 }
 
 
-ReturnCode sendMessage(struct SharedMemoryFile *sharedMemory, char *message)
+ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message)
 {
     unsigned messageLength = strlen(message) + 1;
     if(messageLength > SHMEM_MESSAGE_LENGTH)
@@ -145,19 +145,19 @@ ReturnCode sendMessage(struct SharedMemoryFile *sharedMemory, char *message)
         return RET_ERROR;
     }
 
-    ENSURE(waitMutex(*sharedMemory));
-    int next = getNextFreeIndex(sharedMemory->shared);
+    ENSURE(waitMutex(sharedMemory));
+    int next = getNextFreeIndex(sharedMemory.shared);
     if(next == NO_NODE)
     {
-        ReleaseMutex(sharedMemory->mutex);
+        ReleaseMutex(sharedMemory.mutex);
         return RET_FAILURE;
     }
 
-    sharedMemory->shared->queueLast = next;
-    memcpy(sharedMemory->shared->messageQueue[next], message, messageLength);
+    sharedMemory.shared->queueLast = next;
+    memcpy(sharedMemory.shared->messageQueue[next], message, messageLength);
 
     LOG_LINE(LOG_DEBUG, "Sent message: %s", message);
-    ReleaseMutex(sharedMemory->mutex);
+    ReleaseMutex(sharedMemory.mutex);
     return RET_SUCCESS;
 }
 

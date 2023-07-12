@@ -29,8 +29,8 @@ struct SharedMemory
 
 ReturnCode createSharedMemory(struct SharedMemoryFile *sharedMemory);
 ReturnCode openSharedMemory(struct SharedMemoryFile *sharedMemory);
-ReturnCode sendMessage(struct SharedMemoryFile *sharedMemory, char *message);
-ReturnCode receiveMessage(struct SharedMemoryFile *sharedMemory, char *buffer);
+ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message);
+ReturnCode receiveMessage(struct SharedMemoryFile sharedMemory, char *buffer);
 void closeSharedMemory(struct SharedMemoryFile sharedMemory);
 
 #endif

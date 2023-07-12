@@ -17,8 +17,14 @@ clean:
 test: $(TEST_EXE)
 	$(TEST_EXE)
 
-$(TEST_EXE): $(OBJ) $(TEST_OBJ)
-	$(CC) $(CFLAGS) -o $@ $(OBJ) $(TEST_OBJ) $(TESTING_OBJ) $(LDFLAGS)
+output/sender.exe: output/sender.o
+	$(CC) $(CFLAGS) -o output/sender.exe output/sender.o $(OBJ) $(LDFLAGS)
+
+output/receiver.exe: output/receiver.o
+	$(CC) $(CFLAGS) -o output/receiver.exe output/receiver.o $(OBJ) $(LDFLAGS)
+
+$(TEST_EXE): $(OBJ) $(TEST_OBJ) output/sender.exe output/receiver.exe
+	$(CC) $(CFLAGS) -o $@ $(OBJ) $(filter-out output/sender.o output/receiver.o,$(TEST_OBJ)) $(TESTING_OBJ) $(LDFLAGS)
 
 output/%.d: %.c
 	$(call make_depend,$@)

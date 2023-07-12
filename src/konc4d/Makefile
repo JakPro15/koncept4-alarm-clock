@@ -3,6 +3,7 @@ CFLAGS=-Iinclude -I$(COMMONS_INCLUDE) -I$(TESTING_INCLUDE) $(GLOBAL_CFLAGS)
 LDFLAGS=-lwinmm
 SRC=$(wildcard *.c)
 OBJ=$(SRC:%.c=output/%.o)
+EXE=output/konc4d.exe
 DEPENDS=$(SRC:%.c=output/%.d)
 
 TEST_SRC=$(wildcard test/*.c)
@@ -10,11 +11,13 @@ TEST_OBJ=$(TEST_SRC:test/%.c=output/%.o)
 TEST_DEPENDS=$(TEST_SRC:test/%.c=output/%.d)
 TEST_EXE=output/test_konc4d.exe
 
-all: $(OBJ)
-	$(CC) $(CFLAGS) -o output/konc4d.exe $(OBJ) $(COMMONS_OBJ) $(LDFLAGS)
+all: $(EXE)
 
 test: $(TEST_EXE)
 	$(TEST_EXE)
+
+$(EXE): $(OBJ)
+	$(CC) $(CFLAGS) -o output/konc4d.exe $(OBJ) $(COMMONS_OBJ) $(LDFLAGS)
 
 $(TEST_EXE): $(OBJ) $(TEST_OBJ)
 	$(CC) $(CFLAGS) -o $@ $(filter-out output/main.o,$(OBJ)) $(TEST_OBJ) $(COMMONS_OBJ) $(TESTING_OBJ) $(LDFLAGS)
