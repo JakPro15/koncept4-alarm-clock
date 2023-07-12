@@ -152,7 +152,8 @@ ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite)
         return RET_ERROR;
     }
     struct ActionQueue *oldHead = *head;
-    *toWrite = AQ_FIRST(*head);
+    if(toWrite != NULL)
+        *toWrite = AQ_FIRST(*head);
     *head = (*head)->next;
     free(oldHead);
     return RET_SUCCESS;
@@ -415,5 +416,13 @@ ReturnCode skipUntilTimestamp(struct ActionQueue **head, struct Timestamp time, 
 {
     while(compareTimestamp(AQ_FIRST(*head).timestamp, time, now.timestamp) <= 0)
         popActionWithRepeat(head, NULL, now);
+    return RET_SUCCESS;
+}
+
+
+ReturnCode destroyActionQueue(struct ActionQueue **head)
+{
+    while(*head != NULL)
+        ENSURE(popAction(head, NULL));
     return RET_SUCCESS;
 }

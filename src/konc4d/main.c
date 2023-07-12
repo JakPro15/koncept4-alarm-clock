@@ -1,5 +1,6 @@
 #include "logging.h"
 #include "settings_reading.h"
+#include "shared_memory.h"
 
 #include <stdio.h>
 
@@ -7,29 +8,74 @@
 #if INITIAL_DELAY_MINUTES < 1
     #error("INITIAL_DELAY_MINUTES should be at least 1")
 #endif
-#define WAIT_CHECK_PERIOD_SECONDS 30
+#define WAIT_CHECK_PERIOD_SECONDS 1
 
 
-void waitUntil(struct Timestamp start, struct Timestamp until)
+static bool message_exit;
+
+
+ReturnCode processMessage(struct ActionQueue **actions, char *message)
 {
-    struct Timestamp now = getCurrentTimestamp().timestamp;
-    LOG_LINE(LOG_INFO, "Sleeping until %02d.%02d %02d:%02d", until.date.day, until.date.month, until.time.hour, until.time.minute);
-    while(compareTimestamp(now, until, start) < 0)
+    (void) actions;
+    if(strcmp(message, "RESET") == 0)
     {
-        Sleep(WAIT_CHECK_PERIOD_SECONDS * 1000);
-        now = getCurrentTimestamp().timestamp;
+        LOG_LINE(LOG_INFO, "RESET message received, resetting");
+        return RET_FAILURE;
+    }
+    else if(strcmp(message, "STOP") == 0)
+    {
+        LOG_LINE(LOG_INFO, "STOP message received, stopping");
+        message_exit = true;
+        return RET_ERROR;
+    }
+    else
+    {
+        LOG_LINE(LOG_ERROR, "Unknown message received");
+        return RET_ERROR;
     }
 }
 
 
-ReturnCode initialize(struct ActionQueue **actions)
+ReturnCode handleMessages(struct ActionQueue **actions, struct SharedMemoryFile sharedMemory)
+{
+    char message[SHMEM_MESSAGE_LENGTH];
+    ReturnCode received;
+    RETHROW(received = receiveMessage(sharedMemory, message));
+    while(received != RET_FAILURE)
+    {
+        RETURN_FAIL(processMessage(actions, message));
+        RETHROW(received = receiveMessage(sharedMemory, message));
+    }
+    return RET_SUCCESS;
+}
+
+
+ReturnCode waitUntil(struct Timestamp start, struct Timestamp until,
+                     struct ActionQueue **actions, struct SharedMemoryFile sharedMemory)
+{
+    struct Timestamp now = getCurrentTimestamp().timestamp;
+    LOG_LINE(LOG_INFO, "Sleeping until %02d.%02d %02d:%02d", until.date.day,
+             until.date.month, until.time.hour, until.time.minute);
+    while(compareTimestamp(now, until, start) < 0)
+    {
+        RETURN_FAIL(handleMessages(actions, sharedMemory));
+        Sleep(WAIT_CHECK_PERIOD_SECONDS * 1000);
+        now = getCurrentTimestamp().timestamp;
+    }
+    return RET_SUCCESS;
+}
+
+
+ReturnCode initialize(struct ActionQueue **actions, struct SharedMemoryFile *sharedMemory)
 {
     logging_level = LOG_DEBUG;
+    message_exit = false;
     LOG_LINE(LOG_INFO, "konc4d started");
 
     HWND console = GetConsoleWindow();
     ShowWindow(console, SW_HIDE);
 
+    ENSURE(createSharedMemory(sharedMemory));
     ENSURE(loadActions(actions));
 
     struct YearTimestamp now = getCurrentTimestamp();
@@ -40,14 +86,14 @@ ReturnCode initialize(struct ActionQueue **actions)
 }
 
 
-ReturnCode actionLoop(struct ActionQueue **actions)
+ReturnCode actionLoop(struct ActionQueue **actions, struct SharedMemoryFile sharedMemory)
 {
     struct Action current;
     while(*actions != NULL)
     {
         struct YearTimestamp now = getCurrentTimestamp();
         ENSURE(popActionWithRepeat(actions, &current, now));
-        waitUntil(now.timestamp, current.timestamp);
+        RETURN_FAIL(waitUntil(now.timestamp, current.timestamp, actions, sharedMemory));
         RETURN_FAIL(doAction(&current));
     }
     return RET_SUCCESS;
@@ -56,18 +102,22 @@ ReturnCode actionLoop(struct ActionQueue **actions)
 
 int main(void)
 {
+    struct ActionQueue *actions = NULL;
+    struct SharedMemoryFile sharedMemory;
     while(true)
     {
-        struct ActionQueue *actions = NULL;
-        ENSURE(initialize(&actions));
-        switch(actionLoop(&actions))
+        ENSURE(initialize(&actions, &sharedMemory));
+        ReturnCode returned = actionLoop(&actions, sharedMemory);
+
+        destroyActionQueue(&actions);
+        closeSharedMemory(sharedMemory);
+        if(returned == RET_SUCCESS || message_exit)
         {
-        case RET_SUCCESS:
-            LOG_LINE(LOG_INFO, "All actions done, exiting");
+            LOG_LINE(LOG_INFO, "Stopping the program");
             return 0;
-        case RET_FAILURE: /* RESET */
-            continue;
-        case RET_ERROR:
+        }
+        else if(returned == RET_ERROR)
+        {
             LOG_LINE(LOG_ERROR, "Exiting on error");
             return 1;
         }
