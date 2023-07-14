@@ -7,7 +7,7 @@
 
 
 #define SHMEM_FILE_NAME "konc4_shared_memory"
-#define MUTEX_NAME "konc4d_shared_memory_mutex"
+#define MUTEX_NAME "konc4_shared_memory_mutex"
 #define SHMEM_QUEUE_LENGTH 8
 #define SHMEM_MESSAGE_LENGTH 12
 #define NO_NODE -1

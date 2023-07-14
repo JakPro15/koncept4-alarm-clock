@@ -113,12 +113,12 @@ int main(void)
         closeSharedMemory(sharedMemory);
         if(returned == RET_SUCCESS || message_exit)
         {
-            LOG_LINE(LOG_INFO, "Stopping the program");
+            LOG_LINE(LOG_INFO, "konc4d stopped");
             return 0;
         }
         else if(returned == RET_ERROR)
         {
-            LOG_LINE(LOG_ERROR, "Exiting on error");
+            LOG_LINE(LOG_ERROR, "konc4d exiting on error");
             return 1;
         }
     }
