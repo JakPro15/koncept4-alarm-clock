@@ -46,11 +46,11 @@ struct ActionQueue
 #define AQ_FOURTH(head) (head)->next->next->next->action
 
 
-ReturnCode addAction(struct ActionQueue **head, struct Action *action, struct Timestamp now);
-ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite);
-ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestamp now);
-ReturnCode popActionWithRepeat(struct ActionQueue **head, struct Action *toWrite, struct YearTimestamp now);
-ReturnCode skipUntilTimestamp(struct ActionQueue **head, struct Timestamp time, struct YearTimestamp now);
-ReturnCode destroyActionQueue(struct ActionQueue **head);
+ReturnCode addAction(struct ActionQueue **head, struct Action *action, struct Timestamp now) NO_IGNORE;
+ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite) NO_IGNORE;
+ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestamp now) NO_IGNORE;
+ReturnCode popActionWithRepeat(struct ActionQueue **head, struct Action *toWrite, struct YearTimestamp now) NO_IGNORE;
+ReturnCode skipUntilTimestamp(struct ActionQueue **head, struct Timestamp time, struct YearTimestamp now) NO_IGNORE;
+void destroyActionQueue(struct ActionQueue **head);
 
 #endif

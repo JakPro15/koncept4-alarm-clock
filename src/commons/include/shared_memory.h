@@ -27,10 +27,10 @@ struct SharedMemory
 };
 
 
-ReturnCode createSharedMemory(struct SharedMemoryFile *sharedMemory);
-ReturnCode openSharedMemory(struct SharedMemoryFile *sharedMemory);
-ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message);
-ReturnCode receiveMessage(struct SharedMemoryFile sharedMemory, char *buffer);
+ReturnCode createSharedMemory(struct SharedMemoryFile *sharedMemory) NO_IGNORE;
+ReturnCode openSharedMemory(struct SharedMemoryFile *sharedMemory) NO_IGNORE;
+ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message) NO_IGNORE;
+ReturnCode receiveMessage(struct SharedMemoryFile sharedMemory, char *buffer) NO_IGNORE;
 void closeSharedMemory(struct SharedMemoryFile sharedMemory);
 
 #endif

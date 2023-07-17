@@ -15,8 +15,8 @@ struct SizedString
 };
 
 
-ReturnCode createSizedString(struct SizedString *string);
-ReturnCode appendToSizedString(struct SizedString *string, char character);
+ReturnCode createSizedString(struct SizedString *string) NO_IGNORE;
+ReturnCode appendToSizedString(struct SizedString *string, char character) NO_IGNORE;
 void freeSizedString(struct SizedString string);
 
 

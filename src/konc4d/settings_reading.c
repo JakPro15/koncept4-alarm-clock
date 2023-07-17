@@ -24,7 +24,7 @@ ReturnCode closeBufferedFile(struct BufferedFile *file)
 {
     if(!CloseHandle(file->handle))
     {
-        LOG_LINE(LOG_ERROR, "CloseHandle failed with error code: %d", GetLastError());
+        LOG_LINE(LOG_ERROR, "CloseHandle failed");
         return RET_ERROR;
     }
     return RET_SUCCESS;
@@ -38,7 +38,7 @@ ReturnCode getCharacter(struct BufferedFile *file, char *toWrite)
         DWORD bytesRead = 0;
         if(!ReadFile(file->handle, file->buffer, 256, &bytesRead, NULL))
         {
-            LOG_LINE(LOG_ERROR, "Failed to read file, error: %d", GetLastError());
+            LOG_LINE(LOG_ERROR, "Failed to read file");
             return RET_ERROR;
         }
         if(bytesRead == 0)
@@ -102,13 +102,14 @@ ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, str
     struct BufferedFile settingsFile;
     ENSURE(openBufferedFile(&settingsFile, fileName));
     struct SizedString lineBuffer;
-    ENSURE_EXIT(createSizedString(&lineBuffer), closeBufferedFile(&settingsFile));
+    ENSURE_CALLBACK(createSizedString(&lineBuffer), closeBufferedFile(&settingsFile));
 
     struct Action newAction;
     ReturnCode readLine;
     do
     {
-        RETHROW(readLine = getNextAction(&settingsFile, &newAction, &lineBuffer, now));
+        RETHROW_CALLBACK(readLine = getNextAction(&settingsFile, &newAction, &lineBuffer, now),
+                         freeSizedString(lineBuffer); closeBufferedFile(&settingsFile));
         if(readLine == RET_FAILURE)
         {
             if(newAction.timestamp.date.day == 29 && newAction.timestamp.date.month == 2)
@@ -116,7 +117,8 @@ ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, str
             else
                 break;
         }
-        addAction(toWrite, &newAction, now.timestamp);
+        ENSURE_CALLBACK(addAction(toWrite, &newAction, now.timestamp),
+                        freeSizedString(lineBuffer); closeBufferedFile(&settingsFile));
     } while(true);
 
     freeSizedString(lineBuffer);

@@ -4,6 +4,6 @@
 #include "error_handling.h"
 
 
-ReturnCode parseCommandLine(char *commandLine);
+ReturnCode parseCommandLine(char *commandLine) NO_IGNORE;
 
 #endif

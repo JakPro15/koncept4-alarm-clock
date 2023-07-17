@@ -14,11 +14,11 @@ int main(int argc, char *argv[])
     ReturnCode receivedCode;
     for(int i = 0; i < toReceive; i++)
     {
-        RETHROW(receivedCode = receiveMessage(sharedMemory, received));
+        RETHROW_CALLBACK(receivedCode = receiveMessage(sharedMemory, received), closeSharedMemory(sharedMemory));
         while(receivedCode == RET_FAILURE)
         {
             Sleep(500);
-            RETHROW(receivedCode = receiveMessage(sharedMemory, received));
+            RETHROW_CALLBACK(receivedCode = receiveMessage(sharedMemory, received), closeSharedMemory(sharedMemory));
         }
         printf("%s\n", received);
     }

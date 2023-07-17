@@ -17,11 +17,11 @@ ReturnCode testAddActionRegular(void)
     struct Action action = {{{2, 1}, {0, 0}}, SHUTDOWN, .args.shutdown = {1}};
     struct Action action2 = {{{2, 1}, {10, 0}}, SHUTDOWN, .args.shutdown = {2}};
 
-    addAction(&head, &action, (struct Timestamp) {{3, 1}, {23, 0}});
+    ASSERT_ENSURE(addAction(&head, &action, (struct Timestamp) {{3, 1}, {23, 0}}));
     ASSERT_EQUAL(action, AQ_FIRST(head));
     ASSERT(head->next == NULL);
 
-    addAction(&head, &action2, (struct Timestamp) {{3, 1}, {23, 0}});
+    ASSERT_ENSURE(addAction(&head, &action2, (struct Timestamp) {{3, 1}, {23, 0}}));
     ASSERT_EQUAL(action, AQ_FIRST(head));
     ASSERT(head->next != NULL);
     ASSERT_EQUAL(action2, AQ_SECOND(head));
@@ -42,13 +42,13 @@ ReturnCode testAddActionAtEnd(void)
     struct Action toAdd = {{{2, 1}, {12, 30}}, SHUTDOWN, .args.shutdown = {3}};
     struct Action toAdd2 = {{{2, 1}, {21, 12}}, SHUTDOWN, .args.shutdown = {-1}};
 
-    addAction(&head, &toAdd, (struct Timestamp) {{14, 2}, {23, 0}});
+    ASSERT_ENSURE(addAction(&head, &toAdd, (struct Timestamp) {{14, 2}, {23, 0}}));
     ASSERT(head == &first);
     ASSERT(second.next != NULL);
     ASSERT(second.next->next == NULL);
     ASSERT_EQUAL(second.next->action, toAdd);
 
-    addAction(&head, &toAdd2, (struct Timestamp) {{14, 2}, {23, 0}});
+    ASSERT_ENSURE(addAction(&head, &toAdd2, (struct Timestamp) {{14, 2}, {23, 0}}));
     ASSERT(head == &first);
     ASSERT(second.next->next != NULL);
     ASSERT(second.next->next->next == NULL);
@@ -66,13 +66,13 @@ ReturnCode testAddActionInTheMiddle(void)
     struct Action toAdd = {{{16, 6}, {1, 30}}, SHUTDOWN, .args.shutdown = {5}};
     struct Action toAdd2 = {{{16, 6}, {3, 12}}, SHUTDOWN, .args.shutdown = {-1}};
 
-    addAction(&head, &toAdd, (struct Timestamp) {{15, 6}, {10, 0}});
+    ASSERT_ENSURE(addAction(&head, &toAdd, (struct Timestamp) {{15, 6}, {10, 0}}));
     ASSERT(head == &first);
     ASSERT(second.next == NULL);
     ASSERT(first.next->next == &second);
     ASSERT_EQUAL(first.next->action, toAdd);
 
-    addAction(&head, &toAdd2, (struct Timestamp) {{15, 6}, {10, 0}});
+    ASSERT_ENSURE(addAction(&head, &toAdd2, (struct Timestamp) {{15, 6}, {10, 0}}));
     ASSERT(head == &first);
     ASSERT(second.next == NULL);
     ASSERT(first.next->next->next == &second);
@@ -88,7 +88,7 @@ ReturnCode testAddActionAtHead(void)
     struct ActionQueue *head = &first;
     struct Action toAdd = {{{2, 1}, {6, 30}}, SHUTDOWN, .args.shutdown = {4}};
 
-    addAction(&head, &toAdd, (struct Timestamp) {{1, 1}, {5, 0}});
+    ASSERT_ENSURE(addAction(&head, &toAdd, (struct Timestamp) {{1, 1}, {5, 0}}));
     ASSERT(head->next == &first);
     ASSERT(first.next == NULL);
     ASSERT_EQUAL(AQ_FIRST(head), toAdd);
@@ -102,12 +102,12 @@ ReturnCode testPopAction(void)
     struct ActionQueue *head = NULL;
     struct Action toWrite, first = {{{6, 3}, {11, 0}}, SHUTDOWN, .args.shutdown = {1}};
     struct Action second = {{{6, 3}, {12, 0}}, SHUTDOWN, .args.shutdown = {5}};
-    addAction(&head, &first, (struct Timestamp) {{6, 3}, {5, 0}});
-    addAction(&head, &second, (struct Timestamp) {{6, 3}, {5, 0}});
+    ASSERT_ENSURE(addAction(&head, &first, (struct Timestamp) {{6, 3}, {5, 0}}));
+    ASSERT_ENSURE(addAction(&head, &second, (struct Timestamp) {{6, 3}, {5, 0}}));
 
-    popAction(&head, &toWrite);
+    ASSERT_ENSURE(popAction(&head, &toWrite));
     ASSERT_EQUAL(toWrite, first);
-    popAction(&head, &toWrite);
+    ASSERT_ENSURE(popAction(&head, &toWrite));
     ASSERT_EQUAL(toWrite, second);
     ASSERT(head == NULL);
 
@@ -129,12 +129,12 @@ ReturnCode testPopActionWithRepeat(void)
     struct Action toWrite, first = {{{6, 3}, {11, 0}}, SHUTDOWN, .args.shutdown = {1}, .repeated = true};
     struct Action second = {{{6, 3}, {12, 0}}, SHUTDOWN, .args.shutdown = {5}, .repeated = false};
     struct YearTimestamp now = {{{6, 3}, {5, 0}}, 2015};
-    addAction(&head, &first, now.timestamp);
-    addAction(&head, &second, now.timestamp);
+    ASSERT_ENSURE(addAction(&head, &first, now.timestamp));
+    ASSERT_ENSURE(addAction(&head, &second, now.timestamp));
 
-    popActionWithRepeat(&head, &toWrite, now);
+    ASSERT_ENSURE(popActionWithRepeat(&head, &toWrite, now));
     ASSERT_EQUAL(toWrite, first);
-    popActionWithRepeat(&head, &toWrite, now);
+    ASSERT_ENSURE(popActionWithRepeat(&head, &toWrite, now));
     ASSERT_EQUAL(toWrite, second);
 
     for(int i = 0; i < 5; i++)
@@ -153,8 +153,8 @@ ReturnCode testPopActionWithRepeat(void)
 ReturnCode testParseActionNoDateReset(void)
 {
     struct Action parsed;
-    ASSERT_NOTHROW(parseAction("22:30 reset", &parsed,
-                   (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 1234}));
+    ASSERT_ENSURE(parseAction("22:30 reset", &parsed,
+                  (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 1234}));
     ASSERT(parsed.type == RESET);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{21, 1}, {22, 30}}) == 0);
     ASSERT(parsed.repeated == true);
@@ -165,8 +165,8 @@ ReturnCode testParseActionNoDateReset(void)
 ReturnCode testParseActionNoDateShutdown(void)
 {
     struct Action parsed;
-    ASSERT_NOTHROW(parseAction("  11:30 \tshutdown  35  \v \t", &parsed,
-                   (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
+    ASSERT_ENSURE(parseAction("  11:30 \tshutdown  35  \v \t", &parsed,
+                  (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
     ASSERT(parsed.type == SHUTDOWN);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{22, 1}, {11, 30}}) == 0);
     ASSERT(parsed.args.shutdown.delay == 35);
@@ -178,8 +178,8 @@ ReturnCode testParseActionNoDateShutdown(void)
 ReturnCode testParseActionNoDateNotify(void)
 {
     struct Action parsed;
-    ASSERT_NOTHROW(parseAction("  11:30 \tnotify   hehexd.wav  35  \v \t", &parsed,
-                   (struct YearTimestamp) {{.date = {28, 2}, .time = {12, 30}}, .currentYear = 2011}));
+    ASSERT_ENSURE(parseAction("  11:30 \tnotify   hehexd.wav  35  \v \t", &parsed,
+                  (struct YearTimestamp) {{.date = {28, 2}, .time = {12, 30}}, .currentYear = 2011}));
     ASSERT(parsed.type == NOTIFY);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 3}, {11, 30}}) == 0);
     ASSERT(strcmp(parsed.args.notify.fileName, "hehexd.wav") == 0);
@@ -192,8 +192,8 @@ ReturnCode testParseActionNoDateNotify(void)
 ReturnCode testParseActionNoDateNotifyNoNumber(void)
 {
     struct Action parsed;
-    ASSERT_NOTHROW(parseAction("  11:30 \tnotify   hehexd.wav   \v \t", &parsed,
-                   (struct YearTimestamp) {{.date = {28, 2}, .time = {12, 30}}, .currentYear = 2011}));
+    ASSERT_ENSURE(parseAction("  11:30 \tnotify   hehexd.wav   \v \t", &parsed,
+                  (struct YearTimestamp) {{.date = {28, 2}, .time = {12, 30}}, .currentYear = 2011}));
     ASSERT(parsed.type == NOTIFY);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 3}, {11, 30}}) == 0);
     ASSERT(strcmp(parsed.args.notify.fileName, "hehexd.wav") == 0);
@@ -206,8 +206,8 @@ ReturnCode testParseActionNoDateNotifyNoNumber(void)
 ReturnCode testParseActionNoDateNotifyNoFileName(void)
 {
     struct Action parsed;
-    ASSERT_NOTHROW(parseAction("  11:30 \tnotify    \v \t", &parsed,
-                   (struct YearTimestamp) {{.date = {28, 2}, .time = {12, 30}}, .currentYear = 2011}));
+    ASSERT_ENSURE(parseAction("  11:30 \tnotify    \v \t", &parsed,
+                  (struct YearTimestamp) {{.date = {28, 2}, .time = {12, 30}}, .currentYear = 2011}));
     ASSERT(parsed.type == NOTIFY);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 3}, {11, 30}}) == 0);
     ASSERT(strcmp(parsed.args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
@@ -220,8 +220,8 @@ ReturnCode testParseActionNoDateNotifyNoFileName(void)
 ReturnCode testParseActionNoDateNotifySpacesFileName(void)
 {
     struct Action parsed;
-    ASSERT_NOTHROW(parseAction("  11:30 \tnotify    \v \"Hehe Xd.wav\" \t", &parsed,
-                   (struct YearTimestamp) {{.date = {28, 2}, .time = {12, 30}}, .currentYear = 2011}));
+    ASSERT_ENSURE(parseAction("  11:30 \tnotify    \v \"Hehe Xd.wav\" \t", &parsed,
+                 (struct YearTimestamp) {{.date = {28, 2}, .time = {12, 30}}, .currentYear = 2011}));
     ASSERT(parsed.type == NOTIFY);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 3}, {11, 30}}) == 0);
     ASSERT(strcmp(parsed.args.notify.fileName, "Hehe Xd.wav") == 0);
@@ -234,8 +234,8 @@ ReturnCode testParseActionNoDateNotifySpacesFileName(void)
 ReturnCode testParseActionWithDateReset(void)
 {
     struct Action parsed;
-    ASSERT_NOTHROW(parseAction("12.09 22:30 reset", &parsed,
-                   (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 1234}));
+    ASSERT_ENSURE(parseAction("12.09 22:30 reset", &parsed,
+                  (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 1234}));
     ASSERT(parsed.type == RESET);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{12, 9}, {22, 30}}) == 0);
     ASSERT(parsed.repeated == false);
@@ -250,7 +250,7 @@ ReturnCode testParseActionWithDateShutdown(void)
                  (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2020}));
     ASSERT(parseAction("    29.02  11:30 \tshutdown  35  \v \t", &parsed,
            (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}) == RET_FAILURE);
-    ASSERT_NOTHROW(parseAction("    29.02  11:30 \tshutdown  35  \v \t", &parsed,
+    ASSERT_ENSURE(parseAction("    29.02  11:30 \tshutdown  35  \v \t", &parsed,
                    (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2012}));
     ASSERT(parsed.type == SHUTDOWN);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{29, 2}, {11, 30}}) == 0);
@@ -285,7 +285,7 @@ ReturnCode testParseAction29February(void)
 ReturnCode testParseActionWithDateNotify(void)
 {
     struct Action parsed;
-    ASSERT_NOTHROW(parseAction("   1.1  15:00 \tnotify   hehexd.wav  35  \v \t", &parsed,
+    ASSERT_ENSURE(parseAction("   1.1  15:00 \tnotify   hehexd.wav  35  \v \t", &parsed,
                    (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
     ASSERT(parsed.type == NOTIFY);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 1}, {15, 0}}) == 0);
@@ -298,7 +298,7 @@ ReturnCode testParseActionWithDateNotify(void)
 ReturnCode testParseActionWithDateNotifyNoNumber(void)
 {
     struct Action parsed;
-    ASSERT_NOTHROW(parseAction("   1.1  15:00 \tnotify   hehexd.wav  \v \t", &parsed,
+    ASSERT_ENSURE(parseAction("   1.1  15:00 \tnotify   hehexd.wav  \v \t", &parsed,
                    (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
     ASSERT(parsed.type == NOTIFY);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 1}, {15, 0}}) == 0);
@@ -311,7 +311,7 @@ ReturnCode testParseActionWithDateNotifyNoNumber(void)
 ReturnCode testParseActionWithDateNotifyNoFileName(void)
 {
     struct Action parsed;
-    ASSERT_NOTHROW(parseAction("   1.1  15:00 \tnotify  \v \t", &parsed,
+    ASSERT_ENSURE(parseAction("   1.1  15:00 \tnotify  \v \t", &parsed,
                    (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
     ASSERT(parsed.type == NOTIFY);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 1}, {15, 0}}) == 0);

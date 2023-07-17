@@ -14,7 +14,7 @@ enum LOGGING_LEVEL
 };
 
 extern enum LOGGING_LEVEL logging_level;
-ReturnCode logLine(enum LOGGING_LEVEL level, char *format, ...);
+ReturnCode logLine(enum LOGGING_LEVEL level, char *format, ...) __attribute__((format(printf, 2, 3)));
 
 #define LOG_LINE(level, format, ...) \
     logLine(level, "%s(%s:%d) " format, __func__, __FILE__, __LINE__, ##__VA_ARGS__)

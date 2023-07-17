@@ -27,7 +27,7 @@ static ReturnCode actionShutdown(unsigned delay)
 {
     LOG_LINE(LOG_INFO, "Shutting down the machine.");
     char command[] = "C:\\WINDOWS\\System32\\shutdown /s /t %d";
-    char commandBuffer[sizeof(command) + 4];
+    char commandBuffer[sizeof(command) + 26];
     sprintf(commandBuffer, command, delay);
     if(system(commandBuffer) == 0)
         return RET_SUCCESS;
@@ -137,13 +137,6 @@ ReturnCode addAction(struct ActionQueue **head, struct Action *action, struct Ti
 }
 
 
-ReturnCode removeFirstOfType(struct ActionQueue **head, enum ActionType type)
-{
-    AQ_FIRST(*head).type = type;
-    return RET_SUCCESS;
-}
-
-
 ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite)
 {
     if(*head == NULL)
@@ -192,7 +185,7 @@ static ReturnCode getActionDate(char **string, struct Action *toWrite, struct Ye
             LOG_LINE(LOG_ERROR, "Invalid action date: %u.%u", day, month);
             return RET_ERROR;
         }
-        LOG_LINE(LOG_WARNING, "Skipping action, because 29.02 does not exist this year", day, month);
+        LOG_LINE(LOG_WARNING, "Skipping action, because 29.02 does not exist this year");
         toWrite->timestamp.date = (struct DateOfYear) {day, month};
         return RET_FAILURE;
     }
@@ -270,7 +263,6 @@ static ReturnCode getShutdownActionArgs(char **string, struct Action *toWrite)
 
 static ReturnCode getFileName(char **string, struct SizedString *toWrite)
 {
-    createSizedString(toWrite);
     bool endAtQuote = false, properlyEnded = false, escaped = false;
     if(**string == '\"')
     {
@@ -283,7 +275,7 @@ static ReturnCode getFileName(char **string, struct SizedString *toWrite)
         char analyzed = *((*string)++);
         if(escaped)
         {
-            appendToSizedString(toWrite, analyzed);
+            ENSURE(appendToSizedString(toWrite, analyzed));
             escaped = false;
             continue;
         }
@@ -303,7 +295,7 @@ static ReturnCode getFileName(char **string, struct SizedString *toWrite)
         else if(isWhitespace(analyzed))
             break;
 
-        appendToSizedString(toWrite, analyzed);
+        ENSURE(appendToSizedString(toWrite, analyzed));
     }
 
     if(endAtQuote && !properlyEnded)
@@ -316,7 +308,7 @@ static ReturnCode getFileName(char **string, struct SizedString *toWrite)
         LOG_LINE(LOG_ERROR, "File name too long: %s", toWrite->data);
         return RET_ERROR;
     }
-    appendToSizedString(toWrite, '\0');
+    ENSURE(appendToSizedString(toWrite, '\0'));
     return RET_SUCCESS;
 }
 
@@ -324,7 +316,8 @@ static ReturnCode getFileName(char **string, struct SizedString *toWrite)
 static ReturnCode getNotifyActionArgs(char **string, struct Action *toWrite)
 {
     struct SizedString fileName;
-    ENSURE(getFileName(string, &fileName));
+    ENSURE(createSizedString(&fileName));
+    ENSURE_CALLBACK(getFileName(string, &fileName), freeSizedString(fileName));
     if(fileName.data[0] == '\0')
     {
         strcpy(toWrite->args.notify.fileName, DEFAULT_NOTIFY_SOUND);
@@ -332,6 +325,7 @@ static ReturnCode getNotifyActionArgs(char **string, struct Action *toWrite)
         return RET_SUCCESS;
     }
     strcpy(toWrite->args.notify.fileName, fileName.data);
+    freeSizedString(fileName);
 
     unsigned repeats;
     int size;
@@ -415,14 +409,14 @@ ReturnCode popActionWithRepeat(struct ActionQueue **head, struct Action *toWrite
 ReturnCode skipUntilTimestamp(struct ActionQueue **head, struct Timestamp time, struct YearTimestamp now)
 {
     while(compareTimestamp(AQ_FIRST(*head).timestamp, time, now.timestamp) <= 0)
-        popActionWithRepeat(head, NULL, now);
+        ENSURE(popActionWithRepeat(head, NULL, now));
     return RET_SUCCESS;
 }
 
 
-ReturnCode destroyActionQueue(struct ActionQueue **head)
+void destroyActionQueue(struct ActionQueue **head)
 {
     while(*head != NULL)
-        ENSURE(popAction(head, NULL));
-    return RET_SUCCESS;
+        if(popAction(head, NULL) != RET_SUCCESS)
+            LOG_LINE(LOG_ERROR, "popAction failed - should be impossible to reach");
 }

@@ -24,10 +24,10 @@ static ReturnCode outputLogMessage(char *message, unsigned int length)
         return RET_ERROR;
 
     DWORD bytesWritten;
-    WriteFile(logFile, message, length, &bytesWritten, NULL);
+    WINBOOL written = WriteFile(logFile, message, length, &bytesWritten, NULL);
     CloseHandle(logFile);
 
-    if(bytesWritten != length)
+    if(bytesWritten != length || !written)
         return RET_ERROR;
     return RET_SUCCESS;
 }
@@ -64,7 +64,7 @@ static ReturnCode writeLog(enum LOGGING_LEVEL level, char *format, va_list args)
     if(!message)
         return RET_ERROR;
 
-    ENSURE(outputLogMessage(message, messageLength));
+    ENSURE_CALLBACK(outputLogMessage(message, messageLength), free(message));
     free(message);
 
     return RET_SUCCESS;
@@ -79,11 +79,14 @@ ReturnCode logLine(enum LOGGING_LEVEL level, char *format, ...)
     if(!mutex)
         mutex = CreateMutex(NULL, FALSE, LOG_MUTEX);
     if(WaitForSingleObject(mutex, 5000) != WAIT_OBJECT_0)
+    {
+        fprintf(stderr, "Failed to lock mutex for log writing\n");
         return RET_ERROR;
+    }
 
     va_list args;
     va_start(args, format);
-    ENSURE(writeLog(level, format, args));
+    ENSURE_CALLBACK(writeLog(level, format, args), ReleaseMutex(mutex); fprintf(stderr, "Failed to write log\n"));
     va_end(args);
 
     ReleaseMutex(mutex);

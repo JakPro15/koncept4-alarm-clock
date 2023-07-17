@@ -76,8 +76,8 @@ static ReturnCode initializeMapView(struct SharedMemoryFile *sharedMemory)
 ReturnCode createSharedMemory(struct SharedMemoryFile *sharedMemory)
 {
     ENSURE(initializeMutex(&sharedMemory->mutex));
-    ENSURE(initializeMapFile(sharedMemory));
-    ENSURE(initializeMapView(sharedMemory));
+    ENSURE_CALLBACK(initializeMapFile(sharedMemory), CloseHandle(sharedMemory->mutex));
+    ENSURE_CALLBACK(initializeMapView(sharedMemory), CloseHandle(sharedMemory->mapFile); CloseHandle(sharedMemory->mutex));
     sharedMemory->shared->queueFirst = NO_NODE;
     return RET_SUCCESS;
 }
@@ -86,8 +86,8 @@ ReturnCode createSharedMemory(struct SharedMemoryFile *sharedMemory)
 ReturnCode openSharedMemory(struct SharedMemoryFile *sharedMemory)
 {
     ENSURE(initializeMutex(&sharedMemory->mutex));
-    ENSURE(openMapFile(sharedMemory));
-    ENSURE(initializeMapView(sharedMemory));
+    ENSURE_CALLBACK(openMapFile(sharedMemory), CloseHandle(sharedMemory->mutex));
+    ENSURE_CALLBACK(initializeMapView(sharedMemory), CloseHandle(sharedMemory->mapFile); CloseHandle(sharedMemory->mutex));
     return RET_SUCCESS;
 }
 

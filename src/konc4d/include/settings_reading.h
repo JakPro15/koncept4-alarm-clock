@@ -16,12 +16,12 @@ struct BufferedFile
 };
 
 
-ReturnCode openBufferedFile(struct BufferedFile *toWrite, char *fileName);
+ReturnCode openBufferedFile(struct BufferedFile *toWrite, char *fileName) NO_IGNORE;
 ReturnCode closeBufferedFile(struct BufferedFile *file);
-ReturnCode getCharacter(struct BufferedFile *file, char *toWrite);
-ReturnCode getLine(struct BufferedFile *file, struct SizedString *toWrite);
-ReturnCode getNextAction(struct BufferedFile *settingsFile, struct Action *toWrite, struct SizedString *buffer, struct YearTimestamp now);
-ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, struct YearTimestamp now);
+ReturnCode getCharacter(struct BufferedFile *file, char *toWrite) NO_IGNORE;
+ReturnCode getLine(struct BufferedFile *file, struct SizedString *toWrite) NO_IGNORE;
+ReturnCode getNextAction(struct BufferedFile *settingsFile, struct Action *toWrite, struct SizedString *buffer, struct YearTimestamp now) NO_IGNORE;
+ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, struct YearTimestamp now) NO_IGNORE;
 
 inline ReturnCode loadActions(struct ActionQueue **toWrite)
 {

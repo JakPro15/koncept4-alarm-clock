@@ -4,10 +4,6 @@
 #include "testing.h"
 
 
-void stringvector(void);
-
-#define KONC4_TESTS { \
-    stringvector(); \
-}
+#define KONC4_TESTS {}
 
 #endif
