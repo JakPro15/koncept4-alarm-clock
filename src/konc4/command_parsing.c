@@ -10,20 +10,21 @@
 ReturnCode parseCommand(char *command)
 {
     LOG_LINE(LOG_DEBUG, "Parsing command: %s", command);
-    char *token = strtok(command, " \t");
+    char *saveptr;
+    char *token = strtok_r(command, " \t", &saveptr);
     if(stricmp(token, "reset") == 0)
-        ENSURE(ensuredSendMessage("RESET"));
+        RETHROW(ensuredSendMessage("RESET"));
     else if(stricmp(token, "stop") == 0)
-        ENSURE(ensuredSendMessage("STOP"));
+        RETHROW(ensuredSendMessage("STOP"));
     else if(stricmp(token, "start") == 0)
-        ENSURE(startKonc4d());
+        RETHROW(startKonc4d());
     else
     {
         fprintf(stderr, "Unrecognized command\n");
         LOG_LINE(LOG_WARNING, "Unrecognized command received: %s", command);
         return RET_FAILURE;
     }
-    if(strtok(NULL, " \t") != NULL)
+    if(strtok_r(NULL, " \t", &saveptr) != NULL)
     {
         fprintf(stderr, "Extra tokens in command detected\n");
         LOG_LINE(LOG_WARNING, "Extra tokens in command detected");
@@ -32,13 +33,18 @@ ReturnCode parseCommand(char *command)
 }
 
 
-ReturnCode parseCommandLine(char *commandLine)
+enum CallbackReturn parseCommandLine(char *commandLine)
 {
-    char *command = strtok(commandLine, ";\n");
+    if(stricmp(commandLine, "exit\n") == 0 ||
+       stricmp(commandLine, "quit\n") == 0)
+        return END_SPINNING_SUCCESS;
+    char *saveptr;
+    char *command = strtok_r(commandLine, ";\n", &saveptr);
     while(command != NULL)
     {
-        RETHROW(parseCommand(command));
-        command = strtok(NULL, ";\n");
+        if(parseCommand(command) == RET_ERROR)
+            return END_SPINNING_ERROR;
+        command = strtok_r(NULL, ";\n", &saveptr);
     }
-    return RET_SUCCESS;
+    return KEEP_SPINNING;
 }

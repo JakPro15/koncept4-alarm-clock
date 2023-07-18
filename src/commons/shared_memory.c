@@ -2,9 +2,31 @@
 #include "logging.h"
 
 
+ReturnCode isKonc4dOn(void)
+{
+    HANDLE mutex = OpenMutex(SYNCHRONIZE, FALSE, SHMEM_MUTEX_NAME);
+    if(mutex == NULL)
+    {
+        if(GetLastError() == ERROR_FILE_NOT_FOUND)
+        {
+            LOG_LINE(LOG_DEBUG, "konc4d is off");
+            return RET_FAILURE;
+        }
+        else
+        {
+            LOG_LINE(LOG_ERROR, "Checking if konc4d is on failed (OpenMutex failed)");
+            return RET_ERROR;
+        }
+    }
+    LOG_LINE(LOG_DEBUG, "konc4d is on");
+    CloseHandle(mutex);
+    return RET_SUCCESS;
+}
+
+
 static ReturnCode initializeMutex(HANDLE *mutex)
 {
-    *mutex = CreateMutex(NULL, FALSE, MUTEX_NAME);
+    *mutex = CreateMutex(NULL, FALSE, SHMEM_MUTEX_NAME);
     if(*mutex == NULL)
     {
         LOG_LINE(LOG_ERROR, "Could not create mutex");

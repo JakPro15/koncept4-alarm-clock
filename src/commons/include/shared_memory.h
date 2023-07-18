@@ -7,7 +7,7 @@
 
 
 #define SHMEM_FILE_NAME "konc4_shared_memory"
-#define MUTEX_NAME "konc4_shared_memory_mutex"
+#define SHMEM_MUTEX_NAME "konc4_shared_memory_mutex"
 #define SHMEM_QUEUE_LENGTH 8
 #define SHMEM_MESSAGE_LENGTH 12
 #define NO_NODE -1
@@ -27,6 +27,7 @@ struct SharedMemory
 };
 
 
+ReturnCode isKonc4dOn(void);
 ReturnCode createSharedMemory(struct SharedMemoryFile *sharedMemory) NO_IGNORE;
 ReturnCode openSharedMemory(struct SharedMemoryFile *sharedMemory) NO_IGNORE;
 ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message) NO_IGNORE;

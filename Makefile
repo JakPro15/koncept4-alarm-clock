@@ -64,4 +64,4 @@ test_konc4: all
 test: test_commons test_konc4d test_konc4
 
 active: all
-	powershell.exe rm -Recurse -Force active; mkdir $(ACTIVE_DIR); mv $(KONC4D_DIR)/output/konc4d.exe active/; cp -Recurse asset/ active/
+	powershell.exe rm -Recurse -Force active; mkdir $(ACTIVE_DIR); cp $(KONC4D_DIR)/output/konc4d.exe active/; cp $(KONC4_DIR)/output/konc4.exe active/; cp -Recurse asset/ active/

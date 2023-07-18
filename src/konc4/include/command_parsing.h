@@ -2,8 +2,9 @@
 #define COMMAND_PARSING_H
 
 #include "error_handling.h"
+#include "input_loop.h"
 
 
-ReturnCode parseCommandLine(char *commandLine) NO_IGNORE;
+enum CallbackReturn parseCommandLine(char *commandLine) NO_IGNORE;
 
 #endif
