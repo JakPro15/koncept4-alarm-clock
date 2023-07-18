@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
         RETHROW_CALLBACK(receivedCode = receiveMessage(sharedMemory, received), closeSharedMemory(sharedMemory));
         while(receivedCode == RET_FAILURE)
         {
-            Sleep(500);
+            Sleep(50);
             RETHROW_CALLBACK(receivedCode = receiveMessage(sharedMemory, received), closeSharedMemory(sharedMemory));
         }
         printf("%s\n", received);

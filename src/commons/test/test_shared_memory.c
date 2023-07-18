@@ -7,8 +7,8 @@
 ReturnCode testSingleMessage(void)
 {
     FILE *receivedStream = popen("output\\receiver.exe 1", "r");
-    Sleep(100);
     ASSERT_MESSAGE(receivedStream != NULL, "Failed to launch receiver.exe");
+    Sleep(100);
     ASSERT(system("output\\sender.exe Message") == 0);
     char received[SHMEM_MESSAGE_LENGTH];
     fgets(received, SHMEM_MESSAGE_LENGTH, receivedStream);
