@@ -38,7 +38,7 @@ TESTING_SRC=$(wildcard $(TESTING_DIR)/*.c)
 TESTING_OBJ_ABS=$(TESTING_SRC:$(TESTING_DIR)/%.c=$(TESTING_DIR)/output/%.o)
 export TESTING_OBJ=$(TESTING_OBJ_ABS:$(SRC_DIR)/%=../%)
 
-export GLOBAL_CFLAGS=-g -Wall -Wextra -Wpedantic -Werror -fanalyzer -Wno-analyzer-use-of-uninitialized-value
+export GLOBAL_CFLAGS=-O3 -Wall -Wextra -Wpedantic -Werror -fanalyzer -Wno-analyzer-use-of-uninitialized-value
 
 all:
 	@$(MAKE) -C $(COMMONS_DIR)
