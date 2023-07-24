@@ -35,6 +35,11 @@ void doTesting(char *fileName, unsigned numberOfFunctions, ...);
     printf(COLOR_RED "%s(%s:%d) Assertion failed\n" COLOR_RESET, __func__, __FILE__, __LINE__); \
     return RET_ERROR; \
 }
+#define ASSERT_CALLBACK(expression, callback) if(!(expression)) { \
+    printf(COLOR_RED "%s(%s:%d) Assertion failed\n" COLOR_RESET, __func__, __FILE__, __LINE__); \
+    callback; \
+    return RET_ERROR; \
+}
 #define ASSERT_MESSAGE(expression, message) if(!(expression)) { \
     printf(COLOR_RED "%s(%s:%d) Assertion failed: %s\n" COLOR_RESET, __func__, __FILE__, __LINE__, (message)); \
     return RET_ERROR; \

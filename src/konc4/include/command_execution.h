@@ -4,6 +4,6 @@
 #include "error_handling.h"
 
 
-ReturnCode ensuredSendMessage(char *message) NO_IGNORE;
+ReturnCode ensuredSendMessage(char *message, ...) NO_IGNORE;
 
 #endif

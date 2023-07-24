@@ -19,6 +19,18 @@ ReturnCode parseCommand(char *command)
         RETHROW(ensuredSendMessage("STOP"));
     else if(stricmp(token, "start") == 0)
         RETHROW(startKonc4d());
+    else if(stricmp(token, "skip") == 0)
+    {
+        char *minutesToSkipStr = strtok_r(NULL, " \t", &saveptr);
+        unsigned minutesToSkip = strtoul(minutesToSkipStr, NULL, 0);
+        if(minutesToSkip == 0)
+        {
+            fprintf(stderr, "skip command expects a positive integer argument\n");
+            LOG_LINE(LOG_WARNING, "skip command received invalid argument: %s", minutesToSkipStr);
+            return RET_FAILURE;
+        }
+        RETHROW(ensuredSendMessage("SKIP", minutesToSkip));
+    }
     else
     {
         fprintf(stderr, "Unrecognized command\n");

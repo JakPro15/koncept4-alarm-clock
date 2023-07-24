@@ -1,6 +1,5 @@
 .vscode/
-*.o
-*.d
+src/*/output/*
 *.exe
 launch.ps1
 old_src/

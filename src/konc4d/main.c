@@ -16,7 +16,6 @@ static bool message_exit;
 
 ReturnCode processMessage(struct ActionQueue **actions, char *message)
 {
-    (void) actions;
     if(strcmp(message, "RESET") == 0)
     {
         LOG_LINE(LOG_INFO, "RESET message received, resetting");
@@ -27,6 +26,15 @@ ReturnCode processMessage(struct ActionQueue **actions, char *message)
         LOG_LINE(LOG_INFO, "STOP message received, stopping");
         message_exit = true;
         return RET_ERROR;
+    }
+    else if(strcmp(message, "SKIP") == 0)
+    {
+        unsigned minutesToSkip = *((unsigned*) &message[SHMEM_MESSAGE_LENGTH - sizeof(unsigned)]);
+        struct YearTimestamp now = getCurrentTimestamp();
+        struct YearTimestamp until = addMinutes(now, minutesToSkip);
+        LOG_LINE(LOG_INFO, "SKIP message received, skipping by %u minutes", minutesToSkip);
+        ENSURE(skipUntilTimestamp(actions, until.timestamp, now));
+        return RET_SUCCESS;
     }
     else
     {

@@ -13,17 +13,20 @@ TEST_EXE=output/test_konc4.exe
 
 all: $(EXE)
 
+clean:
+	$(call remove,$(OBJ) $(TEST_OBJ) $(DEPENDS) $(TEST_DEPENDS) $(EXE) $(TEST_EXE))
+
 test: $(TEST_EXE)
 	$(TEST_EXE)
 
-$(EXE): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $(OBJ) $(COMMONS_OBJ) $(LDFLAGS)
+output/input_looper.exe: output/input_looper.o
+	$(CC) $(CFLAGS) -o $@ $^ $(filter-out output/main.o,$(OBJ)) $(COMMONS_OBJ) $(LDFLAGS)
 
-$(TEST_EXE): $(OBJ) $(TEST_OBJ)
-	$(CC) $(CFLAGS) -o $@ $(filter-out output/main.o,$(OBJ)) $(TEST_OBJ) $(COMMONS_OBJ) $(TESTING_OBJ) $(LDFLAGS)
+$(EXE): $(OBJ) $(COMMONS_OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-clean:
-	$(call remove,$(OBJ) $(DEPENDS) $(TEST_OBJ) $(TEST_DEPENDS))
+$(TEST_EXE): $(OBJ) $(TEST_OBJ) $(COMMONS_OBJ) $(TESTING_OBJ) ../commons/output/receiver.exe output/input_looper.exe
+	$(CC) $(CFLAGS) -o $@ $(filter-out output/main.o,$(OBJ)) $(filter-out output/input_looper.o,$(TEST_OBJ)) $(COMMONS_OBJ) $(TESTING_OBJ) $(LDFLAGS)
 
 output/%.d: %.c
 	$(call make_depend,$@)

@@ -3,7 +3,13 @@
 
 #include "testing.h"
 
+#define LOOPER_OUT "output\\looper_out.txt"
 
-#define KONC4_TESTS {}
+
+void input_loop(void);
+
+#define KONC4_TESTS { \
+    input_loop(); \
+}
 
 #endif
