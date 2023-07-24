@@ -6,6 +6,7 @@
 
 ReturnCode testSingleMessage(void)
 {
+    system("powershell.exe rm konc4log.txt");
     FILE *receivedStream = popen("output\\receiver.exe 1", "r");
     ASSERT_MESSAGE(receivedStream != NULL, "Failed to launch receiver.exe");
     Sleep(100);

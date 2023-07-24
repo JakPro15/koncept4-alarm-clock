@@ -30,7 +30,7 @@ struct SharedMemory
 ReturnCode isKonc4dOn(void);
 ReturnCode createSharedMemory(struct SharedMemoryFile *sharedMemory) NO_IGNORE;
 ReturnCode openSharedMemory(struct SharedMemoryFile *sharedMemory) NO_IGNORE;
-ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message) NO_IGNORE;
+ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message, unsigned length) NO_IGNORE;
 ReturnCode receiveMessage(struct SharedMemoryFile sharedMemory, char *buffer) NO_IGNORE;
 void closeSharedMemory(struct SharedMemoryFile sharedMemory);
 

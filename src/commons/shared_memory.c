@@ -2,6 +2,25 @@
 #include "logging.h"
 
 
+#define PRINT_INT(x) LOG_LINE(LOG_DEBUG, "%s = %d", #x, x)
+#define PRINT_STR(x) LOG_LINE(LOG_DEBUG, "%s = %s", #x, x)
+
+static void printSharedMemory(struct SharedMemory *sharedMemory)
+{
+    PRINT_INT(sharedMemory->queueFirst);
+    PRINT_INT(sharedMemory->queueLast);
+    PRINT_STR(sharedMemory->messageQueue[0]);
+    PRINT_STR(sharedMemory->messageQueue[1]);
+    PRINT_STR(sharedMemory->messageQueue[2]);
+    PRINT_STR(sharedMemory->messageQueue[3]);
+    PRINT_STR(sharedMemory->messageQueue[4]);
+    PRINT_STR(sharedMemory->messageQueue[5]);
+    PRINT_STR(sharedMemory->messageQueue[6]);
+    PRINT_STR(sharedMemory->messageQueue[7]);
+    LOG_LINE(LOG_DEBUG, "");
+}
+
+
 ReturnCode isKonc4dOn(void)
 {
     HANDLE mutex = OpenMutex(SYNCHRONIZE, FALSE, SHMEM_MUTEX_NAME);
@@ -120,6 +139,7 @@ ReturnCode receiveMessage(struct SharedMemoryFile sharedMemory, char *buffer)
     int received = sharedMemory.shared->queueFirst;
     if(received == NO_NODE)
     {
+        LOG_LINE(LOG_ERROR, "Recv failed");
         ReleaseMutex(sharedMemory.mutex);
         return RET_FAILURE;
     }
@@ -135,6 +155,7 @@ ReturnCode receiveMessage(struct SharedMemoryFile sharedMemory, char *buffer)
     }
 
     LOG_LINE(LOG_DEBUG, "Received message: %s", buffer);
+    printSharedMemory(sharedMemory.shared);
     ReleaseMutex(sharedMemory.mutex);
     return RET_SUCCESS;
 }
@@ -158,10 +179,9 @@ static int getNextFreeIndex(struct SharedMemory *shared)
 }
 
 
-ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message)
+ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message, unsigned length)
 {
-    unsigned messageLength = strlen(message) + 1;
-    if(messageLength > SHMEM_MESSAGE_LENGTH)
+    if(length > SHMEM_MESSAGE_LENGTH)
     {
         LOG_LINE(LOG_ERROR, "Message to be sent is too long");
         return RET_ERROR;
@@ -171,14 +191,16 @@ ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message)
     int next = getNextFreeIndex(sharedMemory.shared);
     if(next == NO_NODE)
     {
+        LOG_LINE(LOG_ERROR, "Send failed");
         ReleaseMutex(sharedMemory.mutex);
         return RET_FAILURE;
     }
 
     sharedMemory.shared->queueLast = next;
-    memcpy(sharedMemory.shared->messageQueue[next], message, messageLength);
+    memcpy(sharedMemory.shared->messageQueue[next], message, length);
 
     LOG_LINE(LOG_DEBUG, "Sent message: %s", message);
+    printSharedMemory(sharedMemory.shared);
     ReleaseMutex(sharedMemory.mutex);
     return RET_SUCCESS;
 }
