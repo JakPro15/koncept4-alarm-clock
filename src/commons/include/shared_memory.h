@@ -10,6 +10,7 @@
 #define SHMEM_MUTEX_NAME "konc4_shared_memory_mutex"
 #define SHMEM_QUEUE_LENGTH 8
 #define SHMEM_MESSAGE_LENGTH 12
+#define SHMEM_EMBEDDED_UNSIGNED(message) *((unsigned*) &message[SHMEM_MESSAGE_LENGTH - sizeof(unsigned)])
 #define NO_NODE -1
 
 

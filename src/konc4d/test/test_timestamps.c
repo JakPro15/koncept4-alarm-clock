@@ -6,21 +6,21 @@
 #define TSP(d, mon, h, m) (struct Timestamp) {{(d), (mon)}, {(h), (m)}}
 
 #define YDATE(d, m, y) (struct YearTimestamp) {{{(d), (m)}, {0, 0}}, (y)}
-#define DATE_EQUAL(date1, d, m) { \
+#define DATE_EQUAL(date1, d, m) do { \
     struct DateOfYear firstDate = (date1); \
     ASSERT(firstDate.day == (unsigned) (d)); \
-    ASSERT(firstDate.month == (unsigned) (m)) \
-}
+    ASSERT(firstDate.month == (unsigned) (m)); \
+} while(0)
 
 #define YTS(d, mon, h, m, y) (struct YearTimestamp) {{{(d), (mon)}, {(h), (m)}}, (y)}
-#define YTS_EQUAL(yeartimestamp1, d, mon, h, m, y) { \
+#define YTS_EQUAL(yeartimestamp1, d, mon, h, m, y) do { \
     struct YearTimestamp yts = (yeartimestamp1); \
     ASSERT(yts.timestamp.date.day == (unsigned) (d)); \
     ASSERT(yts.timestamp.date.month == (unsigned) (mon)); \
     ASSERT(yts.timestamp.time.hour == (unsigned) (h)); \
     ASSERT(yts.timestamp.time.minute == (unsigned) (m)); \
     ASSERT(yts.currentYear == (unsigned) (y)); \
-}
+} while(0)
 
 
 ReturnCode testBasicCompareTime(void)

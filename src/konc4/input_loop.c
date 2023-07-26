@@ -10,7 +10,7 @@ ReturnCode parseInput(unsigned bufferSize, const char *prompt, enum CallbackRetu
     char answer[bufferSize], passed[bufferSize];
     bool tooLong = false;
     printf("%s", prompt);
-    while(fgets(answer, bufferSize, stdin) != NULL)
+    while(fgets(answer, sizeof(answer), stdin) != NULL)
     {
         if(tooLong)
         {

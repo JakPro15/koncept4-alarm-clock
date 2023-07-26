@@ -7,9 +7,7 @@
 int main(int argc, char *argv[])
 {
     if(!SetPriorityClass(GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS))
-    {
-        fprintf(stderr, "SetPriorityClass failed\n");
-    }
+        LOG_LINE(LOG_ERROR, "SetPriorityClass failed\n");
 
     logging_level = LOG_DEBUG;
     if(argc < 1)
@@ -32,7 +30,16 @@ int main(int argc, char *argv[])
         }
         if(j >= 40)
             return 1;
-        printf("%s\n", received);
+
+        if(strcmp(received, "SKIP") == 0)
+            printf("%s %u\n", received, SHMEM_EMBEDDED_UNSIGNED(received));
+        else
+            printf("%s\n", received);
+
+        if(strcmp(received, "SKIP") == 0)
+            LOG_LINE(LOG_DEBUG, "%s %u\n", received, SHMEM_EMBEDDED_UNSIGNED(received));
+        else
+            LOG_LINE(LOG_DEBUG, "%s\n", received);
     }
     closeSharedMemory(sharedMemory);
 }

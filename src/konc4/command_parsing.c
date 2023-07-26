@@ -14,9 +14,9 @@ ReturnCode parseCommand(char *command)
     char *saveptr;
     char *token = strtok_r(command, " \t", &saveptr);
     if(stricmp(token, "reset") == 0)
-        RETHROW(ensuredSendMessage("RESET"));
+        RETHROW(fullSendMessage("RESET"));
     else if(stricmp(token, "stop") == 0)
-        RETHROW(ensuredSendMessage("STOP"));
+        RETHROW(fullSendMessage("STOP"));
     else if(stricmp(token, "start") == 0)
         RETHROW(startKonc4d());
     else if(stricmp(token, "skip") == 0)
@@ -29,7 +29,7 @@ ReturnCode parseCommand(char *command)
             LOG_LINE(LOG_WARNING, "skip command received invalid argument: %s", minutesToSkipStr);
             return RET_FAILURE;
         }
-        RETHROW(ensuredSendMessage("SKIP", minutesToSkip));
+        RETHROW(fullSendMessage("SKIP", minutesToSkip));
     }
     else
     {

@@ -7,9 +7,11 @@
 
 
 void input_loop(void);
+void command_execution(void);
 
 #define KONC4_TESTS { \
     input_loop(); \
+    command_execution(); \
 }
 
 #endif

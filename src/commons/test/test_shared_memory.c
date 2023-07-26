@@ -51,7 +51,7 @@ ReturnCode testOverQueueCapacity(void)
     for(int i = 0; i < 20; i++)
     {
         sprintf(sent, "%d\n", i);
-        fgets(received, SHMEM_MESSAGE_LENGTH, receivedStream);
+        ASSERT(fgets(received, SHMEM_MESSAGE_LENGTH, receivedStream) != NULL);
         ASSERT(strcmp(received, sent) == 0);
     }
     ASSERT(pclose(receivedStream) == 0);

@@ -29,7 +29,7 @@ ReturnCode processMessage(struct ActionQueue **actions, char *message)
     }
     else if(strcmp(message, "SKIP") == 0)
     {
-        unsigned minutesToSkip = *((unsigned*) &message[SHMEM_MESSAGE_LENGTH - sizeof(unsigned)]);
+        unsigned minutesToSkip = SHMEM_EMBEDDED_UNSIGNED(message);
         struct YearTimestamp now = getCurrentTimestamp();
         struct YearTimestamp until = addMinutes(now, minutesToSkip);
         LOG_LINE(LOG_INFO, "SKIP message received, skipping by %u minutes", minutesToSkip);
