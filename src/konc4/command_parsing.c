@@ -29,6 +29,12 @@ ReturnCode parseCommand(char *command)
             LOG_LINE(LOG_WARNING, "skip command received invalid argument: %s", minutesToSkipStr);
             return RET_FAILURE;
         }
+        if(minutesToSkip > 7200)
+        {
+            fprintf(stderr, "skipping more than five days at once is not supported\n");
+            LOG_LINE(LOG_WARNING, "skip command received invalid argument: %s", minutesToSkipStr);
+            return RET_FAILURE;
+        }
         RETHROW(fullSendMessage("SKIP", minutesToSkip));
     }
     else
@@ -51,13 +57,11 @@ enum CallbackReturn parseCommandLine(char *commandLine)
     if(stricmp(commandLine, "exit\n") == 0 ||
        stricmp(commandLine, "quit\n") == 0)
         return END_SPINNING_SUCCESS;
-    char *saveptr;
-    char *command = strtok_r(commandLine, ";\n", &saveptr);
-    while(command != NULL)
+    char *saveptr, *command;
+    while(command = strtok_r(commandLine, ";\n", &saveptr), command != NULL)
     {
         if(parseCommand(command) == RET_ERROR)
             return END_SPINNING_ERROR;
-        command = strtok_r(NULL, ";\n", &saveptr);
     }
     return KEEP_SPINNING;
 }

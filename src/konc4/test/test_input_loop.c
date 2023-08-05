@@ -2,32 +2,15 @@
 #include "error_handling.h"
 #include "string.h"
 #include "test_konc4.h"
+#include "testing_file_check.h"
 
 #include <stdlib.h>
 
 
-ReturnCode checkLooperOutput(char *proper)
+ReturnCode checkLooperOutput(const char *proper)
 {
-    FILE *looperOutFile = fopen(LOOPER_OUT, "rb");
-    ASSERT_CALLBACK(fseek(looperOutFile, 0, SEEK_END) == 0, fclose(looperOutFile));
-    long looperOutSize = ftell(looperOutFile);
-    rewind(looperOutFile);
-
-    long properSize = strlen(proper);
-    if(looperOutSize != properSize)
-    {
-        fclose(looperOutFile);
-        return RET_ERROR;
-    }
-
-    char looperOut[looperOutSize];
-    ASSERT_CALLBACK(fread(looperOut, looperOutSize, 1, looperOutFile) == 1, fclose(looperOutFile));
-    fclose(looperOutFile);
-
-    if(strncmp(proper, looperOut, properSize) == 0)
-        return RET_SUCCESS;
-    else
-        return RET_ERROR;
+    ASSERT(checkFileContent(LOOPER_OUT, proper) == RET_SUCCESS);
+    return RET_SUCCESS;
 }
 
 

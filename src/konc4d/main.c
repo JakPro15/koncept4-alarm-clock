@@ -8,7 +8,7 @@
 #if INITIAL_DELAY_MINUTES < 1
     #error("INITIAL_DELAY_MINUTES should be at least 1")
 #endif
-#define WAIT_CHECK_PERIOD_SECONDS 1
+#define WAIT_CHECK_PERIOD_SECONDS 30
 
 
 static bool message_exit;

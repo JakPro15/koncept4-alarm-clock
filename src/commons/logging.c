@@ -11,7 +11,7 @@
 
 enum LOGGING_LEVEL logging_level = LOG_INFO;
 static HANDLE mutex;
-static const char *level_strings[5] = {"DEB", "INF", "WAR", "ERR", "SIL"};
+static const char *level_strings[6] = {"TRC", "DEB", "INF", "WAR", "ERR", "SIL"};
 
 
 static ReturnCode outputLogMessage(char *message, unsigned int length)

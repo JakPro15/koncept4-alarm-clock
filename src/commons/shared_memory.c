@@ -2,8 +2,8 @@
 #include "logging.h"
 
 
-#define PRINT_INT(x) LOG_LINE(LOG_DEBUG, "%s = %d", #x, x)
-#define PRINT_STR(x) LOG_LINE(LOG_DEBUG, "%s = %s", #x, x)
+#define PRINT_INT(x) LOG_LINE(LOG_TRACE, "%s = %d", #x, x)
+#define PRINT_STR(x) LOG_LINE(LOG_TRACE, "%s = %s", #x, x)
 
 static void printSharedMemory(struct SharedMemory *sharedMemory)
 {
@@ -17,7 +17,7 @@ static void printSharedMemory(struct SharedMemory *sharedMemory)
     PRINT_STR(sharedMemory->messageQueue[5]);
     PRINT_STR(sharedMemory->messageQueue[6]);
     PRINT_STR(sharedMemory->messageQueue[7]);
-    LOG_LINE(LOG_DEBUG, "");
+    LOG_LINE(LOG_TRACE, "");
 }
 
 
@@ -139,7 +139,7 @@ ReturnCode receiveMessage(struct SharedMemoryFile sharedMemory, char *buffer)
     int received = sharedMemory.shared->queueFirst;
     if(received == NO_NODE)
     {
-        LOG_LINE(LOG_ERROR, "Recv failed");
+        LOG_LINE(LOG_TRACE, "Recv failed");
         ReleaseMutex(sharedMemory.mutex);
         return RET_FAILURE;
     }
