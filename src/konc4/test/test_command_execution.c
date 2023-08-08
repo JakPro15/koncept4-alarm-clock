@@ -54,7 +54,6 @@ ReturnCode testEmbedArgsInMessageSkip(void)
 
 ReturnCode testEnsuredSendMessage(void)
 {
-    system("powershell.exe rm konc4log.txt");
     FILE *receivedStream = popen("..\\commons\\output\\receiver.exe 20", "r");
     ASSERT_MESSAGE(receivedStream != NULL, "Failed to launch receiver.exe");
     Sleep(100);

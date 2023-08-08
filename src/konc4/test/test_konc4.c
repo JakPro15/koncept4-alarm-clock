@@ -6,7 +6,6 @@
 
 int main(void)
 {
-    logging_level = LOG_SILENT;
-    KONC4_TESTS;
+    KONC4_TESTS
     system("powershell.exe rm " LOOPER_OUT);
 }

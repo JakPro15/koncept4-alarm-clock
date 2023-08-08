@@ -2,8 +2,4 @@
 #include "logging.h"
 
 
-int main(void)
-{
-    logging_level = LOG_SILENT;
-    COMMONS_TESTS;
-}
+int main(void) COMMONS_TESTS
