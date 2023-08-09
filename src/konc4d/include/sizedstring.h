@@ -16,18 +16,9 @@ struct SizedString
 
 
 ReturnCode createSizedString(struct SizedString *string) NO_IGNORE;
+ReturnCode increaseSizedStringCapacity(struct SizedString *string) NO_IGNORE;
 ReturnCode appendToSizedString(struct SizedString *string, char character) NO_IGNORE;
 void freeSizedString(struct SizedString string);
 
-
-inline static bool isWhitespace(char character)
-{
-    return (character == ' ' ||
-            character == '\r' ||
-            character == '\n' ||
-            character == '\t' ||
-            character == '\v' ||
-            character == '\f');
-}
 
 #endif

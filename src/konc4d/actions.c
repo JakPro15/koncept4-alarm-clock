@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 #include "actions.h"
 #include "logging.h"
@@ -155,7 +156,7 @@ ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite)
 
 static void skipWhitespace(char **string)
 {
-    while(isWhitespace(**string))
+    while(isspace(**string))
         ++(*string);
 }
 
@@ -292,7 +293,7 @@ static ReturnCode getFileName(char **string, struct SizedString *toWrite)
                 break;
             }
         }
-        else if(isWhitespace(analyzed))
+        else if(isspace(analyzed))
             break;
 
         ENSURE(appendToSizedString(toWrite, analyzed));

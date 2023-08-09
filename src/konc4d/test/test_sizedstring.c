@@ -20,6 +20,22 @@ ReturnCode testCreateSizedString(void)
 }
 
 
+ReturnCode testIncreaseSizedStringCapacity(void)
+{
+    struct SizedString string;
+    ASSERT_NOTHROW(createSizedString(&string));
+    ASSERT(string.capacity == STARTING_CAPACITY);
+    ASSERT_NOTHROW(increaseSizedStringCapacity(&string));
+    ASSERT(string.capacity == STARTING_CAPACITY + CAPACITY_INCREMENT);
+    ASSERT_NOTHROW(increaseSizedStringCapacity(&string));
+    ASSERT(string.capacity == STARTING_CAPACITY + CAPACITY_INCREMENT * 2);
+    ASSERT_NOTHROW(increaseSizedStringCapacity(&string));
+    ASSERT(string.capacity == STARTING_CAPACITY + CAPACITY_INCREMENT * 3);
+    freeSizedString(string);
+    return RET_SUCCESS;
+}
+
+
 ReturnCode testAppendToSizedStringNormal(void)
 {
     struct SizedString string;
@@ -79,6 +95,7 @@ ReturnCode testAppendToSizedStringReallocLarger(void)
 
 PREPARE_TESTING(sized_string,
     testCreateSizedString,
+    testIncreaseSizedStringCapacity,
     testAppendToSizedStringNormal,
     testAppendToSizedStringReallocStarting,
     testAppendToSizedStringReallocLarger

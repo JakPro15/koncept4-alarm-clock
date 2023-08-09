@@ -31,29 +31,30 @@ void doTesting(char *fileName, unsigned numberOfFunctions, ...);
     doTesting(__FILE__, NUMARGS(__VA_ARGS__), __VA_ARGS__); \
 }
 
-#define ASSERT(expression) if(!(expression)) do { \
+#define RETURN_CALLBACK
+#define ASSERT(expression) do { if(!(expression)) { \
     printf(COLOR_RED "%s(%s:%d) Assertion failed\n" COLOR_RESET, __func__, __FILE__, __LINE__); \
-    return RET_ERROR; \
-} while(0)
-#define ASSERT_CALLBACK(expression, callback) do { if(!(expression)) { \
-    printf(COLOR_RED "%s(%s:%d) Assertion failed\n" COLOR_RESET, __func__, __FILE__, __LINE__); \
-    callback; \
+    RETURN_CALLBACK \
     return RET_ERROR; \
 } } while(0)
 #define ASSERT_MESSAGE(expression, message) do { if(!(expression)) { \
     printf(COLOR_RED "%s(%s:%d) Assertion failed: %s\n" COLOR_RESET, __func__, __FILE__, __LINE__, (message)); \
+    RETURN_CALLBACK \
     return RET_ERROR; \
 } } while(0)
 #define ASSERT_ENSURE(expression) do { if((expression) != RET_SUCCESS) { \
     printf(COLOR_RED "%s(%s:%d) Function %s failed\n" COLOR_RESET, __func__, __FILE__, __LINE__, #expression); \
+    RETURN_CALLBACK \
     return RET_ERROR; \
 } } while(0)
 #define ASSERT_NOTHROW(expression) do { if((expression) == RET_ERROR) { \
     printf(COLOR_RED "%s(%s:%d) Function %s threw error\n" COLOR_RESET, __func__, __FILE__, __LINE__, #expression); \
+    RETURN_CALLBACK \
     return RET_ERROR; \
 } } while(0)
 #define ASSERT_THROW(expression) do { if((expression) != RET_ERROR) { \
     printf(COLOR_RED "%s(%s:%d) Function %s did not throw error\n" COLOR_RESET, __func__, __FILE__, __LINE__, #expression); \
+    RETURN_CALLBACK \
     return RET_ERROR; \
 } } while(0)
 

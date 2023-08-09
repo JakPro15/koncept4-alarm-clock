@@ -1,85 +1,40 @@
-#include <stdbool.h>
 #include "settings_reading.h"
 #include "logging.h"
 
+#include <stdbool.h>
+#include <stdio.h>
 
-ReturnCode openBufferedFile(struct BufferedFile *toWrite, char *fileName)
+
+ReturnCode getLine(FILE *file, struct SizedString *toWrite)
 {
-    toWrite->handle = CreateFile(
-        fileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
-        NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL
-    );
-    if(toWrite->handle == INVALID_HANDLE_VALUE)
+    int firstUnreadOffset = 0;
+    int sizeToWrite = toWrite->capacity;
+    bool firstRead = true;
+    while(fgets(toWrite->data + firstUnreadOffset, sizeToWrite, file) != NULL)
     {
-        LOG_LINE(LOG_ERROR, "Failed to open %s file.", fileName);
+        toWrite->size = strlen(toWrite->data) + 1;
+        if(feof(file) || toWrite->data[toWrite->size - 2] == '\n')
+            return RET_SUCCESS;
+        if(firstRead)
+        {
+            firstUnreadOffset += toWrite->capacity - 1;
+            sizeToWrite = CAPACITY_INCREMENT + 1;
+            firstRead = false;
+        }
+        else
+            firstUnreadOffset += CAPACITY_INCREMENT;
+        ENSURE(increaseSizedStringCapacity(toWrite));
+    }
+    if(ferror(file))
+    {
+        LOG_LINE(LOG_ERROR, "Error on reading from file");
         return RET_ERROR;
     }
-    toWrite->buffIndex = 0;
-    toWrite->buffEnd = 0;
-    return RET_SUCCESS;
+    return RET_FAILURE;
 }
 
 
-ReturnCode closeBufferedFile(struct BufferedFile *file)
-{
-    if(!CloseHandle(file->handle))
-    {
-        LOG_LINE(LOG_ERROR, "CloseHandle failed");
-        return RET_ERROR;
-    }
-    return RET_SUCCESS;
-}
-
-
-ReturnCode getCharacter(struct BufferedFile *file, char *toWrite)
-{
-    if(file->buffIndex >= file->buffEnd)
-    {
-        DWORD bytesRead = 0;
-        if(!ReadFile(file->handle, file->buffer, 256, &bytesRead, NULL))
-        {
-            LOG_LINE(LOG_ERROR, "Failed to read file");
-            return RET_ERROR;
-        }
-        if(bytesRead == 0)
-            return RET_FAILURE;
-
-        file->buffIndex = 0;
-        file->buffEnd = bytesRead;
-    }
-    *toWrite = file->buffer[file->buffIndex++];
-    return RET_SUCCESS;
-}
-
-
-ReturnCode getLine(struct BufferedFile *file, struct SizedString *toWrite)
-{
-    char character;
-    ReturnCode code;
-    bool first = true;
-    while(true)
-    {
-        RETHROW(code = getCharacter(file, &character));
-        if(code == RET_FAILURE)
-        {
-            if(first)
-                return RET_FAILURE;
-            else
-                break;
-        }
-        if(character == '\r')
-            continue;
-        if(character == '\n')
-            break;
-        ENSURE(appendToSizedString(toWrite, character));
-        first = false;
-    }
-    ENSURE(appendToSizedString(toWrite, '\0'));
-    return RET_SUCCESS;
-}
-
-
-ReturnCode getNextAction(struct BufferedFile *settingsFile, struct Action *toWrite, struct SizedString *buffer,
+ReturnCode getNextAction(FILE *settingsFile, struct Action *toWrite, struct SizedString *buffer,
                          struct YearTimestamp now)
 {
     ReturnCode lineReading;
@@ -91,7 +46,7 @@ ReturnCode getNextAction(struct BufferedFile *settingsFile, struct Action *toWri
             toWrite->timestamp.date = (struct DateOfYear) {0, 0};
             return RET_FAILURE;
         }
-    } while(strcmp(buffer->data, "") == 0);
+    } while(strcmp(buffer->data, "\r\n") == 0);
     RETURN_FAIL(parseAction(buffer->data, toWrite, now));
     return RET_SUCCESS;
 }
@@ -99,17 +54,21 @@ ReturnCode getNextAction(struct BufferedFile *settingsFile, struct Action *toWri
 
 ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, struct YearTimestamp now)
 {
-    struct BufferedFile settingsFile;
-    ENSURE(openBufferedFile(&settingsFile, fileName));
+    FILE *settingsFile;
+    if((settingsFile = fopen(fileName, "rb")) == NULL)
+    {
+        LOG_LINE(LOG_ERROR, "Failed to open settings file %s", fileName);
+        return RET_ERROR;
+    }
     struct SizedString lineBuffer;
-    ENSURE_CALLBACK(createSizedString(&lineBuffer), closeBufferedFile(&settingsFile));
+    ENSURE_CALLBACK(createSizedString(&lineBuffer), fclose(settingsFile));
 
     struct Action newAction;
     ReturnCode readLine;
     do
     {
-        RETHROW_CALLBACK(readLine = getNextAction(&settingsFile, &newAction, &lineBuffer, now),
-                         freeSizedString(lineBuffer); closeBufferedFile(&settingsFile));
+        RETHROW_CALLBACK(readLine = getNextAction(settingsFile, &newAction, &lineBuffer, now),
+                         freeSizedString(lineBuffer); fclose(settingsFile));
         if(readLine == RET_FAILURE)
         {
             if(newAction.timestamp.date.day == 29 && newAction.timestamp.date.month == 2)
@@ -118,15 +77,16 @@ ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, str
                 break;
         }
         ENSURE_CALLBACK(addAction(toWrite, &newAction, now.timestamp),
-                        freeSizedString(lineBuffer); closeBufferedFile(&settingsFile));
+                        freeSizedString(lineBuffer); fclose(settingsFile));
     } while(true);
 
     freeSizedString(lineBuffer);
-    ENSURE(closeBufferedFile(&settingsFile));
-    if(readLine == RET_ERROR)
+    if(fclose(settingsFile) != 0)
+    {
+        LOG_LINE(LOG_ERROR, "fclose failed");
         return RET_ERROR;
-    else
-        return RET_SUCCESS;
+    }
+    return RET_SUCCESS;
 }
 
 
