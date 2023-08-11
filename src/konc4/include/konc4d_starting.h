@@ -1,5 +1,5 @@
-#ifndef KONC4D_STARTING_H
-#define KONC4D_STARTING_H
+#ifndef KONC4_KONC4D_STARTING_H
+#define KONC4_KONC4D_STARTING_H
 
 #include "error_handling.h"
 

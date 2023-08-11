@@ -1,5 +1,5 @@
-#ifndef COMMAND_EXECUTION_H
-#define COMMAND_EXECUTION_H
+#ifndef KONC4_COMMAND_EXECUTION_H
+#define KONC4_COMMAND_EXECUTION_H
 
 #include "shared_memory.h"
 

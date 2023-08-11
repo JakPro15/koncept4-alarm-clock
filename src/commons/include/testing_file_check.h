@@ -1,3 +1,6 @@
+#ifndef TESTING_FILE_CHECK_H
+#define TESTING_FILE_CHECK_H
+
 #include "error_handling.h"
 
 #include <stdio.h>
@@ -37,3 +40,5 @@ ReturnCode checkFileContent(const char *fileName, const char *proper)
     else
         return RET_ERROR;
 }
+
+#endif

@@ -1,5 +1,5 @@
-#ifndef INPUT_LOOP_H
-#define INPUT_LOOP_H
+#ifndef KONC4_INPUT_LOOP_H
+#define KONC4_INPUT_LOOP_H
 
 #include "error_handling.h"
 
