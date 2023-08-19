@@ -10,6 +10,67 @@
 #include <assert.h>
 
 #define SENDING_DELAY_MS 100
+#define KONC4D_WAITING_DELAY_MS 500
+
+
+ReturnCode executeStart(void)
+{
+    RETURN_FAIL(startKonc4d());
+    printf("konc4d starting command executed, waiting for actual konc4d startup.\n");
+    ReturnCode isOn;
+    do
+    {
+        Sleep(KONC4D_WAITING_DELAY_MS);
+        RETHROW(isOn = isKonc4dOn());
+    } while(isOn == RET_FAILURE);
+    printf("konc4d successfully started.\n");
+    return RET_SUCCESS;
+}
+
+
+ReturnCode executeStop(void)
+{
+    RETURN_FAIL(fullSendMessage("STOP"));
+    printf("Stop message sent. Waiting for konc4d to receive it and shut down.\n");
+
+    ReturnCode isOn;
+    do
+    {
+        Sleep(KONC4D_WAITING_DELAY_MS);
+        RETHROW(isOn = isKonc4dOn());
+    } while(isOn == RET_SUCCESS);
+    printf("konc4d successfully stopped.\n");
+    return RET_SUCCESS;
+}
+
+
+ReturnCode executeReset(void)
+{
+    printf("Beware that reset of konc4d will cancel any further pending messages to konc4d.\n");
+    RETHROW(fullSendMessage("RESET"));
+    printf("Reset message sent.\n");
+    return RET_SUCCESS;
+}
+
+
+ReturnCode executeSkip(unsigned minutesToSkip)
+{
+    if(minutesToSkip == 0)
+    {
+        fprintf(stderr, "Skip command expects a positive integer argument.\n");
+        LOG_LINE(LOG_WARNING, "skip command received invalid argument: %d", minutesToSkip);
+        return RET_FAILURE;
+    }
+    if(minutesToSkip > 7200)
+    {
+        fprintf(stderr, "Skipping more than five days at once is not supported.\n");
+        LOG_LINE(LOG_WARNING, "skip command received invalid argument: %d", minutesToSkip);
+        return RET_FAILURE;
+    }
+    RETHROW(fullSendMessage("SKIP", minutesToSkip));
+    printf("Skip %d message sent.\n", minutesToSkip);
+    return RET_SUCCESS;
+}
 
 
 ReturnCode ensuredOpenSharedMemory(struct SharedMemoryFile *sharedMemory)

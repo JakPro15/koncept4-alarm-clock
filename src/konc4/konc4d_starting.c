@@ -18,7 +18,7 @@ static ReturnCode checkKonc4dOff(void)
     RETHROW(checked = isKonc4dOn());
     if(checked == RET_SUCCESS)
     {
-        printf("konc4d is already on\n");
+        printf("konc4d is already on.\n");
         LOG_LINE(LOG_WARNING, "Tried to start konc4d when it is already started");
         return RET_FAILURE;
     }
@@ -54,6 +54,7 @@ ReturnCode startKonc4d(void)
     system("cd /d \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\\" && explorer konc4d.exe.lnk");
 
     ENSURE(waitUntilKonc4dOn());
+    LOG_LINE(LOG_DEBUG, "konc4d launched properly");
     return RET_SUCCESS;
 }
 

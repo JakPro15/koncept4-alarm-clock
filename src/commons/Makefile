@@ -14,6 +14,7 @@ all: $(OBJ)
 clean:
 	$(call remove,$(OBJ) $(TEST_OBJ) $(DEPENDS) $(TEST_DEPENDS) $(TEST_EXE) output/sender.exe output/receiver.exe)
 
+.PHONY: test
 test: $(TEST_EXE)
 	$(TEST_EXE)
 

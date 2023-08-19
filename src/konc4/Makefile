@@ -16,6 +16,7 @@ all: $(EXE)
 clean:
 	$(call remove,$(OBJ) $(TEST_OBJ) $(DEPENDS) $(TEST_DEPENDS) $(EXE) $(TEST_EXE))
 
+.PHONY: test
 test: $(TEST_EXE)
 	$(TEST_EXE)
 

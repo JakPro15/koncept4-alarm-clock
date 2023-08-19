@@ -14,28 +14,16 @@ ReturnCode parseCommand(char *command)
     char *saveptr;
     char *token = strtok_r(command, " \t", &saveptr);
     if(stricmp(token, "reset") == 0)
-        RETHROW(fullSendMessage("RESET"));
+        return executeReset();
     else if(stricmp(token, "stop") == 0)
-        RETHROW(fullSendMessage("STOP"));
+        return executeStop();
     else if(stricmp(token, "start") == 0)
-        RETHROW(startKonc4d());
+        return executeStart();
     else if(stricmp(token, "skip") == 0)
     {
         char *minutesToSkipStr = strtok_r(NULL, " \t", &saveptr);
         unsigned minutesToSkip = strtoul(minutesToSkipStr, NULL, 0);
-        if(minutesToSkip == 0)
-        {
-            fprintf(stderr, "skip command expects a positive integer argument\n");
-            LOG_LINE(LOG_WARNING, "skip command received invalid argument: %s", minutesToSkipStr);
-            return RET_FAILURE;
-        }
-        if(minutesToSkip > 7200)
-        {
-            fprintf(stderr, "skipping more than five days at once is not supported\n");
-            LOG_LINE(LOG_WARNING, "skip command received invalid argument: %s", minutesToSkipStr);
-            return RET_FAILURE;
-        }
-        RETHROW(fullSendMessage("SKIP", minutesToSkip));
+        return executeSkip(minutesToSkip);
     }
     else
     {
@@ -57,11 +45,11 @@ enum CallbackReturn parseCommandLine(char *commandLine)
     if(stricmp(commandLine, "exit\n") == 0 ||
        stricmp(commandLine, "quit\n") == 0)
         return END_SPINNING_SUCCESS;
-    char *saveptr, *command;
-    while(command = strtok_r(commandLine, ";\n", &saveptr), command != NULL)
+    char *saveptr, *command = strtok_r(commandLine, ";\n", &saveptr);
+    do
     {
         if(parseCommand(command) == RET_ERROR)
             return END_SPINNING_ERROR;
-    }
+    } while(command = strtok_r(NULL, ";\n", &saveptr), command != NULL);
     return KEEP_SPINNING;
 }
