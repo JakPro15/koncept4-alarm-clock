@@ -84,6 +84,11 @@ ReturnCode testFitDefine(void)
 #undef RETURN_CALLBACK
 #define RETURN_CALLBACK destroyActionQueue(&actions);
 
+    ASSERT(fitDefine("muu", sizeof("muu"), &actions, defines, now) == RET_FAILURE);
+    ASSERT(fitDefine("hehe xd", sizeof("hehe xd"), &actions, defines, now) == RET_FAILURE);
+    ASSERT(fitDefine("3define(ab)", sizeof("3define(ab)"), &actions, defines, now) == RET_ERROR);
+    ASSERT(fitDefine("//3define(ab)", sizeof("3define(ab)"), &actions, defines, now) == RET_SUCCESS);
+
     const char line1[] = "define1";
     ASSERT_ENSURE(fitDefine(line1, sizeof(line1), &actions, defines, now));
     ASSERT_EQUAL_SHT(AQ_FIRST(actions), ((struct Action) {{{3, 2}, {11, 30}}, SHUTDOWN, .args.shutdown = {35}}));
@@ -105,6 +110,8 @@ ReturnCode testFitDefine(void)
     ASSERT_ENSURE(fitDefine(line5, sizeof(line5), &actions, defines, now));
     ASSERT_EQUAL_NFY(AQ_FIRST(actions), ((struct Action) {{{1, 1}, {11, 11}}, NOTIFY, {.notify = {5, "hehe.wav"}}, true}));
     ASSERT_EQUAL_RST(AQ_SECOND(actions), ((struct Action) {{{1, 3}, {11, 12}}, RESET, {{0}}, false}));
+
+    destroyActionQueue(&actions);
 #undef RETURN_CALLBACK
 #define RETURN_CALLBACK
     return RET_SUCCESS;
