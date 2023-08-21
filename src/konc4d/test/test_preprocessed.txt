@@ -1,0 +1,8 @@
+#define macro
+0:20 shutdown $0
+0:40 notify $1 $2
+#
+macro
+macro(12)
+macro(10, bruh.mp4)
+macro(9, bruh.wav, 2)

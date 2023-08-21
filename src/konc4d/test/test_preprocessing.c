@@ -1,5 +1,6 @@
 #include "test_konc4d.h"
 #include "preprocessing.h"
+#include "settings_reading.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -118,8 +119,38 @@ ReturnCode testFitDefine(void)
 }
 
 
+ReturnCode testLoadActionsFromFileWithPreprocessing(void)
+{
+    struct ActionQueue *results = NULL;
+#undef RETURN_CALLBACK
+#define RETURN_CALLBACK destroyActionQueue(&results);
+    ASSERT_ENSURE(loadActionsFromFile(&results, "test/test_preprocessed.txt",
+                  (struct YearTimestamp) {{{1, 1}, {0, 0}}, 2020}));
+
+    ASSERT_EQUAL_SHT(AQ_FIRST(results), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
+                     {.shutdown = {DEFAULT_SHUTDOWN_DELAY}}, true}));
+    ASSERT_EQUAL_SHT(AQ_SECOND(results), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
+                     {.shutdown = {12}}, true}));
+    ASSERT_EQUAL_SHT(AQ_THIRD(results), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
+                     {.shutdown = {10}}, true}));
+    ASSERT_EQUAL_SHT(AQ_FOURTH(results), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
+                     {.shutdown = {9}}, true}));
+
+    ASSERT_EQUAL_NFY(AQ_FIFTH(results), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
+                     {.notify = {DEFAULT_NOTIFY_SOUND_REPEATS, DEFAULT_NOTIFY_SOUND}}, true}));
+    ASSERT_EQUAL_NFY(AQ_SIXTH(results), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
+                     {.notify = {DEFAULT_NOTIFY_SOUND_REPEATS, DEFAULT_NOTIFY_SOUND}}, true}));
+    ASSERT_EQUAL_NFY(AQ_SEVENTH(results), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
+                     {.notify = {1, "bruh.mp4"}}, true}));
+    ASSERT_EQUAL_NFY(AQ_EIGHTH(results), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
+                     {.notify = {2, "bruh.wav"}}, true}));
+    return RET_SUCCESS;
+}
+
+
 PREPARE_TESTING(preprocessing,
     testVerifyDefineName,
     testGatherDefines,
-    testFitDefine
+    testFitDefine,
+    testLoadActionsFromFileWithPreprocessing
 )

@@ -35,6 +35,60 @@ ReturnCode getLine(FILE *file, struct SizedString *toWrite)
 }
 
 
+static ReturnCode getCharacter(FILE *file, char *toWrite)
+{
+    *toWrite = fgetc(file);
+    if(*toWrite != EOF)
+        return RET_SUCCESS;
+    if(feof(file))
+        return RET_FAILURE;
+    if(ferror(file))
+    {
+        LOG_LINE(LOG_ERROR, "Input/output error occurred");
+        return RET_ERROR;
+    }
+    LOG_LINE(LOG_ERROR, "Should never be reached");
+    return RET_ERROR;
+}
+
+
+static ReturnCode unGetCharacter(FILE *file, char toWrite)
+{
+    if(ungetc(toWrite, file) == EOF)
+    {
+        LOG_LINE(LOG_ERROR, "ungetc failed");
+        return RET_ERROR;
+    }
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode skipUntil(FILE *file, bool (*until)(char), char *lastCharacter)
+{
+    do
+    {
+        RETURN_FAIL(getCharacter(file, lastCharacter));
+    } while(!until(*lastCharacter));
+    return RET_SUCCESS;
+}
+static bool isPreprocessingDelimiter(char character) { return character == '#'; }
+static bool isNotWhitespace(char character)          { return !isspace(character); }
+
+
+// RET_FAILURE implies EOF reached
+ReturnCode skipPreprocessingDirectives(FILE *settingsFile)
+{
+    char lastCharacter;
+    RETURN_FAIL(skipUntil(settingsFile, isNotWhitespace, &lastCharacter));
+    if(lastCharacter != '#')
+        return unGetCharacter(settingsFile, lastCharacter);
+
+    RETURN_FAIL(skipUntil(settingsFile, isPreprocessingDelimiter, &lastCharacter));
+    RETURN_FAIL(skipUntil(settingsFile, isNotWhitespace, &lastCharacter));
+    return unGetCharacter(settingsFile, lastCharacter);
+}
+
+
 static ReturnCode getNonemptyLine(FILE *settingsFile, struct SizedString *toWrite)
 {
     ReturnCode lineReading;
@@ -75,12 +129,16 @@ ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, str
     struct SizedString lineBuffer;
     ENSURE_CALLBACK(createSizedString(&lineBuffer), fclose(settingsFile); freeGatheredDefines(preprocessingDefines));
 
-    ReturnCode getNonemptyLineResult;
+    ReturnCode getLineResult, skipResult;
     while(true)
     {
-        RETHROW_CALLBACK(getNonemptyLineResult = getNonemptyLine(settingsFile, &lineBuffer),
+        RETHROW_CALLBACK(skipResult = skipPreprocessingDirectives(settingsFile),
                          fclose(settingsFile); freeGatheredDefines(preprocessingDefines); freeSizedString(lineBuffer));
-        if(getNonemptyLineResult == RET_FAILURE)
+        if(skipResult == RET_FAILURE)
+            break;
+        RETHROW_CALLBACK(getLineResult = getNonemptyLine(settingsFile, &lineBuffer),
+                         fclose(settingsFile); freeGatheredDefines(preprocessingDefines); freeSizedString(lineBuffer));
+        if(getLineResult == RET_FAILURE)
             break;
         ENSURE_CALLBACK(analyzeLine(lineBuffer, toWrite, preprocessingDefines, now),
                         fclose(settingsFile); freeGatheredDefines(preprocessingDefines); freeSizedString(lineBuffer));

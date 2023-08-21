@@ -244,7 +244,7 @@ static ReturnCode getShutdownActionArgs(char **string, struct Action *toWrite)
     int size;
     int itemsRead = sscanf(*string, "%u%n", &delay, &size);
     if(itemsRead < 1)
-        delay = 30;
+        delay = DEFAULT_SHUTDOWN_DELAY;
     else
         *string += size;
     LOG_LINE(LOG_DEBUG, "Determined shutdown action delay to be %u seconds", delay);

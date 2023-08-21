@@ -7,6 +7,7 @@
 #define ASSET_DIRECTORY "asset\\"
 #define DEFAULT_NOTIFY_SOUND "ring.wav"
 #define DEFAULT_NOTIFY_SOUND_REPEATS 5
+#define DEFAULT_SHUTDOWN_DELAY 30
 #define MAX_NOTIFY_FILE_NAME_SIZE 30
 
 
@@ -44,6 +45,10 @@ struct ActionQueue
 #define AQ_SECOND(head) (head)->next->action
 #define AQ_THIRD(head) (head)->next->next->action
 #define AQ_FOURTH(head) (head)->next->next->next->action
+#define AQ_FIFTH(head) (head)->next->next->next->next->action
+#define AQ_SIXTH(head) (head)->next->next->next->next->next->action
+#define AQ_SEVENTH(head) (head)->next->next->next->next->next->next->action
+#define AQ_EIGHTH(head) (head)->next->next->next->next->next->next->next->action
 
 
 ReturnCode addAction(struct ActionQueue **head, struct Action *action, struct Timestamp now) NO_IGNORE;

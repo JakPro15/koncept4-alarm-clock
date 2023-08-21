@@ -11,6 +11,7 @@
 
 
 ReturnCode getLine(FILE *file, struct SizedString *toWrite) NO_IGNORE;
+ReturnCode skipPreprocessingDirectives(FILE *settingsFile) NO_IGNORE;
 ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, struct YearTimestamp now) NO_IGNORE;
 
 inline ReturnCode loadActions(struct ActionQueue **toWrite)

@@ -113,9 +113,28 @@ ReturnCode testLoadActionsFromFile29FebLast(void)
 }
 
 
+ReturnCode testSkipPreprocessingDirectives(void)
+{
+    FILE *file = fopen("test/test_skip_preprocessing_directives.txt", "r");
+    ASSERT(file != NULL);
+#undef RETURN_CALLBACK
+#define RETURN_CALLBACK fclose(file);
+
+    ASSERT_ENSURE(skipPreprocessingDirectives(file));
+    char data[10];
+    ASSERT(fgets(data, 10, file) != NULL);
+    ASSERT(strcmp(data, "bean") == 0);
+
+#undef RETURN_CALLBACK
+#define RETURN_CALLBACK
+    return RET_SUCCESS;
+}
+
+
 PREPARE_TESTING(settings_reading,
     testGetLine,
     testLoadActionsFromFile,
     testLoadActionsFromFileWithFeb29,
-    testLoadActionsFromFile29FebLast
+    testLoadActionsFromFile29FebLast,
+    testSkipPreprocessingDirectives
 )
