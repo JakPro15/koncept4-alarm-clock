@@ -1,6 +1,8 @@
-#include <stdlib.h>
 #include "logging.h"
 #include "sizedstring.h"
+
+#include <stdlib.h>
+#include <ctype.h>
 
 
 ReturnCode createSizedString(struct SizedString *string)
@@ -42,4 +44,11 @@ ReturnCode appendToSizedString(struct SizedString *string, char character)
 void freeSizedString(struct SizedString string)
 {
     free(string.data);
+}
+
+
+void skipWhitespace(char **string)
+{
+    while(isspace(**string))
+        ++(*string);
 }

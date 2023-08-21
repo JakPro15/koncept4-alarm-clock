@@ -19,6 +19,7 @@ ReturnCode createSizedString(struct SizedString *string) NO_IGNORE;
 ReturnCode increaseSizedStringCapacity(struct SizedString *string) NO_IGNORE;
 ReturnCode appendToSizedString(struct SizedString *string, char character) NO_IGNORE;
 void freeSizedString(struct SizedString string);
+void skipWhitespace(char **string);
 
 
 #endif

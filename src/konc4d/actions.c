@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <ctype.h>
 
 #include "actions.h"
 #include "logging.h"
@@ -151,13 +150,6 @@ ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite)
     *head = (*head)->next;
     free(oldHead);
     return RET_SUCCESS;
-}
-
-
-static void skipWhitespace(char **string)
-{
-    while(isspace(**string))
-        ++(*string);
 }
 
 

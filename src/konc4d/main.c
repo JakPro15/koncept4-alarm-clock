@@ -8,7 +8,7 @@
 #if INITIAL_DELAY_MINUTES < 1
     #error("INITIAL_DELAY_MINUTES should be at least 1")
 #endif
-#define WAIT_CHECK_PERIOD_SECONDS 30
+#define WAIT_CHECK_PERIOD_SECONDS 1
 
 
 static bool message_exit;
@@ -76,7 +76,6 @@ ReturnCode waitUntil(struct Timestamp start, struct Timestamp until,
 
 ReturnCode initialize(struct ActionQueue **actions, struct SharedMemoryFile *sharedMemory)
 {
-    logging_level = LOG_DEBUG;
     message_exit = false;
     LOG_LINE(LOG_INFO, "konc4d started");
 

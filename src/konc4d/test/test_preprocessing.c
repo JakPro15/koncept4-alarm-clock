@@ -1,0 +1,118 @@
+#include "test_konc4d.h"
+#include "preprocessing.h"
+
+#include <stdio.h>
+#include <string.h>
+
+
+ReturnCode testVerifyDefineName(void)
+{
+    unsigned size = 0;
+    ASSERT_ENSURE(verifyDefineName("name", &size));
+    ASSERT(size == 5);
+    size = 0;
+    ASSERT_ENSURE(verifyDefineName("nameheh2343@5^&", &size));
+    ASSERT(size == 16);
+    ASSERT_THROW(verifyDefineName("", &size));
+    ASSERT_THROW(verifyDefineName("nam e", &size));
+    ASSERT_THROW(verifyDefineName("name ", &size));
+    ASSERT_THROW(verifyDefineName("n#ame", &size));
+    return RET_SUCCESS;
+}
+
+
+#define ASSERT_EQUAL(define, expectedKey, expectedValue) \
+    ASSERT(strcmp(define.key, (expectedKey)) == 0); \
+    ASSERT(strcmp(define.value, (expectedValue)) == 0);
+
+
+ReturnCode testGatherDefines(void)
+{
+    struct GatheredDefines defines;
+    FILE *settingsFile = fopen("test/test_gather_defines.txt", "rb");
+#undef RETURN_CALLBACK
+#define RETURN_CALLBACK fclose(settingsFile);
+    ASSERT_ENSURE(gatherDefines(settingsFile, &defines));
+#undef RETURN_CALLBACK
+#define RETURN_CALLBACK fclose(settingsFile); freeGatheredDefines(defines);
+    ASSERT(defines.size == 2);
+    ASSERT_EQUAL(defines.defines[0], "nr1", "content\r\n");
+    ASSERT_EQUAL(defines.defines[1], "nr2", "content line 1\r\ncontent line 2\r\n\r\ncontent line 3\r\nend");
+#undef RETURN_CALLBACK
+#define RETURN_CALLBACK
+    return RET_SUCCESS;
+}
+#undef ASSERT_EQUAL
+
+
+#define ASSERT_EQUAL_SHT(first, second) \
+    ASSERT(basicCompareTimestamp((first).timestamp, (second).timestamp) == 0); \
+    ASSERT((first).type == (second).type); \
+    ASSERT((first).args.shutdown.delay == (second).args.shutdown.delay); \
+    ASSERT((first).repeated == (second).repeated)
+
+#define ASSERT_EQUAL_RST(first, second) \
+    ASSERT(basicCompareTimestamp((first).timestamp, (second).timestamp) == 0); \
+    ASSERT((first).type == (second).type); \
+    ASSERT((first).repeated == (second).repeated)
+
+#define ASSERT_EQUAL_NFY(first, second) \
+    ASSERT(basicCompareTimestamp((first).timestamp, (second).timestamp) == 0); \
+    ASSERT((first).type == (second).type); \
+    ASSERT((first).args.notify.repeats == (second).args.notify.repeats); \
+    ASSERT(strcmp((first).args.notify.fileName, (second).args.notify.fileName) == 0); \
+    ASSERT((first).repeated == (second).repeated)
+
+
+ReturnCode testFitDefine(void)
+{
+    char *names[4] = {"define1", "def2ine", "3define", "4"};
+    char *bodies[4] = {"3.02 11:30 shutdown 35", "$0 10:00 $1\r\n$0 11:00 $1\r\n$0 12:00 $1",
+                             "12.09 22:$0 reset", "$0:$1 $2 $3 $4 $5"};
+    struct StringPair definePairs[4];
+    for(int i = 0; i < 4; i++)
+    {
+        definePairs[i].key = names[i];
+        definePairs[i].value = bodies[i];
+        definePairs[i].valueSize = strlen(bodies[i]) + 1;
+    }
+    struct GatheredDefines defines;
+    defines.size = 4;
+    defines.defines = definePairs;
+    struct YearTimestamp now = {{.date = {1, 1}, .time = {0, 0}}, .currentYear = 2010};
+    struct ActionQueue *actions = NULL;
+#undef RETURN_CALLBACK
+#define RETURN_CALLBACK destroyActionQueue(&actions);
+
+    const char line1[] = "define1";
+    ASSERT_ENSURE(fitDefine(line1, sizeof(line1), &actions, defines, now));
+    ASSERT_EQUAL_SHT(AQ_FIRST(actions), ((struct Action) {{{3, 2}, {11, 30}}, SHUTDOWN, .args.shutdown = {35}}));
+
+    const char line2[] = "def2ine(22.07, reset)";
+    ASSERT_ENSURE(fitDefine(line2, sizeof(line2), &actions, defines, now));
+    ASSERT_EQUAL_RST(AQ_SECOND(actions), ((struct Action) {{{22, 7}, {10, 00}}, RESET, {{0}}, false}));
+    ASSERT_EQUAL_RST(AQ_THIRD(actions), ((struct Action) {{{22, 7}, {11, 00}}, RESET, {{0}}, false}));
+    ASSERT_EQUAL_RST(AQ_FOURTH(actions), ((struct Action) {{{22, 7}, {12, 00}}, RESET, {{0}}, false}));
+
+    destroyActionQueue(&actions); actions = NULL;
+    const char line3[] = "3define(16)";
+    ASSERT_ENSURE(fitDefine(line3, sizeof(line3), &actions, defines, now));
+    ASSERT_EQUAL_RST(AQ_FIRST(actions), ((struct Action) {{{12, 9}, {22, 16}}, RESET, {{0}}, false}));
+
+    destroyActionQueue(&actions); actions = NULL;
+    const char line4[] = "4(11, 11, notify, hehe.wav, 5)", line5[] = "4(1.03 11, 12, reset)";
+    ASSERT_ENSURE(fitDefine(line4, sizeof(line4), &actions, defines, now));
+    ASSERT_ENSURE(fitDefine(line5, sizeof(line5), &actions, defines, now));
+    ASSERT_EQUAL_NFY(AQ_FIRST(actions), ((struct Action) {{{1, 1}, {11, 11}}, NOTIFY, {.notify = {5, "hehe.wav"}}, true}));
+    ASSERT_EQUAL_RST(AQ_SECOND(actions), ((struct Action) {{{1, 3}, {11, 12}}, RESET, {{0}}, false}));
+#undef RETURN_CALLBACK
+#define RETURN_CALLBACK
+    return RET_SUCCESS;
+}
+
+
+PREPARE_TESTING(preprocessing,
+    testVerifyDefineName,
+    testGatherDefines,
+    testFitDefine
+)
