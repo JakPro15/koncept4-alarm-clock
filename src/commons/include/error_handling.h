@@ -17,5 +17,6 @@ typedef enum _ReturnCodeEnum
 #define ENSURE_CALLBACK(expr, callback)  do { if((expr) != RET_SUCCESS) { callback; return RET_ERROR; } } while(0)
 #define RETHROW_CALLBACK(expr, callback) do { if((expr) == RET_ERROR) { callback; return RET_ERROR; } } while(0)
 #define TRY_END(expr)                    do { if((expr) == RET_SUCCESS) return RET_SUCCESS; } while(0)
+#define TRY_END_RETHROW(expr)            do { ReturnCode expr_result = (expr); if(expr_result != RET_FAILURE) return expr_result; } while(0)
 
 #endif

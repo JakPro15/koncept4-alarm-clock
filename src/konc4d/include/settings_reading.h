@@ -11,7 +11,6 @@
 
 
 ReturnCode getLine(FILE *file, struct SizedString *toWrite) NO_IGNORE;
-ReturnCode getNextAction(FILE *settingsFile, struct Action *toWrite, struct SizedString *buffer, struct YearTimestamp now) NO_IGNORE;
 ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, struct YearTimestamp now) NO_IGNORE;
 
 inline ReturnCode loadActions(struct ActionQueue **toWrite)

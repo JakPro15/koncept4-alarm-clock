@@ -1,5 +1,6 @@
 #include "settings_reading.h"
 #include "logging.h"
+#include "preprocessing.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -34,20 +35,27 @@ ReturnCode getLine(FILE *file, struct SizedString *toWrite)
 }
 
 
-ReturnCode getNextAction(FILE *settingsFile, struct Action *toWrite, struct SizedString *buffer,
-                         struct YearTimestamp now)
+static ReturnCode getNonemptyLine(FILE *settingsFile, struct SizedString *toWrite)
 {
     ReturnCode lineReading;
     do {
-        buffer->size = 0;
-        RETHROW(lineReading = getLine(settingsFile, buffer));
-        if(lineReading == RET_FAILURE)
-        {
-            toWrite->timestamp.date = (struct DateOfYear) {0, 0};
-            return RET_FAILURE;
-        }
-    } while(strcmp(buffer->data, "\r\n") == 0);
-    RETURN_FAIL(parseAction(buffer->data, toWrite, now));
+        toWrite->size = 0;
+        RETURN_FAIL(lineReading = getLine(settingsFile, toWrite));
+    } while(strcmp(toWrite->data, "\r\n") == 0);
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode analyzeLine(struct SizedString line, struct ActionQueue **actions,
+                              struct GatheredDefines preprocessingDefines, struct YearTimestamp now)
+{
+    TRY_END_RETHROW(fitDefine(line.data, line.size, actions, preprocessingDefines, now));
+    struct Action newAction;
+    ReturnCode parseResult;
+    RETHROW(parseResult = parseAction(line.data, &newAction, now));
+    if(parseResult == RET_FAILURE) // 29.02
+        return RET_SUCCESS;
+    ENSURE(addAction(actions, &newAction, now.timestamp));
     return RET_SUCCESS;
 }
 
@@ -60,26 +68,25 @@ ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, str
         LOG_LINE(LOG_ERROR, "Failed to open settings file %s", fileName);
         return RET_ERROR;
     }
+    struct GatheredDefines preprocessingDefines;
+    ENSURE_CALLBACK(gatherDefines(settingsFile, &preprocessingDefines), fclose(settingsFile));
+    rewind(settingsFile);
+
     struct SizedString lineBuffer;
-    ENSURE_CALLBACK(createSizedString(&lineBuffer), fclose(settingsFile));
+    ENSURE_CALLBACK(createSizedString(&lineBuffer), fclose(settingsFile); freeGatheredDefines(preprocessingDefines));
 
-    struct Action newAction;
-    ReturnCode readLine;
-    do
+    ReturnCode getNonemptyLineResult;
+    while(true)
     {
-        RETHROW_CALLBACK(readLine = getNextAction(settingsFile, &newAction, &lineBuffer, now),
-                         freeSizedString(lineBuffer); fclose(settingsFile));
-        if(readLine == RET_FAILURE)
-        {
-            if(newAction.timestamp.date.day == 29 && newAction.timestamp.date.month == 2)
-                continue;
-            else
-                break;
-        }
-        ENSURE_CALLBACK(addAction(toWrite, &newAction, now.timestamp),
-                        freeSizedString(lineBuffer); fclose(settingsFile));
-    } while(true);
+        RETHROW_CALLBACK(getNonemptyLineResult = getNonemptyLine(settingsFile, &lineBuffer),
+                         fclose(settingsFile); freeGatheredDefines(preprocessingDefines); freeSizedString(lineBuffer));
+        if(getNonemptyLineResult == RET_FAILURE)
+            break;
+        ENSURE_CALLBACK(analyzeLine(lineBuffer, toWrite, preprocessingDefines, now),
+                        fclose(settingsFile); freeGatheredDefines(preprocessingDefines); freeSizedString(lineBuffer));
+    }
 
+    freeGatheredDefines(preprocessingDefines);
     freeSizedString(lineBuffer);
     if(fclose(settingsFile) != 0)
     {
