@@ -59,7 +59,7 @@ ReturnCode testEnsuredSendMessage(void)
     Sleep(100);
 
     struct SharedMemoryFile sharedMemory;
-    ASSERT_ENSURE(openSharedMemory(&sharedMemory));
+    ASSERT_ENSURE(openSharedMemory(&sharedMemory, SHMEM_KONC4D_WRITE));
     char message[SHMEM_MESSAGE_LENGTH] = "SKIP";
 
     for(int i = 0; i < 20; i++)

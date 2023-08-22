@@ -82,7 +82,7 @@ ReturnCode initialize(struct ActionQueue **actions, struct SharedMemoryFile *sha
     HWND console = GetConsoleWindow();
     ShowWindow(console, SW_HIDE);
 
-    ENSURE(createSharedMemory(sharedMemory));
+    ENSURE(createSharedMemory(sharedMemory, SHMEM_KONC4D_WRITE));
     ENSURE(loadActions(actions));
 
     struct YearTimestamp now = getCurrentTimestamp();

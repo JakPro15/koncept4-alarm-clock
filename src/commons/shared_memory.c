@@ -2,6 +2,10 @@
 #include "logging.h"
 
 
+static const char *shmemFiles[] = {"konc4d_shared_memory_write", "konc4d_shared_memory_read"};
+static const char *shmemMutexes[] = {"konc4d_shared_memory_write_mutex", "konc4d_shared_memory_read_mutex"};
+
+
 #define PRINT_INT(x) LOG_LINE(LOG_TRACE, "%s = %d", #x, x)
 #define PRINT_STR(x) LOG_LINE(LOG_TRACE, "%s = %s", #x, x)
 
@@ -23,7 +27,7 @@ static void printSharedMemory(struct SharedMemory *sharedMemory)
 
 ReturnCode isKonc4dOn(void)
 {
-    HANDLE mutex = OpenMutex(SYNCHRONIZE, FALSE, SHMEM_MUTEX_NAME);
+    HANDLE mutex = OpenMutex(SYNCHRONIZE, FALSE, shmemMutexes[SHMEM_KONC4D_WRITE]);
     if(mutex == NULL)
     {
         if(GetLastError() == ERROR_FILE_NOT_FOUND)
@@ -43,9 +47,9 @@ ReturnCode isKonc4dOn(void)
 }
 
 
-static ReturnCode initializeMutex(HANDLE *mutex)
+static ReturnCode initializeMutex(HANDLE *mutex, unsigned pipeNr)
 {
-    *mutex = CreateMutex(NULL, FALSE, SHMEM_MUTEX_NAME);
+    *mutex = CreateMutex(NULL, FALSE, shmemMutexes[pipeNr]);
     if(*mutex == NULL)
     {
         LOG_LINE(LOG_ERROR, "Could not create mutex");
@@ -67,11 +71,11 @@ static ReturnCode waitMutex(struct SharedMemoryFile sharedMemory)
 }
 
 
-static ReturnCode initializeMapFile(struct SharedMemoryFile *sharedMemory)
+static ReturnCode initializeMapFile(struct SharedMemoryFile *sharedMemory, unsigned pipeNr)
 {
     sharedMemory->mapFile = CreateFileMapping(
         INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0,
-        sizeof(struct SharedMemory), SHMEM_FILE_NAME
+        sizeof(struct SharedMemory), shmemFiles[pipeNr]
     );
     if(sharedMemory->mapFile == NULL)
     {
@@ -83,10 +87,10 @@ static ReturnCode initializeMapFile(struct SharedMemoryFile *sharedMemory)
 }
 
 
-static ReturnCode openMapFile(struct SharedMemoryFile *sharedMemory)
+static ReturnCode openMapFile(struct SharedMemoryFile *sharedMemory, unsigned pipeNr)
 {
     sharedMemory->mapFile = OpenFileMapping(
-        FILE_MAP_ALL_ACCESS, FALSE, SHMEM_FILE_NAME
+        FILE_MAP_ALL_ACCESS, FALSE, shmemFiles[pipeNr]
     );
     if(sharedMemory->mapFile == NULL)
     {
@@ -114,20 +118,20 @@ static ReturnCode initializeMapView(struct SharedMemoryFile *sharedMemory)
 }
 
 
-ReturnCode createSharedMemory(struct SharedMemoryFile *sharedMemory)
+ReturnCode createSharedMemory(struct SharedMemoryFile *sharedMemory, unsigned pipeNr)
 {
-    ENSURE(initializeMutex(&sharedMemory->mutex));
-    ENSURE_CALLBACK(initializeMapFile(sharedMemory), CloseHandle(sharedMemory->mutex));
+    ENSURE(initializeMutex(&sharedMemory->mutex, pipeNr));
+    ENSURE_CALLBACK(initializeMapFile(sharedMemory, pipeNr), CloseHandle(sharedMemory->mutex));
     ENSURE_CALLBACK(initializeMapView(sharedMemory), CloseHandle(sharedMemory->mapFile); CloseHandle(sharedMemory->mutex));
     sharedMemory->shared->queueFirst = NO_NODE;
     return RET_SUCCESS;
 }
 
 
-ReturnCode openSharedMemory(struct SharedMemoryFile *sharedMemory)
+ReturnCode openSharedMemory(struct SharedMemoryFile *sharedMemory, unsigned pipeNr)
 {
-    ENSURE(initializeMutex(&sharedMemory->mutex));
-    ENSURE_CALLBACK(openMapFile(sharedMemory), CloseHandle(sharedMemory->mutex));
+    ENSURE(initializeMutex(&sharedMemory->mutex, pipeNr));
+    ENSURE_CALLBACK(openMapFile(sharedMemory, pipeNr), CloseHandle(sharedMemory->mutex));
     ENSURE_CALLBACK(initializeMapView(sharedMemory), CloseHandle(sharedMemory->mapFile); CloseHandle(sharedMemory->mutex));
     return RET_SUCCESS;
 }

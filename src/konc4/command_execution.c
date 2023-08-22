@@ -99,7 +99,7 @@ ReturnCode ensuredOpenSharedMemory(struct SharedMemoryFile *sharedMemory)
     RETHROW(isOn = isKonc4dOn());
     if(isOn == RET_FAILURE)
         RETURN_FAIL(promptForKonc4dStart());
-    ENSURE(openSharedMemory(sharedMemory));
+    ENSURE(openSharedMemory(sharedMemory, SHMEM_KONC4D_WRITE));
     return RET_SUCCESS;
 }
 

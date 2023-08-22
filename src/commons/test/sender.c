@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
 {
     logging_level = LOG_SILENT;
     struct SharedMemoryFile sharedMemory;
-    ENSURE(openSharedMemory(&sharedMemory));
+    ENSURE(openSharedMemory(&sharedMemory, SHMEM_KONC4D_WRITE));
     ReturnCode sentCode;
     for(int i = 1; i < argc; i++)
     {
