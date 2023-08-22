@@ -11,6 +11,8 @@
 
 #define SENDING_DELAY_MS 100
 #define KONC4D_WAITING_DELAY_MS 500
+#define KONC4D_MAX_WAITING_MS 5000
+#define KONC4D_MAX_ATTEMPTS KONC4D_MAX_WAITING_MS / KONC4D_WAITING_DELAY_MS
 
 
 ReturnCode executeStart(void)
@@ -18,10 +20,17 @@ ReturnCode executeStart(void)
     RETURN_FAIL(startKonc4d());
     printf("konc4d starting command executed, waiting for actual konc4d startup.\n");
     ReturnCode isOn;
+    unsigned attempts = 0;
     do
     {
         Sleep(KONC4D_WAITING_DELAY_MS);
         RETHROW(isOn = isKonc4dOn());
+        if(++attempts >= KONC4D_MAX_ATTEMPTS)
+        {
+            LOG_LINE(LOG_WARNING, "Failed to start konc4d");
+            printf("Failed to start konc4d. Check konc4log.txt for more information.\n");
+            return RET_FAILURE;
+        }
     } while(isOn == RET_FAILURE);
     printf("konc4d successfully started.\n");
     return RET_SUCCESS;
@@ -34,10 +43,17 @@ ReturnCode executeStop(void)
     printf("Stop message sent. Waiting for konc4d to receive it and shut down.\n");
 
     ReturnCode isOn;
+    unsigned attempts = 0;
     do
     {
         Sleep(KONC4D_WAITING_DELAY_MS);
         RETHROW(isOn = isKonc4dOn());
+        if(++attempts >= KONC4D_MAX_ATTEMPTS)
+        {
+            LOG_LINE(LOG_WARNING, "Failed to stop konc4d");
+            printf("Failed to stop konc4d. Check konc4log.txt for more information.\n");
+            return RET_FAILURE;
+        }
     } while(isOn == RET_SUCCESS);
     printf("konc4d successfully stopped.\n");
     return RET_SUCCESS;
