@@ -33,6 +33,7 @@ ReturnCode executeStart(void)
         }
     } while(isOn == RET_FAILURE);
     printf("konc4d successfully started.\n");
+    LOG_LINE(LOG_INFO, "konc4 start command executed successfully");
     return RET_SUCCESS;
 }
 
@@ -56,6 +57,7 @@ ReturnCode executeStop(void)
         }
     } while(isOn == RET_SUCCESS);
     printf("konc4d successfully stopped.\n");
+    LOG_LINE(LOG_INFO, "konc4 stop command executed successfully");
     return RET_SUCCESS;
 }
 
@@ -65,6 +67,7 @@ ReturnCode executeReset(void)
     printf("Beware that reset of konc4d will cancel any further pending messages to konc4d.\n");
     RETHROW(fullSendMessage("RESET"));
     printf("Reset message sent.\n");
+    LOG_LINE(LOG_INFO, "konc4 reset command executed successfully");
     return RET_SUCCESS;
 }
 
@@ -85,6 +88,7 @@ ReturnCode executeSkip(unsigned minutesToSkip)
     }
     RETHROW(fullSendMessage("SKIP", minutesToSkip));
     printf("Skip %d message sent.\n", minutesToSkip);
+    LOG_LINE(LOG_INFO, "konc4 skip command executed successfully");
     return RET_SUCCESS;
 }
 
