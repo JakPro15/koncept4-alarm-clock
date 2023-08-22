@@ -1,4 +1,4 @@
-#include "test_konc4d.h"
+#include "test_commons.h"
 #include "timestamps.h"
 
 #define TOD(h, m) (struct TimeOfDay) {(h), (m)}

@@ -2,21 +2,13 @@
 #define KONC4D_ACTIONS_H
 
 #include "error_handling.h"
-#include "timestamps.h"
+#include "passed_action.h"
 
 #define ASSET_DIRECTORY "asset\\"
 #define DEFAULT_NOTIFY_SOUND "ring.wav"
 #define DEFAULT_NOTIFY_SOUND_REPEATS 5
 #define DEFAULT_SHUTDOWN_DELAY 30
 #define MAX_NOTIFY_FILE_NAME_SIZE 30
-
-
-enum ActionType
-{
-    SHUTDOWN,
-    NOTIFY,
-    RESET
-};
 
 
 struct Action
@@ -57,5 +49,10 @@ ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestam
 ReturnCode popActionWithRepeat(struct ActionQueue **head, struct Action *toWrite, struct YearTimestamp now) NO_IGNORE;
 ReturnCode skipUntilTimestamp(struct ActionQueue **head, struct Timestamp time, struct YearTimestamp now) NO_IGNORE;
 void destroyActionQueue(struct ActionQueue **head);
+
+inline struct PassedAction getPassedAction(struct Action *action)
+{
+    return (struct PassedAction) {action->timestamp, action->type, action->repeated};
+}
 
 #endif

@@ -4,12 +4,17 @@
 #include <windows.h>
 
 #include "error_handling.h"
+#include "passed_action.h"
+#include "assert.h"
 
 
 #define SHMEM_KONC4D_WRITE 0
 #define SHMEM_KONC4D_READ 1
+
 #define SHMEM_QUEUE_LENGTH 8
-#define SHMEM_MESSAGE_LENGTH 12
+#define SHMEM_MESSAGE_LENGTH (unsigned) sizeof(struct PassedAction)
+static_assert(SHMEM_MESSAGE_LENGTH >= 12, "SHMEM_MESSAGE_LENGTH smaller than was assumed");
+
 #define SHMEM_EMBEDDED_UNSIGNED(message) *((unsigned*) &message[SHMEM_MESSAGE_LENGTH - sizeof(unsigned)])
 #define NO_NODE -1
 

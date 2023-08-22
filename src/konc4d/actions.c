@@ -413,3 +413,6 @@ void destroyActionQueue(struct ActionQueue **head)
         if(popAction(head, NULL) != RET_SUCCESS)
             LOG_LINE(LOG_ERROR, "popAction failed - should be impossible to reach");
 }
+
+
+struct PassedAction getPassedAction(struct Action *action);

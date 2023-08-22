@@ -5,9 +5,11 @@
 
 
 void shared_memory(void);
+void timestamps(void);
 
 #define COMMONS_TESTS { \
     shared_memory(); \
+    timestamps(); \
 }
 
 #endif

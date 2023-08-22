@@ -15,12 +15,12 @@ ReturnCode testEmbedArgsInMessageNormal(void)
     va_list unused;
     const char message[] = "STOP";
     char embedded[SHMEM_MESSAGE_LENGTH];
-    for(int i = 0; i < SHMEM_MESSAGE_LENGTH; i++)
+    for(unsigned i = 0; i < SHMEM_MESSAGE_LENGTH; i++)
         embedded[i] = '\xff';
 
     embedArgsInMessage(embedded, message, unused);
     ASSERT(strcmp(embedded, message) == 0);
-    for(int i = sizeof(message); i < SHMEM_MESSAGE_LENGTH; i++)
+    for(unsigned i = sizeof(message); i < SHMEM_MESSAGE_LENGTH; i++)
         ASSERT(embedded[i] == '\xff');
     return RET_SUCCESS;
 #pragma GCC diagnostic pop
@@ -40,12 +40,12 @@ ReturnCode testEmbedArgsInMessageSkip(void)
 {
     const char message[] = "SKIP";
     char embedded[SHMEM_MESSAGE_LENGTH];
-    for(int i = 0; i < SHMEM_MESSAGE_LENGTH; i++)
+    for(unsigned i = 0; i < SHMEM_MESSAGE_LENGTH; i++)
         embedded[i] = '\xff';
 
     embedArgsInMessageWrapper(embedded, message, 233);
     ASSERT(strcmp(embedded, message) == 0);
-    for(int i = sizeof(message); (unsigned) i < SHMEM_MESSAGE_LENGTH - sizeof(unsigned); i++)
+    for(unsigned i = sizeof(message); (unsigned) i < SHMEM_MESSAGE_LENGTH - sizeof(unsigned); i++)
         ASSERT(embedded[i] == '\xff');
     ASSERT(SHMEM_EMBEDDED_UNSIGNED(embedded) == 233);
     return RET_SUCCESS;
