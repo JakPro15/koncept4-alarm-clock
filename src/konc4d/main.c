@@ -1,6 +1,7 @@
 #include "logging.h"
 #include "settings_reading.h"
 #include "shared_memory.h"
+#include "message_processing.h"
 
 #include <stdio.h>
 
@@ -11,51 +12,7 @@
 #define WAIT_CHECK_PERIOD_SECONDS 1
 
 
-static bool message_exit;
-
-
-ReturnCode processMessage(struct ActionQueue **actions, char *message)
-{
-    if(strcmp(message, "RESET") == 0)
-    {
-        LOG_LINE(LOG_INFO, "RESET message received, resetting");
-        return RET_FAILURE;
-    }
-    else if(strcmp(message, "STOP") == 0)
-    {
-        LOG_LINE(LOG_INFO, "STOP message received, stopping");
-        message_exit = true;
-        return RET_ERROR;
-    }
-    else if(strcmp(message, "SKIP") == 0)
-    {
-        unsigned minutesToSkip = SHMEM_EMBEDDED_UNSIGNED(message);
-        struct YearTimestamp now = getCurrentTimestamp();
-        struct YearTimestamp until = addMinutes(now, minutesToSkip);
-        LOG_LINE(LOG_INFO, "SKIP message received, skipping by %u minutes", minutesToSkip);
-        ENSURE(skipUntilTimestamp(actions, until.timestamp, now));
-        return RET_SUCCESS;
-    }
-    else
-    {
-        LOG_LINE(LOG_ERROR, "Unknown message received");
-        return RET_ERROR;
-    }
-}
-
-
-ReturnCode handleMessages(struct ActionQueue **actions, struct SharedMemoryFile sharedMemory)
-{
-    char message[SHMEM_MESSAGE_LENGTH];
-    ReturnCode received;
-    RETHROW(received = receiveMessage(sharedMemory, message));
-    while(received != RET_FAILURE)
-    {
-        RETURN_FAIL(processMessage(actions, message));
-        RETHROW(received = receiveMessage(sharedMemory, message));
-    }
-    return RET_SUCCESS;
-}
+bool message_exit;
 
 
 ReturnCode waitUntil(struct Timestamp start, struct Timestamp until,
@@ -82,7 +39,7 @@ ReturnCode initialize(struct ActionQueue **actions, struct SharedMemoryFile *sha
     HWND console = GetConsoleWindow();
     ShowWindow(console, SW_HIDE);
 
-    ENSURE(createSharedMemory(sharedMemory, SHMEM_KONC4D_WRITE));
+    ENSURE(createSharedMemory(sharedMemory, SHMEM_TO_KONC4D));
     ENSURE(loadActions(actions));
 
     struct YearTimestamp now = getCurrentTimestamp();
@@ -95,13 +52,13 @@ ReturnCode initialize(struct ActionQueue **actions, struct SharedMemoryFile *sha
 
 ReturnCode actionLoop(struct ActionQueue **actions, struct SharedMemoryFile sharedMemory)
 {
-    struct Action current;
+    struct Action current = (*actions)->action;
     while(*actions != NULL)
     {
         struct YearTimestamp now = getCurrentTimestamp();
-        ENSURE(popActionWithRepeat(actions, &current, now));
         RETURN_FAIL(waitUntil(now.timestamp, current.timestamp, actions, sharedMemory));
         RETURN_FAIL(doAction(&current));
+        ENSURE(popActionWithRepeat(actions, &current, now));
     }
     return RET_SUCCESS;
 }

@@ -8,7 +8,7 @@
 
 enum ActionType
 {
-    SHUTDOWN,
+    SHUTDOWN=0,
     NOTIFY,
     RESET
 };

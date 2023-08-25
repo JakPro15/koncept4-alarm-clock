@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     int toReceive = atoi(argv[1]);
 
     struct SharedMemoryFile sharedMemory;
-    ENSURE(createSharedMemory(&sharedMemory, SHMEM_KONC4D_WRITE));
+    ENSURE(createSharedMemory(&sharedMemory, SHMEM_TO_KONC4D));
     char received[SHMEM_MESSAGE_LENGTH];
     ReturnCode receivedCode;
 

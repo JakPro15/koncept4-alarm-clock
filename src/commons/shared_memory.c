@@ -27,7 +27,7 @@ static void printSharedMemory(struct SharedMemory *sharedMemory)
 
 ReturnCode isKonc4dOn(void)
 {
-    HANDLE mutex = OpenMutex(SYNCHRONIZE, FALSE, shmemMutexes[SHMEM_KONC4D_WRITE]);
+    HANDLE mutex = OpenMutex(SYNCHRONIZE, FALSE, shmemMutexes[SHMEM_TO_KONC4D]);
     if(mutex == NULL)
     {
         if(GetLastError() == ERROR_FILE_NOT_FOUND)
@@ -195,7 +195,7 @@ ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message, unsi
     int next = getNextFreeIndex(sharedMemory.shared);
     if(next == NO_NODE)
     {
-        LOG_LINE(LOG_ERROR, "Send failed");
+        LOG_LINE(LOG_TRACE, "Send failed");
         ReleaseMutex(sharedMemory.mutex);
         return RET_FAILURE;
     }

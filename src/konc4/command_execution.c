@@ -3,6 +3,7 @@
 #include "shared_memory.h"
 #include "input_loop.h"
 #include "konc4d_starting.h"
+#include "action_receiving.h"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -93,13 +94,42 @@ ReturnCode executeSkip(unsigned minutesToSkip)
 }
 
 
+static const char* actionType[3] = {"shutdown", "notify", "reset"};
+
+
+ReturnCode executeShow(void)
+{
+    printf("Trying to obtain action data from konc4d.\n");
+    struct PassedAction *actions;
+    unsigned size;
+    ReturnCode obtained;
+    RETHROW(obtained = obtainActions(&actions, &size));
+    if(obtained == RET_FAILURE)
+    {
+        printf("Failed to obtain action data from konc4d.\n");
+        LOG_LINE(LOG_WARNING, "Failed to obtain actions from konc4d");
+        return RET_FAILURE;
+    }
+    printf("Actions:\n");
+    for(unsigned i = 0; i < size; i++)
+    {
+        printf("%d) {%02d.%02d %02d:%02d, type: %s, %s}\n", i,
+               actions[i].timestamp.date.day, actions[i].timestamp.date.month,
+               actions[i].timestamp.time.hour, actions[i].timestamp.time.minute,
+               actionType[actions[i].type], actions[i].repeated ? "repeated" : "not repeated");
+    }
+    LOG_LINE(LOG_INFO, "konc4 show command executed successfully");
+    return RET_SUCCESS;
+}
+
+
 ReturnCode ensuredOpenSharedMemory(struct SharedMemoryFile *sharedMemory)
 {
     ReturnCode isOn;
     RETHROW(isOn = isKonc4dOn());
     if(isOn == RET_FAILURE)
         RETURN_FAIL(promptForKonc4dStart());
-    ENSURE(openSharedMemory(sharedMemory, SHMEM_KONC4D_WRITE));
+    ENSURE(openSharedMemory(sharedMemory, SHMEM_TO_KONC4D));
     return RET_SUCCESS;
 }
 

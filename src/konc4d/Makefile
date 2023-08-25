@@ -24,7 +24,7 @@ $(EXE): $(OBJ) $(COMMONS_OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(TEST_EXE): $(OBJ) $(TEST_OBJ) $(COMMONS_OBJ) $(TESTING_OBJ)
-	$(CC) $(CFLAGS) -o $@ $(filter-out output/main.o,$(OBJ)) $(TEST_OBJ) $(COMMONS_OBJ) $(TESTING_OBJ) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $(filter-out output/main.o output/message_processing.o,$(OBJ)) $(TEST_OBJ) $(COMMONS_OBJ) $(TESTING_OBJ) $(LDFLAGS)
 
 output/%.d: %.c
 	$(call make_depend,$@)

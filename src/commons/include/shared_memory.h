@@ -8,8 +8,8 @@
 #include "assert.h"
 
 
-#define SHMEM_KONC4D_WRITE 0
-#define SHMEM_KONC4D_READ 1
+#define SHMEM_TO_KONC4D 0
+#define SHMEM_FROM_KONC4D 1
 
 #define SHMEM_QUEUE_LENGTH 8
 #define SHMEM_MESSAGE_LENGTH (unsigned) sizeof(struct PassedAction)
