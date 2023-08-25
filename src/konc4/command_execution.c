@@ -113,7 +113,7 @@ ReturnCode executeShow(void)
     printf("Actions:\n");
     for(unsigned i = 0; i < size; i++)
     {
-        printf("%d) {%02d.%02d %02d:%02d, type: %s, %s}\n", i,
+        printf("%d) {%02d.%02d %02d:%02d, type: %s, %s}\n", i + 1,
                actions[i].timestamp.date.day, actions[i].timestamp.date.month,
                actions[i].timestamp.time.hour, actions[i].timestamp.time.minute,
                actionType[actions[i].type], actions[i].repeated ? "repeated" : "not repeated");

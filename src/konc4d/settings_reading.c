@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#define SETTINGS_FILE_BUFFER_SIZE 4 * 1024  // fatter buffer to fit entire file in memory
+
 
 ReturnCode getLine(FILE *file, struct SizedString *toWrite)
 {
@@ -80,11 +82,11 @@ ReturnCode skipPreprocessingDirectives(FILE *settingsFile)
 {
     char lastCharacter;
     RETURN_FAIL(skipUntil(settingsFile, isNotWhitespace, &lastCharacter));
-    if(lastCharacter != '#')
-        return unGetCharacter(settingsFile, lastCharacter);
-
-    RETURN_FAIL(skipUntil(settingsFile, isPreprocessingDelimiter, &lastCharacter));
-    RETURN_FAIL(skipUntil(settingsFile, isNotWhitespace, &lastCharacter));
+    while(lastCharacter == '#')
+    {
+        RETURN_FAIL(skipUntil(settingsFile, isPreprocessingDelimiter, &lastCharacter));
+        RETURN_FAIL(skipUntil(settingsFile, isNotWhitespace, &lastCharacter));
+    }
     return unGetCharacter(settingsFile, lastCharacter);
 }
 
@@ -120,6 +122,12 @@ ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, str
     if((settingsFile = fopen(fileName, "rb")) == NULL)
     {
         LOG_LINE(LOG_ERROR, "Failed to open settings file %s", fileName);
+        return RET_ERROR;
+    }
+    if(setvbuf(settingsFile, NULL, _IOFBF, SETTINGS_FILE_BUFFER_SIZE) != 0)
+    {
+        LOG_LINE(LOG_ERROR, "setvbuf failed");
+        fclose(settingsFile);
         return RET_ERROR;
     }
     struct GatheredDefines preprocessingDefines;

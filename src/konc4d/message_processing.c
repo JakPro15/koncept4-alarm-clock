@@ -2,7 +2,7 @@
 #include "logging.h"
 #include "shared_memory.h"
 
-#define SHMEM_DELAY 500
+#define SHMEM_DELAY 100
 #define SHMEM_TIMEOUT 5000
 #define SHMEM_TICKS_TIMEOUT SHMEM_TIMEOUT / SHMEM_DELAY
 

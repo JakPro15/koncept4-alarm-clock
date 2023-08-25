@@ -88,7 +88,7 @@ ReturnCode testFitDefine(void)
     ASSERT(fitDefine("muu", sizeof("muu"), &actions, defines, now) == RET_FAILURE);
     ASSERT(fitDefine("hehe xd", sizeof("hehe xd"), &actions, defines, now) == RET_FAILURE);
     ASSERT(fitDefine("3define(ab)", sizeof("3define(ab)"), &actions, defines, now) == RET_ERROR);
-    ASSERT(fitDefine("//3define(ab)", sizeof("3define(ab)"), &actions, defines, now) == RET_SUCCESS);
+    ASSERT(fitDefine("//3define(ab)", sizeof("//3define(ab)"), &actions, defines, now) == RET_SUCCESS);
 
     const char line1[] = "define1";
     ASSERT_ENSURE(fitDefine(line1, sizeof(line1), &actions, defines, now));
