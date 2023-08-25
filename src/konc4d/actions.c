@@ -368,11 +368,11 @@ ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestam
     {
         if(toWrite->timestamp.date.day == 29 && toWrite->timestamp.date.month == 2)
             return RET_FAILURE;
-        toWrite->repeated = true;
+        toWrite->repeatPeriod = MINUTES_IN_DAY;
         writeCurrentDate(toWrite, now);
     }
     else
-        toWrite->repeated = false;
+        toWrite->repeatPeriod = false;
     ENSURE(getActionType(&currentString, toWrite));
     ENSURE(getActionArguments(&currentString, toWrite));
     if(*currentString != '\0')
@@ -387,12 +387,12 @@ ReturnCode popActionWithRepeat(struct ActionQueue **head, struct Action *toWrite
     ENSURE(popAction(head, &popped));
     if(toWrite != NULL)
         *toWrite = popped;
-    if(popped.repeated)
+    if(popped.repeatPeriod)
     {
         int actionYear = now.currentYear;
         if(basicCompareTimestamp(now.timestamp, popped.timestamp) >= 0)
             actionYear += 1;
-        popped.timestamp.date = getNextDay((struct YearTimestamp) {popped.timestamp, actionYear});
+        popped.timestamp = addMinutes((struct YearTimestamp) {popped.timestamp, actionYear}, popped.repeatPeriod).timestamp;
         ENSURE(addAction(head, &popped, now.timestamp));
     }
     return RET_SUCCESS;

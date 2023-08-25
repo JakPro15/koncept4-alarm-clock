@@ -18,7 +18,7 @@ struct PassedAction
 {
     struct Timestamp timestamp;
     enum ActionType type;
-    bool repeated;
+    unsigned repeatPeriod;
 };
 
 #endif

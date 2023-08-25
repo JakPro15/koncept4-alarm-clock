@@ -50,19 +50,19 @@ ReturnCode testGatherDefines(void)
     ASSERT(basicCompareTimestamp((first).timestamp, (second).timestamp) == 0); \
     ASSERT((first).type == (second).type); \
     ASSERT((first).args.shutdown.delay == (second).args.shutdown.delay); \
-    ASSERT((first).repeated == (second).repeated)
+    ASSERT((first).repeatPeriod == (second).repeatPeriod)
 
 #define ASSERT_EQUAL_RST(first, second) \
     ASSERT(basicCompareTimestamp((first).timestamp, (second).timestamp) == 0); \
     ASSERT((first).type == (second).type); \
-    ASSERT((first).repeated == (second).repeated)
+    ASSERT((first).repeatPeriod == (second).repeatPeriod)
 
 #define ASSERT_EQUAL_NFY(first, second) \
     ASSERT(basicCompareTimestamp((first).timestamp, (second).timestamp) == 0); \
     ASSERT((first).type == (second).type); \
     ASSERT((first).args.notify.repeats == (second).args.notify.repeats); \
     ASSERT(strcmp((first).args.notify.fileName, (second).args.notify.fileName) == 0); \
-    ASSERT((first).repeated == (second).repeated)
+    ASSERT((first).repeatPeriod == (second).repeatPeriod)
 
 
 ReturnCode testFitDefine(void)
@@ -109,7 +109,7 @@ ReturnCode testFitDefine(void)
     const char line4[] = "4(11, 11, notify, hehe.wav, 5)", line5[] = "4(1.03 11, 12, reset)";
     ASSERT_ENSURE(fitDefine(line4, sizeof(line4), &actions, defines, now));
     ASSERT_ENSURE(fitDefine(line5, sizeof(line5), &actions, defines, now));
-    ASSERT_EQUAL_NFY(AQ_FIRST(actions), ((struct Action) {{{1, 1}, {11, 11}}, NOTIFY, {.notify = {5, "hehe.wav"}}, true}));
+    ASSERT_EQUAL_NFY(AQ_FIRST(actions), ((struct Action) {{{1, 1}, {11, 11}}, NOTIFY, {.notify = {5, "hehe.wav"}}, MINUTES_IN_DAY}));
     ASSERT_EQUAL_RST(AQ_SECOND(actions), ((struct Action) {{{1, 3}, {11, 12}}, RESET, {{0}}, false}));
 
     destroyActionQueue(&actions);
@@ -128,22 +128,22 @@ ReturnCode testLoadActionsFromFileWithPreprocessing(void)
                   (struct YearTimestamp) {{{1, 1}, {0, 0}}, 2020}));
 
     ASSERT_EQUAL_SHT(AQ_FIRST(results), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
-                     {.shutdown = {DEFAULT_SHUTDOWN_DELAY}}, true}));
+                     {.shutdown = {DEFAULT_SHUTDOWN_DELAY}}, MINUTES_IN_DAY}));
     ASSERT_EQUAL_SHT(AQ_SECOND(results), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
-                     {.shutdown = {12}}, true}));
+                     {.shutdown = {12}}, MINUTES_IN_DAY}));
     ASSERT_EQUAL_SHT(AQ_THIRD(results), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
-                     {.shutdown = {10}}, true}));
+                     {.shutdown = {10}}, MINUTES_IN_DAY}));
     ASSERT_EQUAL_SHT(AQ_FOURTH(results), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
-                     {.shutdown = {9}}, true}));
+                     {.shutdown = {9}}, MINUTES_IN_DAY}));
 
     ASSERT_EQUAL_NFY(AQ_FIFTH(results), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
-                     {.notify = {DEFAULT_NOTIFY_SOUND_REPEATS, DEFAULT_NOTIFY_SOUND}}, true}));
+                     {.notify = {DEFAULT_NOTIFY_SOUND_REPEATS, DEFAULT_NOTIFY_SOUND}}, MINUTES_IN_DAY}));
     ASSERT_EQUAL_NFY(AQ_SIXTH(results), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
-                     {.notify = {DEFAULT_NOTIFY_SOUND_REPEATS, DEFAULT_NOTIFY_SOUND}}, true}));
+                     {.notify = {DEFAULT_NOTIFY_SOUND_REPEATS, DEFAULT_NOTIFY_SOUND}}, MINUTES_IN_DAY}));
     ASSERT_EQUAL_NFY(AQ_SEVENTH(results), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
-                     {.notify = {1, "bruh.mp4"}}, true}));
+                     {.notify = {1, "bruh.mp4"}}, MINUTES_IN_DAY}));
     ASSERT_EQUAL_NFY(AQ_EIGHTH(results), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
-                     {.notify = {2, "bruh.wav"}}, true}));
+                     {.notify = {2, "bruh.wav"}}, MINUTES_IN_DAY}));
     return RET_SUCCESS;
 }
 

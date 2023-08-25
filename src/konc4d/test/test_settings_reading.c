@@ -49,11 +49,11 @@ ReturnCode testLoadActionsFromFile(void)
     ASSERT(basicCompareTimestamp(AQ_FIRST(results).timestamp, (struct Timestamp) {{2, 4}, {11, 30}}) == 0);
     ASSERT(strcmp(AQ_FIRST(results).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
     ASSERT(AQ_FIRST(results).args.notify.repeats == 5);
-    ASSERT(AQ_FIRST(results).repeated == true);
+    ASSERT(AQ_FIRST(results).repeatPeriod == MINUTES_IN_DAY);
 
     ASSERT(AQ_SECOND(results).type == RESET);
     ASSERT(basicCompareTimestamp(AQ_SECOND(results).timestamp, (struct Timestamp) {{12, 9}, {22, 30}}) == 0);
-    ASSERT(AQ_SECOND(results).repeated == false);
+    ASSERT(AQ_SECOND(results).repeatPeriod == false);
 
     ASSERT(results->next->next == NULL);
     destroyActionQueue(&results);
@@ -76,16 +76,16 @@ ReturnCode testLoadActionsFromFileWithFeb29(void)
     ASSERT(basicCompareTimestamp(AQ_FIRST(results).timestamp, (struct Timestamp) {{2, 4}, {11, 30}}) == 0);
     ASSERT(strcmp(AQ_FIRST(results).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
     ASSERT(AQ_FIRST(results).args.notify.repeats == 5);
-    ASSERT(AQ_FIRST(results).repeated == true);
+    ASSERT(AQ_FIRST(results).repeatPeriod == MINUTES_IN_DAY);
 
     ASSERT(AQ_SECOND(results).type == RESET);
     ASSERT(basicCompareTimestamp(AQ_SECOND(results).timestamp, (struct Timestamp) {{12, 9}, {22, 30}}) == 0);
-    ASSERT(AQ_SECOND(results).repeated == false);
+    ASSERT(AQ_SECOND(results).repeatPeriod == false);
 
     ASSERT(AQ_THIRD(results).type == SHUTDOWN);
     ASSERT(basicCompareTimestamp(AQ_THIRD(results).timestamp, (struct Timestamp) {{29, 2}, {11, 30}}) == 0);
     ASSERT(AQ_THIRD(results).args.shutdown.delay == 35);
-    ASSERT(AQ_THIRD(results).repeated == false);
+    ASSERT(AQ_THIRD(results).repeatPeriod == false);
 
     ASSERT(results->next->next->next == NULL);
     destroyActionQueue(&results);

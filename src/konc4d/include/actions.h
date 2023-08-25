@@ -20,7 +20,7 @@ struct Action
         struct {unsigned repeats; char fileName[MAX_NOTIFY_FILE_NAME_SIZE + 1];} notify;
         struct {unsigned delay;} shutdown;
     } args;
-    bool repeated;
+    unsigned repeatPeriod;
 };
 
 
@@ -52,7 +52,7 @@ void destroyActionQueue(struct ActionQueue **head);
 
 inline struct PassedAction getPassedAction(struct Action *action)
 {
-    return (struct PassedAction) {action->timestamp, action->type, action->repeated};
+    return (struct PassedAction) {action->timestamp, action->type, action->repeatPeriod};
 }
 
 #endif

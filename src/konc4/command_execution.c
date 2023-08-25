@@ -116,7 +116,7 @@ ReturnCode executeShow(void)
         printf("%d) {%02d.%02d %02d:%02d, type: %s, %s}\n", i + 1,
                actions[i].timestamp.date.day, actions[i].timestamp.date.month,
                actions[i].timestamp.time.hour, actions[i].timestamp.time.minute,
-               actionType[actions[i].type], actions[i].repeated ? "repeated" : "not repeated");
+               actionType[actions[i].type], actions[i].repeatPeriod ? "repeated" : "not repeated");
     }
     LOG_LINE(LOG_INFO, "konc4 show command executed successfully");
     return RET_SUCCESS;

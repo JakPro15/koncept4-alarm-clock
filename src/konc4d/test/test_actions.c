@@ -8,7 +8,7 @@
     ASSERT(basicCompareTimestamp((first).timestamp, (second).timestamp) == 0); \
     ASSERT((first).type == (second).type); \
     ASSERT((first).args.shutdown.delay == (second).args.shutdown.delay); \
-    ASSERT((first).repeated == (second).repeated)
+    ASSERT((first).repeatPeriod == (second).repeatPeriod)
 
 
 ReturnCode testAddActionRegular(void)
@@ -126,8 +126,8 @@ ReturnCode testPopActionEmpty(void)
 ReturnCode testPopActionWithRepeat(void)
 {
     struct ActionQueue *head = NULL;
-    struct Action toWrite, first = {{{6, 3}, {11, 0}}, SHUTDOWN, .args.shutdown = {1}, .repeated = true};
-    struct Action second = {{{6, 3}, {12, 0}}, SHUTDOWN, .args.shutdown = {5}, .repeated = false};
+    struct Action toWrite, first = {{{6, 3}, {11, 0}}, SHUTDOWN, .args.shutdown = {1}, .repeatPeriod = MINUTES_IN_DAY};
+    struct Action second = {{{6, 3}, {12, 0}}, SHUTDOWN, .args.shutdown = {5}, .repeatPeriod = false};
     struct YearTimestamp now = {{{6, 3}, {5, 0}}, 2015};
     ASSERT_ENSURE(addAction(&head, &first, now.timestamp));
     ASSERT_ENSURE(addAction(&head, &second, now.timestamp));
@@ -143,7 +143,7 @@ ReturnCode testPopActionWithRepeat(void)
         ASSERT(toWrite.type == SHUTDOWN);
         ASSERT(basicCompareTimestamp(toWrite.timestamp, (struct Timestamp) {{7 + i, 3}, {11, 0}}) == 0);
         ASSERT(toWrite.args.shutdown.delay == 1);
-        ASSERT(toWrite.repeated == true);
+        ASSERT(toWrite.repeatPeriod == MINUTES_IN_DAY);
     }
 
     return RET_SUCCESS;
@@ -157,7 +157,7 @@ ReturnCode testParseActionNoDateReset(void)
                   (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 1234}));
     ASSERT(parsed.type == RESET);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{21, 1}, {22, 30}}) == 0);
-    ASSERT(parsed.repeated == true);
+    ASSERT(parsed.repeatPeriod == MINUTES_IN_DAY);
     return RET_SUCCESS;
 }
 
@@ -170,7 +170,7 @@ ReturnCode testParseActionNoDateShutdown(void)
     ASSERT(parsed.type == SHUTDOWN);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{22, 1}, {11, 30}}) == 0);
     ASSERT(parsed.args.shutdown.delay == 35);
-    ASSERT(parsed.repeated == true);
+    ASSERT(parsed.repeatPeriod == MINUTES_IN_DAY);
     return RET_SUCCESS;
 }
 
@@ -184,7 +184,7 @@ ReturnCode testParseActionNoDateNotify(void)
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 3}, {11, 30}}) == 0);
     ASSERT(strcmp(parsed.args.notify.fileName, "hehexd.wav") == 0);
     ASSERT(parsed.args.notify.repeats == 35);
-    ASSERT(parsed.repeated == true);
+    ASSERT(parsed.repeatPeriod == MINUTES_IN_DAY);
     return RET_SUCCESS;
 }
 
@@ -198,7 +198,7 @@ ReturnCode testParseActionNoDateNotifyNoNumber(void)
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 3}, {11, 30}}) == 0);
     ASSERT(strcmp(parsed.args.notify.fileName, "hehexd.wav") == 0);
     ASSERT(parsed.args.notify.repeats == 1);
-    ASSERT(parsed.repeated == true);
+    ASSERT(parsed.repeatPeriod == MINUTES_IN_DAY);
     return RET_SUCCESS;
 }
 
@@ -212,7 +212,7 @@ ReturnCode testParseActionNoDateNotifyNoFileName(void)
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 3}, {11, 30}}) == 0);
     ASSERT(strcmp(parsed.args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
     ASSERT(parsed.args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
-    ASSERT(parsed.repeated == true);
+    ASSERT(parsed.repeatPeriod == MINUTES_IN_DAY);
     return RET_SUCCESS;
 }
 
@@ -226,7 +226,7 @@ ReturnCode testParseActionNoDateNotifySpacesFileName(void)
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{1, 3}, {11, 30}}) == 0);
     ASSERT(strcmp(parsed.args.notify.fileName, "Hehe Xd.wav") == 0);
     ASSERT(parsed.args.notify.repeats == 1);
-    ASSERT(parsed.repeated == true);
+    ASSERT(parsed.repeatPeriod == MINUTES_IN_DAY);
     return RET_SUCCESS;
 }
 
@@ -238,7 +238,7 @@ ReturnCode testParseActionWithDateReset(void)
                   (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 1234}));
     ASSERT(parsed.type == RESET);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{12, 9}, {22, 30}}) == 0);
-    ASSERT(parsed.repeated == false);
+    ASSERT(parsed.repeatPeriod == false);
     return RET_SUCCESS;
 }
 
@@ -255,7 +255,7 @@ ReturnCode testParseActionWithDateShutdown(void)
     ASSERT(parsed.type == SHUTDOWN);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{29, 2}, {11, 30}}) == 0);
     ASSERT(parsed.args.shutdown.delay == 35);
-    ASSERT(parsed.repeated == false);
+    ASSERT(parsed.repeatPeriod == false);
     return RET_SUCCESS;
 }
 
@@ -269,7 +269,7 @@ ReturnCode testParseAction29February(void)
     ASSERT(parseAction("29.02 11:30 reset", &parsed1, (struct YearTimestamp) {{{1, 1}, {11, 30}}, 2024}) == RET_SUCCESS);
     ASSERT(parsed1.type == RESET);
     ASSERT(basicCompareTimestamp(parsed1.timestamp, (struct Timestamp) {{29, 2}, {11, 30}}) == 0);
-    ASSERT(parsed1.repeated == false);
+    ASSERT(parsed1.repeatPeriod == false);
 
     ASSERT(parseAction("29.02 11:30 reset", &parsed2, (struct YearTimestamp) {{{1, 12}, {11, 30}}, 2020}) == RET_FAILURE);
     ASSERT(parseAction("29.02 11:30 reset", &parsed2, (struct YearTimestamp) {{{1, 12}, {11, 30}}, 2021}) == RET_FAILURE);
@@ -277,7 +277,7 @@ ReturnCode testParseAction29February(void)
     ASSERT(parseAction("29.02 11:30 reset", &parsed2, (struct YearTimestamp) {{{1, 12}, {11, 30}}, 2023}) == RET_SUCCESS);
     ASSERT(parsed2.type == RESET);
     ASSERT(basicCompareTimestamp(parsed2.timestamp, (struct Timestamp) {{29, 2}, {11, 30}}) == 0);
-    ASSERT(parsed2.repeated == false);
+    ASSERT(parsed2.repeatPeriod == false);
     return RET_SUCCESS;
 }
 
@@ -336,10 +336,10 @@ ReturnCode testSkipUntilTimestamp(void)
     struct YearTimestamp until = {{{4, 7}, {14, 21}}, 2023};
     struct Action actions[] = {
         {{{4, 7}, {14, 20}}, RESET, {{0}}, false},
-        {{{4, 7}, {14, 21}}, RESET, {{0}}, true},
+        {{{4, 7}, {14, 21}}, RESET, {{0}}, MINUTES_IN_DAY},
         {{{4, 7}, {14, 22}}, RESET, {{0}}, false},
         {{{3, 7}, {14, 15}}, RESET, {{0}}, false},
-        {{{5, 7}, {14, 15}}, RESET, {{0}}, true}
+        {{{5, 7}, {14, 15}}, RESET, {{0}}, MINUTES_IN_DAY}
     };
     struct ActionQueue *head = NULL;
     for(int i = 0; i < 5; i++)
@@ -348,19 +348,19 @@ ReturnCode testSkipUntilTimestamp(void)
 
     ASSERT(AQ_FIRST(head).type == RESET);
     ASSERT(basicCompareTimestamp(AQ_FIRST(head).timestamp, actions[2].timestamp) == 0);
-    ASSERT(AQ_FIRST(head).repeated == false);
+    ASSERT(AQ_FIRST(head).repeatPeriod == false);
 
     ASSERT(AQ_SECOND(head).type == RESET);
     ASSERT(basicCompareTimestamp(AQ_SECOND(head).timestamp, actions[4].timestamp) == 0);
-    ASSERT(AQ_SECOND(head).repeated == true);
+    ASSERT(AQ_SECOND(head).repeatPeriod == MINUTES_IN_DAY);
 
     ASSERT(AQ_THIRD(head).type == RESET);
     ASSERT(basicCompareTimestamp(AQ_THIRD(head).timestamp, (struct Timestamp) {{5, 7}, {14, 21}}) == 0);
-    ASSERT(AQ_THIRD(head).repeated == true);
+    ASSERT(AQ_THIRD(head).repeatPeriod == MINUTES_IN_DAY);
 
     ASSERT(AQ_FOURTH(head).type == RESET);
     ASSERT(basicCompareTimestamp(AQ_FOURTH(head).timestamp, actions[3].timestamp) == 0);
-    ASSERT(AQ_FOURTH(head).repeated == false);
+    ASSERT(AQ_FOURTH(head).repeatPeriod == false);
 
     ASSERT(head->next->next->next->next == NULL);
     return RET_SUCCESS;

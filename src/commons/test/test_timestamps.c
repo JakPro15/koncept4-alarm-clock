@@ -179,10 +179,10 @@ ReturnCode testAddMinutes(void)
     YTS_EQUAL(addMinutes(YTS(28, 2, 3, 59, 2021), 50), 28, 2, 4, 49, 2021);
     YTS_EQUAL(addMinutes(YTS(28, 2, 23, 59, 2021), 50), 1, 3, 0, 49, 2021);
     YTS_EQUAL(addMinutes(YTS(28, 2, 23, 59, 2024), 50), 29, 2, 0, 49, 2024);
-    YTS_EQUAL(addMinutes(YTS(28, 2, 23, 59, 2024), 50 + 24 * 60), 1, 3, 0, 49, 2024);
+    YTS_EQUAL(addMinutes(YTS(28, 2, 23, 59, 2024), 50 + MINUTES_IN_DAY), 1, 3, 0, 49, 2024);
 
     YTS_EQUAL(addMinutes(YTS(31, 12, 12, 0, 2020), 13 * 60), 1, 1, 1, 0, 2021);
-    YTS_EQUAL(addMinutes(YTS(2, 1, 12, 0, 2020), 3 * 365 * 24 * 60), 1, 1, 12, 0, 2023);
+    YTS_EQUAL(addMinutes(YTS(2, 1, 12, 0, 2020), 3 * 365 * MINUTES_IN_DAY), 1, 1, 12, 0, 2023);
     return RET_SUCCESS;
 }
 
