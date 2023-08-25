@@ -15,7 +15,7 @@ struct YearTimestamp getCurrentTimestamp(void)
 }
 
 
-inline static bool does29FebruaryExist(unsigned currentYear)
+static bool does29FebruaryExist(unsigned currentYear)
 {
     return currentYear % 4 == 0 && (currentYear % 100 != 0 || currentYear % 400 == 0);
 }

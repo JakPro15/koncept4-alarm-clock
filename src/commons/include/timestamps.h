@@ -52,7 +52,7 @@ int basicCompareDate(const struct DateOfYear first, const struct DateOfYear seco
 
 
 /* Returns 1 if first is later, -1 if first is earlier, 0 if they're equal.
- * Considers times before current time and after midnight to be tomorrow's. */
+ * without respect of the current time */
 int basicCompareTimestamp(const struct Timestamp first, const struct Timestamp second);
 
 
