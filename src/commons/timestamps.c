@@ -15,7 +15,7 @@ struct YearTimestamp getCurrentTimestamp(void)
 }
 
 
-static bool does29FebruaryExist(unsigned currentYear)
+static bool isLeapYear(unsigned currentYear)
 {
     return currentYear % 4 == 0 && (currentYear % 100 != 0 || currentYear % 400 == 0);
 }
@@ -32,7 +32,7 @@ bool isDateValid(struct DateOfYear toValidate, unsigned year)
             return true;
         break;
     case 2:
-        if(does29FebruaryExist(year))
+        if(isLeapYear(year))
         {
             if(toValidate.day <= 29)
                 return true;
@@ -61,7 +61,7 @@ struct DateOfYear getNextDay(struct YearTimestamp now)
             return (struct DateOfYear) {.day = 1, .month = current.month + 1};
         break;
     case 2:
-        if(does29FebruaryExist(now.currentYear))
+        if(isLeapYear(now.currentYear))
         {
             if(current.day == 29)
                 return (struct DateOfYear) {.day = 1, .month = 3};
@@ -77,19 +77,57 @@ struct DateOfYear getNextDay(struct YearTimestamp now)
 }
 
 
+static const unsigned monthLengths[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+static unsigned getMonthLength(unsigned month, unsigned year)
+{
+    if(month == 2 && isLeapYear(year))
+        return 29;
+    else
+        return monthLengths[month - 1];
+}
+
+
+static unsigned getYearLength(unsigned year)
+{
+    return isLeapYear(year) ? 366 : 365;
+}
+
+
+static unsigned getDayOfYear(struct DateOfYear date, unsigned year)
+{
+    unsigned day = 0;
+    for(unsigned i = 1; i < date.month; i++)
+        day += getMonthLength(i, year);
+    day += date.day;
+    return day;
+}
+
+
+static struct DateOfYear dayOfYearToDate(unsigned day, unsigned year)
+{
+    int month = 1;
+    while((int) day - (int) getMonthLength(month, year) > 0)
+        day -= getMonthLength(month++, year);
+    return (struct DateOfYear) {day, month};
+}
+
+
 struct YearTimestamp addMinutes(struct YearTimestamp now, unsigned delay)
 {
     struct YearTimestamp result = now;
     result.timestamp.time.minute += delay;
+
     result.timestamp.time.hour += result.timestamp.time.minute / 60;
     result.timestamp.time.minute %= 60;
-    while(result.timestamp.time.hour > 23)
-    {
-        result.timestamp.time.hour -= 24;
-        result.timestamp.date = getNextDay(result);
-        if(result.timestamp.date.day == 1 && result.timestamp.date.month == 1)
-            result.currentYear += 1;
-    }
+
+    unsigned day = getDayOfYear(now.timestamp.date, now.currentYear);
+    day += result.timestamp.time.hour / 24;
+    result.timestamp.time.hour %= 24;
+
+    while(day > getYearLength(result.currentYear))
+        day -= getYearLength(result.currentYear++);
+
+    result.timestamp.date = dayOfYearToDate(day, result.currentYear);
     return result;
 }
 
