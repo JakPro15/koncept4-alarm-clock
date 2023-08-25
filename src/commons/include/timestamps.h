@@ -3,7 +3,9 @@
 
 #include <stdbool.h>
 
+#define MINUTES_IN_HOUR 60
 #define MINUTES_IN_DAY 24 * 60
+#define MINUTES_IN_WEEK 7 * 24 * 60
 
 
 struct DateOfYear

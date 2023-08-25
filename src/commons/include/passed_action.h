@@ -13,12 +13,14 @@ enum ActionType
     RESET
 };
 
+#define MONTHLY_REPEAT -1
+
 
 struct PassedAction
 {
     struct Timestamp timestamp;
     enum ActionType type;
-    unsigned repeatPeriod;
+    int repeatPeriod;
 };
 
 #endif

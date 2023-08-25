@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <math.h>
 
 #include "actions.h"
 #include "logging.h"
@@ -150,6 +151,53 @@ ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite)
     *head = (*head)->next;
     free(oldHead);
     return RET_SUCCESS;
+}
+
+
+static ReturnCode checkForPeriodSpecifier(char **string, struct Action *toWrite, const char *specifier, int period)
+{
+    unsigned specifierSize = strlen(specifier);
+    if(strnicmp(*string, specifier, specifierSize) == 0)
+    {
+        LOG_LINE(LOG_DEBUG, "Determined action specifier to be %s", specifier);
+        toWrite->repeatPeriod = period;
+        *string += specifierSize;
+        skipWhitespace(string);
+        return RET_SUCCESS;
+    }
+    return RET_FAILURE;
+}
+
+
+static ReturnCode getActionRepeatPeriod(char **string, struct Action *toWrite)
+{
+    toWrite->repeatPeriod = false;
+    TRY_END(checkForPeriodSpecifier(string, toWrite, "daily", MINUTES_IN_DAY));
+    TRY_END(checkForPeriodSpecifier(string, toWrite, "weekly", MINUTES_IN_WEEK));
+    TRY_END(checkForPeriodSpecifier(string, toWrite, "monthly", MONTHLY_REPEAT));
+    if(strnicmp(*string, "period", strlen("period")) == 0)
+    {
+        *string += strlen("period");
+        double hours;
+        int size;
+        int itemsRead = sscanf(*string, "%lf%n", &hours, &size);
+        if(itemsRead < 1)
+        {
+            LOG_LINE(LOG_ERROR, "Repeat period not given for 'period' repeat specifier");
+            return RET_ERROR;
+        }
+        *string += size;
+        toWrite->repeatPeriod = (int) round(hours * MINUTES_IN_HOUR);
+        if(toWrite->repeatPeriod < 1)
+        {
+            LOG_LINE(LOG_ERROR, "Repeat period given for 'period' repeat specifier below one minute: %lf", hours);
+            return RET_ERROR;
+        }
+        LOG_LINE(LOG_DEBUG, "Determined action specifier to be repeat %lf", hours);
+        skipWhitespace(string);
+        return RET_SUCCESS;
+    }
+    return RET_FAILURE;
 }
 
 
@@ -352,14 +400,14 @@ static ReturnCode getActionArguments(char **string, struct Action *toWrite)
 }
 
 
-// [date] minute shutdown delay
-// [date] minute notify filename repeats
-// [date] minute reset
 ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestamp now)
 {
     LOG_LINE(LOG_DEBUG, "Parsing action from string %s", string);
     char *currentString = string;
     skipWhitespace(&currentString);
+
+    ReturnCode repeatSpecifier;
+    RETHROW(repeatSpecifier = getActionRepeatPeriod(&currentString, toWrite));
 
     ReturnCode dateParsing;
     RETHROW(dateParsing = getActionDate(&currentString, toWrite, now));
@@ -368,11 +416,14 @@ ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestam
     {
         if(toWrite->timestamp.date.day == 29 && toWrite->timestamp.date.month == 2)
             return RET_FAILURE;
+        if(repeatSpecifier == RET_SUCCESS)
+        {
+            LOG_LINE(LOG_ERROR, "If repeat specifier is given, date must also be specified");
+            return RET_ERROR;
+        }
         toWrite->repeatPeriod = MINUTES_IN_DAY;
         writeCurrentDate(toWrite, now);
     }
-    else
-        toWrite->repeatPeriod = false;
     ENSURE(getActionType(&currentString, toWrite));
     ENSURE(getActionArguments(&currentString, toWrite));
     if(*currentString != '\0')

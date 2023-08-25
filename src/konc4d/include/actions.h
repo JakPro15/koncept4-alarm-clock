@@ -20,7 +20,7 @@ struct Action
         struct {unsigned repeats; char fileName[MAX_NOTIFY_FILE_NAME_SIZE + 1];} notify;
         struct {unsigned delay;} shutdown;
     } args;
-    unsigned repeatPeriod;
+    int repeatPeriod;
 };
 
 
@@ -45,7 +45,28 @@ struct ActionQueue
 
 ReturnCode addAction(struct ActionQueue **head, struct Action *action, struct Timestamp now) NO_IGNORE;
 ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite) NO_IGNORE;
+
+/* Action line format:
+ * [[repeat specifier] date] minute type [arguments]
+ * repeat specifier := (daily|weekly|monthly|period N)
+ *      period given in hours as floating-point number
+ *      default: if date is given, no repeat
+ *               if date not given, daily
+ * date := DD.MM
+ * minute := hh:mm
+ * type := (shutdown|notify|reset)
+ * arguments :=
+ *      if type == shutdown: delay
+ *          delay given in seconds, default DEFAULT_SHUTDOWN_DELAY
+ *      if type == reset:
+ *          no arguments permitted
+ *      if type == notify: [filename [repeats]]
+ *          filename specifies a file in ASSET_DIRECTORY, default is DEFAULT_NOTIFY_SOUND with DEFAULT_NOTIFY_SOUND_REPEATS
+ *              filename must not be longer than MAX_NOTIFY_FILE_NAME_SIZE
+ *          repeats is an integer, default is 1 if filename given, DEFAULT_NOTIFY_SOUND_REPEATS if not
+ */
 ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestamp now) NO_IGNORE;
+
 ReturnCode popActionWithRepeat(struct ActionQueue **head, struct Action *toWrite, struct YearTimestamp now) NO_IGNORE;
 ReturnCode skipUntilTimestamp(struct ActionQueue **head, struct Timestamp time, struct YearTimestamp now) NO_IGNORE;
 void destroyActionQueue(struct ActionQueue **head);
