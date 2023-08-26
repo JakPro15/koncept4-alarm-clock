@@ -39,6 +39,10 @@ bool isDateValid(struct DateOfYear toValidate, unsigned year);
 struct DateOfYear getNextDay(struct YearTimestamp time);
 struct YearTimestamp addMinutes(struct YearTimestamp now, unsigned delay);
 
+/* Returns difference in minutes: second - first */
+unsigned difference(struct YearTimestamp earlier, struct YearTimestamp later);
+struct YearTimestamp deduceYear(struct Timestamp toDeduce, struct YearTimestamp now);
+
 
 /* Returns 1 if first is later, -1 if first is earlier, 0 if they're equal,
  * without respect of the current time */
@@ -63,5 +67,9 @@ int basicCompareTimestamp(const struct Timestamp first, const struct Timestamp s
 /* Returns 1 if first is later, -1 if first is earlier, 0 if they're equal.
  * Considers times before current time and after midnight to be tomorrow's. */
 int compareTimestamp(const struct Timestamp first, const struct Timestamp second, const struct Timestamp now);
+
+
+/* Returns 1 if first is later, -1 if first is earlier, 0 if they're equal. */
+int compareYearTimestamp(const struct YearTimestamp first, const struct YearTimestamp second);
 
 #endif

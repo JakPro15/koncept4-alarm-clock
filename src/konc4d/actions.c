@@ -159,7 +159,7 @@ static ReturnCode checkForPeriodSpecifier(char **string, struct Action *toWrite,
     unsigned specifierSize = strlen(specifier);
     if(strnicmp(*string, specifier, specifierSize) == 0)
     {
-        LOG_LINE(LOG_DEBUG, "Determined action specifier to be %s", specifier);
+        LOG_LINE(LOG_DEBUG, "Determined action specifier to be '%s'", specifier);
         toWrite->repeatPeriod = period;
         *string += specifierSize;
         skipWhitespace(string);
@@ -193,7 +193,7 @@ static ReturnCode getActionRepeatPeriod(char **string, struct Action *toWrite)
             LOG_LINE(LOG_ERROR, "Repeat period given for 'period' repeat specifier below one minute: %lf", hours);
             return RET_ERROR;
         }
-        LOG_LINE(LOG_DEBUG, "Determined action specifier to be repeat %lf", hours);
+        LOG_LINE(LOG_DEBUG, "Determined action specifier to be 'repeat %lf'", hours);
         skipWhitespace(string);
         return RET_SUCCESS;
     }
@@ -234,6 +234,26 @@ static ReturnCode getActionDate(char **string, struct Action *toWrite, struct Ye
     toWrite->timestamp.date.day = day;
     toWrite->timestamp.date.month = month;
     return RET_SUCCESS;
+}
+
+
+void adjustDateForRepeat(struct Action *toWrite, struct YearTimestamp now)
+{
+    struct YearTimestamp actionTime = deduceYear(toWrite->timestamp, now);
+    if(toWrite->repeatPeriod == MONTHLY_REPEAT)
+    {
+        actionTime.currentYear = now.currentYear;
+        actionTime.timestamp.date.month = now.timestamp.date.month;
+        if(basicCompareTimestamp(actionTime.timestamp, now.timestamp) < 0)
+            actionTime.timestamp.date.month = actionTime.timestamp.date.month % 12 + 1;
+    }
+    else
+    {
+        --actionTime.currentYear;
+        unsigned diff = difference(actionTime, now);
+        actionTime = addMinutes(actionTime, (diff / toWrite->repeatPeriod + 1) * toWrite->repeatPeriod);
+    }
+    toWrite->timestamp = actionTime.timestamp;
 }
 
 
@@ -424,6 +444,8 @@ ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestam
         toWrite->repeatPeriod = MINUTES_IN_DAY;
         writeCurrentDate(toWrite, now);
     }
+    else if(repeatSpecifier == RET_SUCCESS)
+        adjustDateForRepeat(toWrite, now);
     ENSURE(getActionType(&currentString, toWrite));
     ENSURE(getActionArguments(&currentString, toWrite));
     if(*currentString != '\0')

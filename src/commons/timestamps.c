@@ -132,6 +132,31 @@ struct YearTimestamp addMinutes(struct YearTimestamp now, unsigned delay)
 }
 
 
+unsigned difference(struct YearTimestamp earlier, struct YearTimestamp later)
+{
+    int diff = 0;
+    while(later.currentYear > earlier.currentYear)
+        diff += getYearLength(--later.currentYear) * MINUTES_IN_DAY;
+
+    unsigned earlierDayOfYear = getDayOfYear(earlier.timestamp.date, earlier.currentYear);
+    unsigned laterDayOfYear = getDayOfYear(later.timestamp.date, later.currentYear);
+    diff += (laterDayOfYear - earlierDayOfYear) * MINUTES_IN_DAY;
+
+    diff += (later.timestamp.time.hour - earlier.timestamp.time.hour) * MINUTES_IN_HOUR;
+    diff += later.timestamp.time.minute - earlier.timestamp.time.minute;
+    return (unsigned) diff;
+}
+
+
+struct YearTimestamp deduceYear(struct Timestamp toDeduce, struct YearTimestamp now)
+{
+    if(basicCompareTimestamp(toDeduce, now.timestamp) <= 0)
+        return (struct YearTimestamp) {toDeduce, now.currentYear + 1};
+    else
+        return (struct YearTimestamp) {toDeduce, now.currentYear + 1};
+}
+
+
 int basicCompareTime(const struct TimeOfDay first, const struct TimeOfDay second)
 {
     if(first.hour > second.hour || (first.hour == second.hour && first.minute > second.minute))
@@ -204,4 +229,13 @@ int compareTimestamp(const struct Timestamp first, const struct Timestamp second
         else
             return basicCompareTimestamp(first, second);
     }
+}
+
+
+int compareYearTimestamp(const struct YearTimestamp first, const struct YearTimestamp second)
+{
+    if(first.currentYear != second.currentYear)
+        return first.currentYear < second.currentYear ? -1 : 1;
+    else
+        return basicCompareTimestamp(first.timestamp, second.timestamp);
 }
