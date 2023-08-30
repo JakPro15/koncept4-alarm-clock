@@ -471,6 +471,12 @@ ReturnCode popActionWithRepeat(struct ActionQueue **head, struct Action *toWrite
             popped.timestamp = addMinutes((struct YearTimestamp) {popped.timestamp, actionYear}, popped.repeatPeriod).timestamp;
         ENSURE(addAction(head, &popped, now.timestamp));
     }
+    if(toWrite != NULL && toWrite->repeatPeriod == MONTHLY_REPEAT)
+    {
+        unsigned actionYear = deduceYear(toWrite->timestamp, now).currentYear;
+        if(!isDateValid(toWrite->timestamp.date, actionYear))
+            toWrite->timestamp.date.day = getMonthLength(toWrite->timestamp.date.month, actionYear);
+    }
     return RET_SUCCESS;
 }
 

@@ -175,6 +175,57 @@ static ReturnCode testPopActionWithRepeatMonthly(void)
 }
 
 
+static ReturnCode testPopActionWithRepeatMonthlyCorrection31(void)
+{
+    struct ActionQueue *head = NULL;
+    struct Action toWrite, action = {{{31, 8}, {11, 0}}, SHUTDOWN, .args.shutdown = {1}, .repeatPeriod = MONTHLY_REPEAT};
+    struct YearTimestamp now = {{{6, 8}, {5, 0}}, 2015};
+    ASSERT_ENSURE(addAction(&head, &action, now.timestamp));
+
+    ASSERT_ENSURE(popActionWithRepeat(&head, &toWrite, now));
+    ASSERT_EQUAL(toWrite, action);
+
+    for(int i = 0; i < 5; i++)
+    {
+        ASSERT_ENSURE(popActionWithRepeat(&head, &toWrite, now));
+        ASSERT(toWrite.type == SHUTDOWN);
+        ASSERT(basicCompareTimestamp(toWrite.timestamp, (struct Timestamp) {
+            {getMonthLength(toWrite.timestamp.date.month, deduceYear(toWrite.timestamp, now).currentYear), (8 + i) % 12 + 1}, {11, 0}
+        }) == 0);
+        ASSERT(toWrite.args.shutdown.delay == 1);
+        ASSERT(toWrite.repeatPeriod == MONTHLY_REPEAT);
+    }
+
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode testPopActionWithRepeatMonthlyCorrection30(void)
+{
+    struct ActionQueue *head = NULL;
+    struct Action toWrite, action = {{{30, 8}, {11, 0}}, SHUTDOWN, .args.shutdown = {1}, .repeatPeriod = MONTHLY_REPEAT};
+    struct YearTimestamp now = {{{6, 8}, {5, 0}}, 2015};
+    ASSERT_ENSURE(addAction(&head, &action, now.timestamp));
+
+    ASSERT_ENSURE(popActionWithRepeat(&head, &toWrite, now));
+    ASSERT_EQUAL(toWrite, action);
+
+    for(int i = 0; i < 10; i++)
+    {
+        ASSERT_ENSURE(popActionWithRepeat(&head, &toWrite, now));
+        ASSERT(toWrite.type == SHUTDOWN);
+        unsigned monthLength = getMonthLength(toWrite.timestamp.date.month, deduceYear(toWrite.timestamp, now).currentYear);
+        ASSERT(basicCompareTimestamp(toWrite.timestamp, (struct Timestamp) {
+            {monthLength > 30 ? 30 : monthLength, (8 + i) % 12 + 1}, {11, 0}
+        }) == 0);
+        ASSERT(toWrite.args.shutdown.delay == 1);
+        ASSERT(toWrite.repeatPeriod == MONTHLY_REPEAT);
+    }
+
+    return RET_SUCCESS;
+}
+
+
 static ReturnCode testSkipUntilTimestamp(void)
 {
     struct YearTimestamp now = {{{4, 7}, {14, 16}}, 2023};
@@ -221,5 +272,7 @@ PREPARE_TESTING(actions,
     testPopActionEmpty,
     testPopActionWithRepeat,
     testPopActionWithRepeatMonthly,
+    testPopActionWithRepeatMonthlyCorrection31,
+    testPopActionWithRepeatMonthlyCorrection30,
     testSkipUntilTimestamp
 )
