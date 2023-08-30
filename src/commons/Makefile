@@ -24,7 +24,7 @@ output/sender.exe: output/sender.o $(OBJ)
 output/receiver.exe: output/receiver.o $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(TEST_EXE): $(OBJ) $(TEST_OBJ) output/sender.exe output/receiver.exe
+$(TEST_EXE): $(OBJ) $(TEST_OBJ) $(TESTING_OBJ) output/sender.exe output/receiver.exe
 	$(CC) $(CFLAGS) -o $@ $(OBJ) $(filter-out output/sender.o output/receiver.o,$(TEST_OBJ)) $(TESTING_OBJ) $(LDFLAGS)
 
 output/%.d: %.c

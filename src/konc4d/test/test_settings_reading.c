@@ -48,12 +48,12 @@ static ReturnCode testLoadActionsFromFile(void)
     ASSERT(AQ_FIRST(results).type == NOTIFY);
     ASSERT(basicCompareTimestamp(AQ_FIRST(results).timestamp, (struct Timestamp) {{2, 4}, {11, 30}}) == 0);
     ASSERT(strcmp(AQ_FIRST(results).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
-    ASSERT(AQ_FIRST(results).args.notify.repeats == 5);
+    ASSERT(AQ_FIRST(results).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
     ASSERT(AQ_FIRST(results).repeatPeriod == MINUTES_IN_DAY);
 
     ASSERT(AQ_SECOND(results).type == RESET);
-    ASSERT(basicCompareTimestamp(AQ_SECOND(results).timestamp, (struct Timestamp) {{12, 9}, {22, 30}}) == 0);
-    ASSERT(AQ_SECOND(results).repeatPeriod == false);
+    ASSERT(basicCompareTimestamp(AQ_SECOND(results).timestamp, (struct Timestamp) {{12, 4}, {22, 30}}) == 0);
+    ASSERT(AQ_SECOND(results).repeatPeriod == MONTHLY_REPEAT);
 
     ASSERT(results->next->next == NULL);
     destroyActionQueue(&results);
@@ -75,12 +75,12 @@ static ReturnCode testLoadActionsFromFileWithFeb29(void)
     ASSERT(AQ_FIRST(results).type == NOTIFY);
     ASSERT(basicCompareTimestamp(AQ_FIRST(results).timestamp, (struct Timestamp) {{2, 4}, {11, 30}}) == 0);
     ASSERT(strcmp(AQ_FIRST(results).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
-    ASSERT(AQ_FIRST(results).args.notify.repeats == 5);
+    ASSERT(AQ_FIRST(results).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
     ASSERT(AQ_FIRST(results).repeatPeriod == MINUTES_IN_DAY);
 
     ASSERT(AQ_SECOND(results).type == RESET);
-    ASSERT(basicCompareTimestamp(AQ_SECOND(results).timestamp, (struct Timestamp) {{12, 9}, {22, 30}}) == 0);
-    ASSERT(AQ_SECOND(results).repeatPeriod == false);
+    ASSERT(basicCompareTimestamp(AQ_SECOND(results).timestamp, (struct Timestamp) {{12, 4}, {22, 30}}) == 0);
+    ASSERT(AQ_SECOND(results).repeatPeriod == MONTHLY_REPEAT);
 
     ASSERT(AQ_THIRD(results).type == SHUTDOWN);
     ASSERT(basicCompareTimestamp(AQ_THIRD(results).timestamp, (struct Timestamp) {{29, 2}, {11, 30}}) == 0);

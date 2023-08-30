@@ -1,6 +1,6 @@
-12.09 22:30 reset
+monthly 12.09 22:30 reset
 
 
-    29.02  11:30    sHuTdOwN  35
+ 29.02  11:30    sHuTdOwN  35
 
-  11:30       notify
+ 11:30       notify

@@ -41,14 +41,14 @@ export TESTING_OBJ=$(TESTING_OBJ_ABS:$(SRC_DIR)/%=../%)
 export GLOBAL_CFLAGS=-g -Og -Wall -Wextra -Wpedantic -Werror -fanalyzer -Wno-analyzer-use-of-uninitialized-value -Wno-analyzer-malloc-leak
 
 all:
-	@$(MAKE) -C $(COMMONS_DIR)
 	@$(MAKE) -C $(TESTING_DIR)
+	@$(MAKE) -C $(COMMONS_DIR)
 	@$(MAKE) -C $(KONC4D_DIR)
 	@$(MAKE) -C $(KONC4_DIR)
 
 clean:
-	@$(MAKE) -C $(COMMONS_DIR) clean
 	@$(MAKE) -C $(TESTING_DIR) clean
+	@$(MAKE) -C $(COMMONS_DIR) clean
 	@$(MAKE) -C $(KONC4D_DIR) clean
 	@$(MAKE) -C $(KONC4_DIR) clean
 

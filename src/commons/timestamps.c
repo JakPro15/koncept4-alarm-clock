@@ -23,31 +23,8 @@ static bool isLeapYear(unsigned currentYear)
 
 bool isDateValid(struct DateOfYear toValidate, unsigned year)
 {
-    if(toValidate.month < 1 || toValidate.month > 12 || toValidate.day < 1)
-        return false;
-    switch(toValidate.month)
-    {
-    case 4: case 6: case 9: case 11:
-        if(toValidate.day <= 30)
-            return true;
-        break;
-    case 2:
-        if(isLeapYear(year))
-        {
-            if(toValidate.day <= 29)
-                return true;
-        }
-        else
-        {
-            if(toValidate.day <= 28)
-                return true;
-        }
-        break;
-    default:
-        if(toValidate.day <= 31)
-            return true;
-    }
-    return false;
+    return toValidate.day > 0 && toValidate.month > 0 && toValidate.month <= 12 &&
+           getMonthLength(toValidate.month, year) >= toValidate.day;
 }
 
 
@@ -78,7 +55,7 @@ struct DateOfYear getNextDay(struct YearTimestamp now)
 
 
 static const unsigned monthLengths[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-static unsigned getMonthLength(unsigned month, unsigned year)
+unsigned getMonthLength(unsigned month, unsigned year)
 {
     if(month == 2 && isLeapYear(year))
         return 29;

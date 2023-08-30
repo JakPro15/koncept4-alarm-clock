@@ -36,6 +36,7 @@ struct YearTimestamp
 
 struct YearTimestamp getCurrentTimestamp(void);
 bool isDateValid(struct DateOfYear toValidate, unsigned year);
+unsigned getMonthLength(unsigned month, unsigned year);
 struct DateOfYear getNextDay(struct YearTimestamp time);
 struct YearTimestamp addMinutes(struct YearTimestamp now, unsigned delay);
 
