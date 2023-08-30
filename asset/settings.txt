@@ -14,11 +14,10 @@
 #
 
 #
-    22:00 notify
-    22:30 notify
-    23:00 shutdown
+22:00 notify
+22:30 notify
+23:00 shutdown
 #
-
 0:00 notify
 0:30 notify
 1:00 shutdown
@@ -26,6 +25,7 @@
 important(24.05)
 important(26.05)
 important(23.06)
+important(30.08)
 important(13.10)
 important(16.12)
 
