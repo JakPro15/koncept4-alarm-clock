@@ -23,7 +23,7 @@
 } while(0)
 
 
-ReturnCode testBasicCompareTime(void)
+static ReturnCode testBasicCompareTime(void)
 {
     ASSERT(basicCompareTime(TOD(0, 0), TOD(23, 59)) == -1);
     ASSERT(basicCompareTime(TOD(23, 59), TOD(0, 0)) == 1);
@@ -36,7 +36,7 @@ ReturnCode testBasicCompareTime(void)
 }
 
 
-ReturnCode testCompareTimeRegular(void)
+static ReturnCode testCompareTimeRegular(void)
 {
     ASSERT(compareTime(TOD(12, 30), TOD(13, 30), TOD(7, 0)) == -1);
     ASSERT(compareTime(TOD(12, 30), TOD(12, 30), TOD(7, 0)) == 0);
@@ -49,7 +49,7 @@ ReturnCode testCompareTimeRegular(void)
 }
 
 
-ReturnCode testCompareTimeCurrentBetween(void)
+static ReturnCode testCompareTimeCurrentBetween(void)
 {
     ASSERT(compareTime(TOD(12, 30), TOD(13, 30), TOD(13, 0)) == 1);
     ASSERT(compareTime(TOD(13, 30), TOD(12, 30), TOD(13, 0)) == -1);
@@ -63,7 +63,7 @@ ReturnCode testCompareTimeCurrentBetween(void)
 }
 
 
-ReturnCode testBasicCompareDate(void)
+static ReturnCode testBasicCompareDate(void)
 {
     ASSERT(basicCompareDate(DOY(1, 1), DOY(12, 1)) == -1);
     ASSERT(basicCompareDate(DOY(12, 12), DOY(31, 1)) == 1);
@@ -76,7 +76,7 @@ ReturnCode testBasicCompareDate(void)
 }
 
 
-ReturnCode testBasicCompareTimestamp(void)
+static ReturnCode testBasicCompareTimestamp(void)
 {
     ASSERT(basicCompareTimestamp(TSP(1, 1, 12, 30), TSP(1, 1, 12, 40)) == -1);
     ASSERT(basicCompareTimestamp(TSP(14, 2, 23, 59), TSP(14, 2, 0, 0)) == 1);
@@ -95,7 +95,7 @@ ReturnCode testBasicCompareTimestamp(void)
 }
 
 
-ReturnCode testCompareTimestampRegular(void)
+static ReturnCode testCompareTimestampRegular(void)
 {
     ASSERT(compareTimestamp(TSP(1, 1, 12, 30), TSP(1, 1, 12, 40), TSP(5, 5, 0, 0)) == -1);
     ASSERT(compareTimestamp(TSP(14, 2, 23, 59), TSP(14, 2, 0, 0), TSP(5, 5, 0, 0)) == 1);
@@ -114,7 +114,7 @@ ReturnCode testCompareTimestampRegular(void)
 }
 
 
-ReturnCode testCompareTimestampCurrentBetween(void)
+static ReturnCode testCompareTimestampCurrentBetween(void)
 {
     ASSERT(compareTimestamp(TSP(1, 1, 12, 30), TSP(1, 1, 12, 40), TSP(1, 1, 12, 35)) == 1);
     ASSERT(compareTimestamp(TSP(14, 2, 23, 59), TSP(14, 2, 0, 0), TSP(14, 2, 22, 0)) == -1);
@@ -133,7 +133,7 @@ ReturnCode testCompareTimestampCurrentBetween(void)
 }
 
 
-ReturnCode testIsDateValid(void)
+static ReturnCode testIsDateValid(void)
 {
     ASSERT(isDateValid((struct DateOfYear) {0, 3}, 2020) == false);
     ASSERT(isDateValid((struct DateOfYear) {0, 12}, 2020) == false);
@@ -153,7 +153,7 @@ ReturnCode testIsDateValid(void)
 }
 
 
-ReturnCode testGetNextDay(void)
+static ReturnCode testGetNextDay(void)
 {
     DATE_EQUAL(getNextDay(YDATE(1, 1, 2020)), 2, 1);
     DATE_EQUAL(getNextDay(YDATE(8, 10, 2019)), 9, 10);
@@ -169,7 +169,7 @@ ReturnCode testGetNextDay(void)
 }
 
 
-ReturnCode testAddMinutes(void)
+static ReturnCode testAddMinutes(void)
 {
     YTS_EQUAL(addMinutes(YTS(1, 1, 12, 0, 2020), 5), 1, 1, 12, 5, 2020);
     YTS_EQUAL(addMinutes(YTS(8, 8, 4, 49, 2020), 11), 8, 8, 5, 0, 2020);

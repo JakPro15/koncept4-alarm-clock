@@ -14,7 +14,7 @@ ReturnCode checkLooperOutput(const char *proper)
 }
 
 
-ReturnCode testEndSpinningSuccess(void)
+static ReturnCode testEndSpinningSuccess(void)
 {
     char message[] = "hehe xd\nabcde\nhehe xd xd xd\nsuccess\n";
     FILE *inputLooper = popen("output\\input_looper.exe > " LOOPER_OUT, "w");
@@ -26,7 +26,7 @@ ReturnCode testEndSpinningSuccess(void)
 }
 
 
-ReturnCode testEndSpinningFailure(void)
+static ReturnCode testEndSpinningFailure(void)
 {
     char message[] = "abcdefgh\nfailure\n";
     FILE *inputLooper = popen("output\\input_looper.exe > " LOOPER_OUT, "w");
@@ -38,7 +38,7 @@ ReturnCode testEndSpinningFailure(void)
 }
 
 
-ReturnCode testEndSpinningError(void)
+static ReturnCode testEndSpinningError(void)
 {
     char message[] = "abcdefgh\nfailure \nerror\n";
     FILE *inputLooper = popen("output\\input_looper.exe > " LOOPER_OUT, "w");
@@ -50,7 +50,7 @@ ReturnCode testEndSpinningError(void)
 }
 
 
-ReturnCode testInputEqualBufferSize(void)
+static ReturnCode testInputEqualBufferSize(void)
 {
     char message[] = "abcdefghijklmnoprst\nsuccess\n";
     FILE *inputLooper = popen("output\\input_looper.exe > " LOOPER_OUT, "w");
@@ -62,7 +62,7 @@ ReturnCode testInputEqualBufferSize(void)
 }
 
 
-ReturnCode testInputOverBufferSize(void)
+static ReturnCode testInputOverBufferSize(void)
 {
     char message[] = "abcdefghijklmnoprstuvw\nsuccess\n";
     FILE *inputLooper = popen("output\\input_looper.exe > " LOOPER_OUT, "w");
@@ -74,7 +74,7 @@ ReturnCode testInputOverBufferSize(void)
 }
 
 
-ReturnCode testInputSuddenlyEnding(void)
+static ReturnCode testInputSuddenlyEnding(void)
 {
     char message[] = "abcde\nhehe\n";
     FILE *inputLooper = popen("output\\input_looper.exe > " LOOPER_OUT, "w");

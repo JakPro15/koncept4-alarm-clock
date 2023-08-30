@@ -4,7 +4,7 @@
 #include <string.h>
 
 
-ReturnCode testParseActionNoDateReset(void)
+static ReturnCode testNoDateReset(void)
 {
     struct Action parsed;
     ASSERT_ENSURE(parseAction("22:30 reset", &parsed,
@@ -16,7 +16,7 @@ ReturnCode testParseActionNoDateReset(void)
 }
 
 
-ReturnCode testParseActionNoDateShutdown(void)
+static ReturnCode testNoDateShutdown(void)
 {
     struct Action parsed;
     ASSERT_ENSURE(parseAction("  11:30 \tshutdown  35  \v \t", &parsed,
@@ -29,7 +29,7 @@ ReturnCode testParseActionNoDateShutdown(void)
 }
 
 
-ReturnCode testParseActionNoDateNotify(void)
+static ReturnCode testNoDateNotify(void)
 {
     struct Action parsed;
     ASSERT_ENSURE(parseAction("  11:30 \tnotify   hehexd.wav  35  \v \t", &parsed,
@@ -43,7 +43,7 @@ ReturnCode testParseActionNoDateNotify(void)
 }
 
 
-ReturnCode testParseActionNoDateNotifyNoNumber(void)
+static ReturnCode testNoDateNotifyNoNumber(void)
 {
     struct Action parsed;
     ASSERT_ENSURE(parseAction("  11:30 \tnotify   hehexd.wav   \v \t", &parsed,
@@ -57,7 +57,7 @@ ReturnCode testParseActionNoDateNotifyNoNumber(void)
 }
 
 
-ReturnCode testParseActionNoDateNotifyNoFileName(void)
+static ReturnCode testNoDateNotifyNoFileName(void)
 {
     struct Action parsed;
     ASSERT_ENSURE(parseAction("  11:30 \tnotify    \v \t", &parsed,
@@ -71,7 +71,7 @@ ReturnCode testParseActionNoDateNotifyNoFileName(void)
 }
 
 
-ReturnCode testParseActionNoDateNotifySpacesFileName(void)
+static ReturnCode testNoDateNotifySpacesFileName(void)
 {
     struct Action parsed;
     ASSERT_ENSURE(parseAction("  11:30 \tnotify    \v \"Hehe Xd.wav\" \t", &parsed,
@@ -85,7 +85,7 @@ ReturnCode testParseActionNoDateNotifySpacesFileName(void)
 }
 
 
-ReturnCode testParseActionWithDateReset(void)
+static ReturnCode testWithDateReset(void)
 {
     struct Action parsed;
     ASSERT_ENSURE(parseAction("12.09 22:30 reset", &parsed,
@@ -97,7 +97,7 @@ ReturnCode testParseActionWithDateReset(void)
 }
 
 
-ReturnCode testParseActionWithDateShutdown(void)
+static ReturnCode testWithDateShutdown(void)
 {
     struct Action parsed;
     ASSERT_THROW(parseAction("    30.02  11:30 \tshutdown  35  \v \t", &parsed,
@@ -114,7 +114,7 @@ ReturnCode testParseActionWithDateShutdown(void)
 }
 
 
-ReturnCode testParseAction29February(void)
+static ReturnCode test29February(void)
 {
     struct Action parsed1, parsed2;
     ASSERT(parseAction("29.02 11:30 reset", &parsed1, (struct YearTimestamp) {{{1, 1}, {11, 30}}, 2021}) == RET_FAILURE);
@@ -136,7 +136,7 @@ ReturnCode testParseAction29February(void)
 }
 
 
-ReturnCode testParseActionWithDateNotify(void)
+static ReturnCode testWithDateNotify(void)
 {
     struct Action parsed;
     ASSERT_ENSURE(parseAction("   1.1  15:00 \tnotify   hehexd.wav  35  \v \t", &parsed,
@@ -149,7 +149,7 @@ ReturnCode testParseActionWithDateNotify(void)
 }
 
 
-ReturnCode testParseActionWithDateNotifyNoNumber(void)
+static ReturnCode testWithDateNotifyNoNumber(void)
 {
     struct Action parsed;
     ASSERT_ENSURE(parseAction("   1.1  15:00 \tnotify   hehexd.wav  \v \t", &parsed,
@@ -162,7 +162,7 @@ ReturnCode testParseActionWithDateNotifyNoNumber(void)
 }
 
 
-ReturnCode testParseActionWithDateNotifyNoFileName(void)
+static ReturnCode testWithDateNotifyNoFileName(void)
 {
     struct Action parsed;
     ASSERT_ENSURE(parseAction("   1.1  15:00 \tnotify  \v \t", &parsed,
@@ -175,7 +175,7 @@ ReturnCode testParseActionWithDateNotifyNoFileName(void)
 }
 
 
-ReturnCode testParseActionNotifyTooLongFileName(void)
+static ReturnCode testNotifyTooLongFileName(void)
 {
     struct Action parsed;
     ASSERT_THROW(parseAction("   1.1  15:00 \tnotify   hehexdlooooooooooooooooooooooooooooooooooooooooooong.wav  35  \v \t", &parsed,
@@ -184,7 +184,7 @@ ReturnCode testParseActionNotifyTooLongFileName(void)
 }
 
 
-ReturnCode testParseActionRepeatSpecifierDaily(void)
+static ReturnCode testRepeatSpecifierDaily(void)
 {
     struct Action parsed;
     ASSERT_ENSURE(parseAction("\t daily   1.1  15:00 \tnotify  \v \t", &parsed,
@@ -198,10 +198,10 @@ ReturnCode testParseActionRepeatSpecifierDaily(void)
 }
 
 
-ReturnCode testParseActionRepeatSpecifierWeekly(void)
+static ReturnCode testRepeatSpecifierWeekly(void)
 {
     struct Action parsed;
-    ASSERT_ENSURE(parseAction("\t weekly   1.1  15:00 \tnotify  \v \t", &parsed,
+    ASSERT_ENSURE(parseAction("weekly   1.1  15:00 \tnotify  \v \t", &parsed,
                   (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
     ASSERT(parsed.type == NOTIFY);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{22, 1}, {15, 0}}) == 0);
@@ -212,7 +212,7 @@ ReturnCode testParseActionRepeatSpecifierWeekly(void)
 }
 
 
-ReturnCode testParseActionRepeatSpecifierMonthly(void)
+static ReturnCode testRepeatSpecifierMonthly(void)
 {
     struct Action parsed;
     ASSERT_ENSURE(parseAction("\t monthly   1.1  15:00 \tnotify  \v \t", &parsed,
@@ -226,10 +226,10 @@ ReturnCode testParseActionRepeatSpecifierMonthly(void)
 }
 
 
-ReturnCode testParseActionRepeatSpecifierPeriod(void)
+static ReturnCode testRepeatSpecifierPeriod(void)
 {
     struct Action parsed;
-    ASSERT_ENSURE(parseAction("\t period 144   1.1  15:00 \tnotify  \v \t", &parsed,
+    ASSERT_ENSURE(parseAction("period 144   1.1  15:00 \tnotify  \v \t", &parsed,
                   (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
     ASSERT(parsed.type == NOTIFY);
     ASSERT(basicCompareTimestamp(parsed.timestamp, (struct Timestamp) {{25, 1}, {15, 0}}) == 0);
@@ -240,7 +240,7 @@ ReturnCode testParseActionRepeatSpecifierPeriod(void)
 }
 
 
-ReturnCode testParseActionRepeatSpecifierPeriodFraction(void)
+static ReturnCode testRepeatSpecifierPeriodFraction(void)
 {
     struct Action parsed;
     ASSERT_ENSURE(parseAction("\t period 1.5   1.1  15:00 \tnotify  \v \t", &parsed,
@@ -255,22 +255,22 @@ ReturnCode testParseActionRepeatSpecifierPeriodFraction(void)
 
 
 PREPARE_TESTING(parse_action,
-    testParseActionNoDateReset,
-    testParseActionNoDateShutdown,
-    testParseActionNoDateNotify,
-    testParseActionNoDateNotifyNoNumber,
-    testParseActionNoDateNotifyNoFileName,
-    testParseActionNoDateNotifySpacesFileName,
-    testParseActionWithDateReset,
-    testParseActionWithDateShutdown,
-    testParseAction29February,
-    testParseActionWithDateNotify,
-    testParseActionWithDateNotifyNoNumber,
-    testParseActionWithDateNotifyNoFileName,
-    testParseActionNotifyTooLongFileName,
-    testParseActionRepeatSpecifierDaily,
-    testParseActionRepeatSpecifierWeekly,
-    testParseActionRepeatSpecifierMonthly,
-    testParseActionRepeatSpecifierPeriod,
-    testParseActionRepeatSpecifierPeriodFraction
+    testNoDateReset,
+    testNoDateShutdown,
+    testNoDateNotify,
+    testNoDateNotifyNoNumber,
+    testNoDateNotifyNoFileName,
+    testNoDateNotifySpacesFileName,
+    testWithDateReset,
+    testWithDateShutdown,
+    test29February,
+    testWithDateNotify,
+    testWithDateNotifyNoNumber,
+    testWithDateNotifyNoFileName,
+    testNotifyTooLongFileName,
+    testRepeatSpecifierDaily,
+    testRepeatSpecifierWeekly,
+    testRepeatSpecifierMonthly,
+    testRepeatSpecifierPeriod,
+    testRepeatSpecifierPeriodFraction
 )

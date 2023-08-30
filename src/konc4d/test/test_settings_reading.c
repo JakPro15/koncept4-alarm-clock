@@ -2,7 +2,7 @@
 #include "settings_reading.h"
 
 
-ReturnCode testGetLine(void)
+static ReturnCode testGetLine(void)
 {
     FILE *file = fopen("test/test_get_line.txt", "rb");
     ASSERT(file != NULL);
@@ -37,7 +37,7 @@ ReturnCode testGetLine(void)
 }
 
 
-ReturnCode testLoadActionsFromFile(void)
+static ReturnCode testLoadActionsFromFile(void)
 {
     struct ActionQueue *results = NULL;
 #undef RETURN_CALLBACK
@@ -64,7 +64,7 @@ ReturnCode testLoadActionsFromFile(void)
 }
 
 
-ReturnCode testLoadActionsFromFileWithFeb29(void)
+static ReturnCode testLoadActionsFromFileWithFeb29(void)
 {
     struct ActionQueue *results = NULL;
 #undef RETURN_CALLBACK
@@ -96,7 +96,7 @@ ReturnCode testLoadActionsFromFileWithFeb29(void)
 }
 
 
-ReturnCode testLoadActionsFromFile29FebLast(void)
+static ReturnCode testLoadActionsFromFile29FebLast(void)
 {
     struct ActionQueue *results = NULL;
 #undef RETURN_CALLBACK
@@ -113,7 +113,7 @@ ReturnCode testLoadActionsFromFile29FebLast(void)
 }
 
 
-ReturnCode testSkipPreprocessingDirectives(void)
+static ReturnCode testSkipPreprocessingDirectives(void)
 {
     FILE *file = fopen("test/test_skip_preprocessing_directives.txt", "r");
     ASSERT(file != NULL);

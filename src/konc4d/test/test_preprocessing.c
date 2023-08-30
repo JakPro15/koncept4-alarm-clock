@@ -6,7 +6,7 @@
 #include <string.h>
 
 
-ReturnCode testVerifyDefineName(void)
+static ReturnCode testVerifyDefineName(void)
 {
     unsigned size = 0;
     ASSERT_ENSURE(verifyDefineName("name", &size));
@@ -27,7 +27,7 @@ ReturnCode testVerifyDefineName(void)
     ASSERT(strcmp(define.value, (expectedValue)) == 0);
 
 
-ReturnCode testGatherDefines(void)
+static ReturnCode testGatherDefines(void)
 {
     struct GatheredDefines defines;
     FILE *settingsFile = fopen("test/test_gather_defines.txt", "rb");
@@ -65,7 +65,7 @@ ReturnCode testGatherDefines(void)
     ASSERT((first).repeatPeriod == (second).repeatPeriod)
 
 
-ReturnCode testFitDefine(void)
+static ReturnCode testFitDefine(void)
 {
     char *names[4] = {"define1", "def2ine", "3define", "4"};
     char *bodies[4] = {"3.02 11:30 shutdown 35", "$0 10:00 $1\r\n$0 11:00 $1\r\n$0 12:00 $1",
@@ -119,7 +119,7 @@ ReturnCode testFitDefine(void)
 }
 
 
-ReturnCode testLoadActionsFromFileWithPreprocessing(void)
+static ReturnCode testLoadActionsFromFileWithPreprocessing(void)
 {
     struct ActionQueue *results = NULL;
 #undef RETURN_CALLBACK

@@ -4,7 +4,7 @@
 #include "shared_memory.h"
 
 
-ReturnCode testSingleMessage(void)
+static ReturnCode testSingleMessage(void)
 {
     FILE *receivedStream = popen("output\\receiver.exe 1", "r");
     ASSERT_MESSAGE(receivedStream != NULL, "Failed to launch receiver.exe");
@@ -18,7 +18,7 @@ ReturnCode testSingleMessage(void)
 }
 
 
-ReturnCode testMultipleMessages(void)
+static ReturnCode testMultipleMessages(void)
 {
     FILE *receivedStream = popen("output\\receiver.exe 3", "r");
     ASSERT_MESSAGE(receivedStream != NULL, "Failed to launch receiver.exe");
@@ -38,7 +38,7 @@ ReturnCode testMultipleMessages(void)
 }
 
 
-ReturnCode testOverQueueCapacity(void)
+static ReturnCode testOverQueueCapacity(void)
 {
     FILE *receivedStream = popen("output\\receiver.exe 20", "r");
     ASSERT_MESSAGE(receivedStream != NULL, "Failed to launch receiver.exe");

@@ -3,7 +3,7 @@
 #include "sizedstring.h"
 
 
-ReturnCode testCreateSizedString(void)
+static ReturnCode testCreateSizedString(void)
 {
     struct SizedString string;
     string.size = (unsigned) -1;
@@ -20,7 +20,7 @@ ReturnCode testCreateSizedString(void)
 }
 
 
-ReturnCode testIncreaseSizedStringCapacity(void)
+static ReturnCode testIncreaseSizedStringCapacity(void)
 {
     struct SizedString string;
     ASSERT_NOTHROW(createSizedString(&string));
@@ -36,7 +36,7 @@ ReturnCode testIncreaseSizedStringCapacity(void)
 }
 
 
-ReturnCode testAppendToSizedStringNormal(void)
+static ReturnCode testAppendToSizedStringNormal(void)
 {
     struct SizedString string;
     ASSERT_NOTHROW(createSizedString(&string));
@@ -56,7 +56,7 @@ ReturnCode testAppendToSizedStringNormal(void)
 }
 
 
-ReturnCode testAppendToSizedStringReallocStarting(void)
+static ReturnCode testAppendToSizedStringReallocStarting(void)
 {
     struct SizedString string;
     ASSERT_NOTHROW(createSizedString(&string));
@@ -73,7 +73,7 @@ ReturnCode testAppendToSizedStringReallocStarting(void)
 }
 
 
-ReturnCode testAppendToSizedStringReallocLarger(void)
+static ReturnCode testAppendToSizedStringReallocLarger(void)
 {
     struct SizedString string;
     ASSERT_NOTHROW(createSizedString(&string));

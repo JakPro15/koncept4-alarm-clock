@@ -8,7 +8,7 @@
 void embedArgsInMessage(char *toWrite, const char *message, va_list args);
 
 
-ReturnCode testEmbedArgsInMessageNormal(void)
+static ReturnCode testEmbedArgsInMessageNormal(void)
 {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wuninitialized"
@@ -36,7 +36,7 @@ static void embedArgsInMessageWrapper(char *toWrite, const char *message, ...)
 }
 
 
-ReturnCode testEmbedArgsInMessageSkip(void)
+static ReturnCode testEmbedArgsInMessageSkip(void)
 {
     const char message[] = "SKIP";
     char embedded[SHMEM_MESSAGE_LENGTH];
@@ -52,7 +52,7 @@ ReturnCode testEmbedArgsInMessageSkip(void)
 }
 
 
-ReturnCode testEnsuredSendMessage(void)
+static ReturnCode testEnsuredSendMessage(void)
 {
     FILE *receivedStream = popen("..\\commons\\output\\receiver.exe 20", "r");
     ASSERT_MESSAGE(receivedStream != NULL, "Failed to launch receiver.exe");
