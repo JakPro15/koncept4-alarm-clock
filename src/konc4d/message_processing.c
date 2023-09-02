@@ -30,7 +30,7 @@ ReturnCode sendAction(struct SharedMemoryFile sharedMemory, struct Action *toSen
 }
 
 
-unsigned countActions(struct ActionQueue *actions)
+static unsigned countActions(struct ActionQueue *actions)
 {
     unsigned result = 0;
     for(; actions != NULL; actions = actions->next)

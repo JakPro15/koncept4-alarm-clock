@@ -52,13 +52,13 @@ ReturnCode initialize(struct ActionQueue **actions, struct SharedMemoryFile *sha
 
 ReturnCode actionLoop(struct ActionQueue **actions, struct SharedMemoryFile sharedMemory)
 {
-    struct Action current = (*actions)->action;
     while(*actions != NULL)
     {
+        struct Action current = (*actions)->action;
         struct YearTimestamp now = getCurrentTimestamp();
         RETURN_FAIL(waitUntil(now.timestamp, current.timestamp, actions, sharedMemory));
         RETURN_FAIL(doAction(&current));
-        ENSURE(popActionWithRepeat(actions, &current, now));
+        ENSURE(popActionWithRepeat(actions, NULL, now));
     }
     return RET_SUCCESS;
 }
@@ -66,6 +66,7 @@ ReturnCode actionLoop(struct ActionQueue **actions, struct SharedMemoryFile shar
 
 int main(void)
 {
+    logging_level = LOG_DEBUG;
     struct ActionQueue *actions = NULL;
     struct SharedMemoryFile sharedMemory;
     while(true)
