@@ -38,7 +38,7 @@ TESTING_SRC=$(wildcard $(TESTING_DIR)/*.c)
 TESTING_OBJ_ABS=$(TESTING_SRC:$(TESTING_DIR)/%.c=$(TESTING_DIR)/output/%.o)
 export TESTING_OBJ=$(TESTING_OBJ_ABS:$(SRC_DIR)/%=../%)
 
-export GLOBAL_CFLAGS=-g -Og -Wall -Wextra -Wpedantic -Werror -fanalyzer -Wno-analyzer-use-of-uninitialized-value -Wno-analyzer-malloc-leak
+export GLOBAL_CFLAGS=-O3 -flto -fuse-linker-plugin -Wall -Wextra -Wpedantic -Werror -fanalyzer -Wno-stringop-overflow -Wno-analyzer-use-of-uninitialized-value -Wno-analyzer-malloc-leak
 
 all:
 	@$(MAKE) -C $(TESTING_DIR)

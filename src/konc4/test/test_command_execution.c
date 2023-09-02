@@ -8,22 +8,27 @@
 void embedArgsInMessage(char *toWrite, const char *message, va_list args);
 
 
+void embedArgsWrapper(char *toWrite, const char *message, ...)
+{
+    va_list unused;
+    va_start(unused, message);
+    embedArgsInMessage(toWrite, message, unused);
+    va_end(unused);
+}
+
+
 static ReturnCode testEmbedArgsInMessageNormal(void)
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wuninitialized"
-    va_list unused;
     const char message[] = "STOP";
     char embedded[SHMEM_MESSAGE_LENGTH];
     for(unsigned i = 0; i < SHMEM_MESSAGE_LENGTH; i++)
         embedded[i] = '\xff';
 
-    embedArgsInMessage(embedded, message, unused);
+    embedArgsWrapper(embedded, message);
     ASSERT(strcmp(embedded, message) == 0);
     for(unsigned i = sizeof(message); i < SHMEM_MESSAGE_LENGTH; i++)
         ASSERT(embedded[i] == '\xff');
     return RET_SUCCESS;
-#pragma GCC diagnostic pop
 }
 
 

@@ -66,7 +66,6 @@ ReturnCode actionLoop(struct ActionQueue **actions, struct SharedMemoryFile shar
 
 int main(void)
 {
-    logging_level = LOG_DEBUG;
     struct ActionQueue *actions = NULL;
     struct SharedMemoryFile sharedMemory;
     while(true)
