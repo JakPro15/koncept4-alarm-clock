@@ -1,12 +1,10 @@
 #include "test_konc4d.h"
 #include "actions.h"
 
+#include <string.h>
 
-#define ASSERT_EQUAL(first, second) \
-    ASSERT(basicCompareTimestamp((first).timestamp, (second).timestamp) == 0); \
-    ASSERT((first).type == (second).type); \
-    ASSERT((first).args.shutdown.delay == (second).args.shutdown.delay); \
-    ASSERT((first).repeatPeriod == (second).repeatPeriod)
+
+#define ASSERT_EQUAL(first, second) ASSERT(actionsEqual(&(first), &(second)))
 
 
 static ReturnCode testAddActionRegular(void)
@@ -263,6 +261,52 @@ static ReturnCode testSkipUntilTimestamp(void)
 }
 
 
+static ReturnCode testActionsEqualNoArgs(void)
+{
+    struct Action first = {{{1, 1}, {11, 23}}, RESET, {{0}}, 1440}, second = first;
+    ASSERT(actionsEqual(&first, &second));
+    second.timestamp.date.month = 2;
+    ASSERT(!actionsEqual(&first, &second));
+    first.timestamp.date.month = 2;
+    ASSERT(actionsEqual(&first, &second));
+
+    second.type = SHUTDOWN;
+    ASSERT(!actionsEqual(&first, &second));
+    first.type = SHUTDOWN;
+    ASSERT(actionsEqual(&first, &second));
+
+    second.repeatPeriod = MONTHLY_REPEAT;
+    ASSERT(!actionsEqual(&first, &second));
+    first.repeatPeriod = MONTHLY_REPEAT;
+    ASSERT(actionsEqual(&first, &second));
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode testActionsEqualWithArgs(void)
+{
+    struct Action first = {{{1, 1}, {11, 23}}, SHUTDOWN, {.shutdown = {30}}, 1440}, second = first;
+    ASSERT(actionsEqual(&first, &second));
+    second.args.shutdown.delay = 2;
+    ASSERT(!actionsEqual(&first, &second));
+    first.args.shutdown.delay = 2;
+    ASSERT(actionsEqual(&first, &second));
+
+    first = (struct Action){{{1, 1}, {11, 23}}, NOTIFY, {.notify = {5, "bruh.wav"}}, 1440}, second = first;
+    ASSERT(actionsEqual(&first, &second));
+    second.args.notify.repeats = 2;
+    ASSERT(!actionsEqual(&first, &second));
+    first.args.notify.repeats = 2;
+    ASSERT(actionsEqual(&first, &second));
+
+    strcpy(second.args.notify.fileName, "hehexd.wav");
+    ASSERT(!actionsEqual(&first, &second));
+    strcpy(first.args.notify.fileName, "hehexd.wav");
+    ASSERT(actionsEqual(&first, &second));
+    return RET_SUCCESS;
+}
+
+
 PREPARE_TESTING(actions,
     testAddActionRegular,
     testAddActionAtEnd,
@@ -274,5 +318,7 @@ PREPARE_TESTING(actions,
     testPopActionWithRepeatMonthly,
     testPopActionWithRepeatMonthlyCorrection31,
     testPopActionWithRepeatMonthlyCorrection30,
-    testSkipUntilTimestamp
+    testSkipUntilTimestamp,
+    testActionsEqualNoArgs,
+    testActionsEqualWithArgs
 )

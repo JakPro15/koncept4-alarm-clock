@@ -16,6 +16,11 @@
 21:30 notify
 22:00 notify
 22:30 shutdown
+23:00 shutdown
+23:30 shutdown
+0:00 shutdown
+0:30 shutdown
+1:00 shutdown
 
 important(24.05)
 important(26.05)

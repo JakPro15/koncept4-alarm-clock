@@ -497,4 +497,25 @@ void destroyActionQueue(struct ActionQueue **head)
 }
 
 
+bool actionsEqual(const struct Action *first, const struct Action *second)
+{
+    if(first->type != second->type ||
+       first->repeatPeriod != second->repeatPeriod ||
+       basicCompareTimestamp(first->timestamp, second->timestamp) != 0)
+        return false;
+    switch(first->type)
+    {
+    case SHUTDOWN:
+        return first->args.shutdown.delay == second->args.shutdown.delay;
+    case NOTIFY:
+        return first->args.notify.repeats == second->args.notify.repeats &&
+            strcmp(first->args.notify.fileName, second->args.notify.fileName) == 0;
+    case RESET:
+        return true;
+    default:
+        return true;
+    }
+}
+
+
 struct PassedAction getPassedAction(struct Action *action);

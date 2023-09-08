@@ -70,6 +70,7 @@ ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestam
 ReturnCode popActionWithRepeat(struct ActionQueue **head, struct Action *toWrite, struct YearTimestamp now) NO_IGNORE;
 ReturnCode skipUntilTimestamp(struct ActionQueue **head, struct Timestamp time, struct YearTimestamp now) NO_IGNORE;
 void destroyActionQueue(struct ActionQueue **head);
+bool actionsEqual(const struct Action *first, const struct Action *second) NO_IGNORE;
 
 inline struct PassedAction getPassedAction(struct Action *action)
 {
