@@ -57,6 +57,8 @@ ReturnCode actionLoop(struct ActionQueue **actions, struct SharedMemoryFile shar
         struct Action current = (*actions)->action;
         struct YearTimestamp now = getCurrentTimestamp();
         RETURN_FAIL(waitUntil(now.timestamp, current.timestamp, actions, sharedMemory));
+        if(!actionsEqual(&current, &(*actions)->action))
+            continue;
         RETURN_FAIL(doAction(&current));
         ENSURE(popActionWithRepeat(actions, NULL, now));
     }
