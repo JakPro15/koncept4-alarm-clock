@@ -158,7 +158,7 @@ ReturnCode receiveMessage(struct SharedMemoryFile sharedMemory, char *buffer)
         sharedMemory.shared->queueFirst %= SHMEM_QUEUE_LENGTH;
     }
 
-    LOG_LINE(LOG_DEBUG, "Received message: %s", buffer);
+    LOG_LINE(LOG_TRACE, "Received message: %s", buffer);
     printSharedMemory(sharedMemory.shared);
     ReleaseMutex(sharedMemory.mutex);
     return RET_SUCCESS;
@@ -203,7 +203,7 @@ ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message, unsi
     sharedMemory.shared->queueLast = next;
     memcpy(sharedMemory.shared->messageQueue[next], message, length);
 
-    LOG_LINE(LOG_DEBUG, "Sent message: %s", message);
+    LOG_LINE(LOG_TRACE, "Sent message: %s", message);
     printSharedMemory(sharedMemory.shared);
     ReleaseMutex(sharedMemory.mutex);
     return RET_SUCCESS;

@@ -10,7 +10,7 @@
 ReturnCode sendAction(struct SharedMemoryFile sharedMemory, struct Action *toSend)
 {
     struct PassedAction sentAction = getPassedAction(toSend);
-    LOG_LINE(LOG_DEBUG, "Sending action: {%02d.%02d %02d:%02d, type: %d}",
+    LOG_LINE(LOG_TRACE, "Sending action: {%02d.%02d %02d:%02d, type: %d}",
              toSend->timestamp.date.day, toSend->timestamp.date.month,
              toSend->timestamp.time.hour, toSend->timestamp.time.minute, toSend->type);
     ReturnCode sent;

@@ -4,6 +4,7 @@
 #include "input_loop.h"
 #include "konc4d_starting.h"
 #include "action_receiving.h"
+#include "timestamps.h"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -94,11 +95,75 @@ ReturnCode executeSkip(unsigned minutesToSkip)
 }
 
 
+struct ShowArgument {
+    int number;
+    struct Timestamp until;
+};
+#define TIMESTAMP_PRESENT -1
+
+
+static ReturnCode parseShowArgument(const char *argument, struct ShowArgument *toWrite, struct YearTimestamp now)
+{
+    if(argument == NULL)
+    {
+        toWrite->number = ULONG_MAX;
+        return RET_SUCCESS;
+    }
+    unsigned hour, minute;
+    int itemsRead = sscanf(argument, "%u:%u", &hour, &minute);
+    if(itemsRead < 2)
+    {
+        long parsed = strtoul(argument, NULL, 0);
+        if(parsed == 0 || parsed > INT_MAX)
+        {
+            LOG_LINE(LOG_ERROR, "Invalid argument for show command: %s", argument);
+            return RET_ERROR;
+        }
+        toWrite->number = (int) parsed;
+        LOG_LINE(LOG_DEBUG, "Determined show argument to be %d", toWrite->number);
+        return RET_SUCCESS;
+    }
+    else
+        toWrite->number = TIMESTAMP_PRESENT;
+    if(hour > 23 || minute > 59)
+    {
+        LOG_LINE(LOG_ERROR, "Invalid argument for show command: %u:%u", hour, minute);
+        return RET_ERROR;
+    }
+    toWrite->until.time = (struct TimeOfDay){hour, minute};
+    if(basicCompareTime(toWrite->until.time, now.timestamp.time) <= 0)
+        toWrite->until.date = getNextDay(now);
+    else
+        toWrite->until.date = now.timestamp.date;
+    LOG_LINE(LOG_DEBUG, "Determined show argument to be (until) %u.%u %u:%u",
+             toWrite->until.date.day, toWrite->until.date.month,
+             toWrite->until.time.hour, toWrite->until.time.minute);
+    return RET_SUCCESS;
+}
+
+
 static const char* actionType[3] = {"shutdown", "notify", "reset"};
 
 
-ReturnCode executeShow(void)
+static void printAction(const struct PassedAction *actions, unsigned index)
 {
+    printf("%2d) {%02d.%02d %02d:%02d, type: %8s, ", index + 1,
+           actions[index].timestamp.date.day, actions[index].timestamp.date.month,
+           actions[index].timestamp.time.hour, actions[index].timestamp.time.minute,
+           actionType[actions[index].type]);
+    if(actions[index].repeatPeriod)
+        printf("repeated with period: %d minutes}\n", actions[index].repeatPeriod);
+    else
+        puts("not repeated}");
+}
+
+
+ReturnCode executeShow(const char *argument)
+{
+    struct YearTimestamp now = getCurrentTimestamp();
+    struct ShowArgument parsedArgument;
+    ENSURE(parseShowArgument(argument, &parsedArgument, now));
+
     printf("Trying to obtain action data from konc4d.\n");
     struct PassedAction *actions;
     unsigned size;
@@ -111,17 +176,19 @@ ReturnCode executeShow(void)
         return RET_FAILURE;
     }
     printf("Actions:\n");
-    for(unsigned i = 0; i < size; i++)
+    unsigned i = 0;
+    if(parsedArgument.number == TIMESTAMP_PRESENT)
     {
-        printf("%2d) {%02d.%02d %02d:%02d, type: %8s, ", i + 1,
-               actions[i].timestamp.date.day, actions[i].timestamp.date.month,
-               actions[i].timestamp.time.hour, actions[i].timestamp.time.minute,
-               actionType[actions[i].type]);
-        if(actions[i].repeatPeriod)
-            printf("repeated with period: %d minutes}\n", actions[i].repeatPeriod);
-        else
-            puts("not repeated}");
+        while(compareTimestamp(actions[i].timestamp, parsedArgument.until, now.timestamp) <= 0 && i < size)
+            printAction(actions, i++);
     }
+    else
+    {
+        for(; i < ((size < (unsigned) parsedArgument.number) ? size : (unsigned) parsedArgument.number); i++)
+            printAction(actions, i);
+    }
+    if(i == 0)
+        puts("none");
     free(actions);
     LOG_LINE(LOG_INFO, "konc4 show command executed successfully");
     return RET_SUCCESS;

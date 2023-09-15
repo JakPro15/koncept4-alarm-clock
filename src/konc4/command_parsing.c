@@ -20,7 +20,10 @@ ReturnCode parseCommand(char *command)
     else if(stricmp(token, "start") == 0)
         return executeStart();
     else if(stricmp(token, "show") == 0)
-        return executeShow();
+    {
+        char *argument = strtok_r(NULL, " \t", &saveptr);
+        return executeShow(argument);
+    }
     else if(stricmp(token, "skip") == 0)
     {
         char *minutesToSkipStr = strtok_r(NULL, " \t", &saveptr);

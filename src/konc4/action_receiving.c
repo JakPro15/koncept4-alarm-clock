@@ -21,7 +21,7 @@ ReturnCode timeoutReceive(struct SharedMemoryFile sharedMemory, char *toWrite)
         LOG_LINE(LOG_ERROR, "Receiving timed out");
         return RET_FAILURE;
     }
-    LOG_LINE(LOG_DEBUG, "Received message: %s", toWrite);
+    LOG_LINE(LOG_TRACE, "Received message: %s", toWrite);
     return RET_SUCCESS;
 }
 

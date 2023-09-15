@@ -66,7 +66,7 @@ int basicCompareTimestamp(const struct Timestamp first, const struct Timestamp s
 
 
 /* Returns 1 if first is later, -1 if first is earlier, 0 if they're equal.
- * Considers times before current time and after midnight to be tomorrow's. */
+ * Considers times before current time and after January 1 to be next year's. */
 int compareTimestamp(const struct Timestamp first, const struct Timestamp second, const struct Timestamp now);
 
 
