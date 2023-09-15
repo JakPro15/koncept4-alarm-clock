@@ -130,7 +130,7 @@ struct YearTimestamp deduceYear(struct Timestamp toDeduce, struct YearTimestamp 
     if(basicCompareTimestamp(toDeduce, now.timestamp) <= 0)
         return (struct YearTimestamp) {toDeduce, now.currentYear + 1};
     else
-        return (struct YearTimestamp) {toDeduce, now.currentYear + 1};
+        return (struct YearTimestamp) {toDeduce, now.currentYear};
 }
 
 

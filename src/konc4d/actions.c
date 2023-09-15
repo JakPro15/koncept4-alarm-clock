@@ -498,6 +498,8 @@ ReturnCode parseActionLine(char *string, struct ActionQueue **toWrite, struct Ye
     for(unsigned i = 1; i < times; i++)
     {
         newAction.timestamp = addMinutes(deduceYear(newAction.timestamp, now), every).timestamp;
+        if(newAction.repeatPeriod)
+            adjustDateForRepeat(&newAction, now);
         ENSURE(addAction(toWrite, &newAction, now.timestamp));
     }
     return RET_SUCCESS;
