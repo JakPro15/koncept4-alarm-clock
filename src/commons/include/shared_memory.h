@@ -11,7 +11,7 @@
 #define SHMEM_TO_KONC4D 0
 #define SHMEM_FROM_KONC4D 1
 
-#define SHMEM_QUEUE_LENGTH 8
+#define SHMEM_QUEUE_LENGTH 128
 #define SHMEM_MESSAGE_LENGTH (unsigned) sizeof(struct PassedAction)
 static_assert(SHMEM_MESSAGE_LENGTH >= 12, "SHMEM_MESSAGE_LENGTH smaller than was assumed");
 

@@ -40,6 +40,8 @@ static ReturnCode testMultipleMessages(void)
 
 static ReturnCode testOverQueueCapacity(void)
 {
+    if(SHMEM_QUEUE_LENGTH >= 20)
+        return RET_FAILURE;
     FILE *receivedStream = popen("output\\receiver.exe 20", "r");
     ASSERT_MESSAGE(receivedStream != NULL, "Failed to launch receiver.exe");
     Sleep(100);
