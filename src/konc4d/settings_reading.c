@@ -106,12 +106,7 @@ static ReturnCode analyzeLine(struct SizedString line, struct ActionQueue **acti
                               struct GatheredDefines preprocessingDefines, struct YearTimestamp now)
 {
     TRY_END_RETHROW(fitDefine(line.data, line.size, actions, preprocessingDefines, now));
-    struct Action newAction;
-    ReturnCode parseResult;
-    RETHROW(parseResult = parseAction(line.data, &newAction, now));
-    if(parseResult == RET_FAILURE) // 29.02
-        return RET_SUCCESS;
-    ENSURE(addAction(actions, &newAction, now.timestamp));
+    ENSURE(parseActionLine(line.data, actions, now));
     return RET_SUCCESS;
 }
 

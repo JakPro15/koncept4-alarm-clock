@@ -154,6 +154,34 @@ ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite)
 }
 
 
+ReturnCode getActionTimesEveryClause(char **string, unsigned *times, unsigned *every)
+{
+    int size;
+    int itemsRead = sscanf(*string, "%u times every %u%n", times, every, &size);
+    if(itemsRead < 2)
+        return RET_FAILURE;
+    *string += size;
+    if(*times < 2)
+    {
+        LOG_LINE(LOG_ERROR, "Too small times specifier: %u", *times);
+        return RET_ERROR;
+    }
+    if(*every < 1)
+    {
+        LOG_LINE(LOG_ERROR, "Too small every specifier: %u", *every);
+        return RET_ERROR;
+    }
+    if(*every * *times >= MINUTES_IN_DAY)
+    {
+        LOG_LINE(LOG_ERROR, "Times every clause too large - would repeat over a day: %u times every %u", *times, *every);
+        return RET_ERROR;
+    }
+    LOG_LINE(LOG_DEBUG, "Determined times every specifier to be '%u times every %u'", *times, *every);
+    skipWhitespace(string);
+    return RET_SUCCESS;
+}
+
+
 static ReturnCode checkForPeriodSpecifier(char **string, struct Action *toWrite, const char *specifier, int period)
 {
     unsigned specifierSize = strlen(specifier);
@@ -450,6 +478,28 @@ ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestam
     ENSURE(getActionArguments(&currentString, toWrite));
     if(*currentString != '\0')
         LOG_LINE(LOG_WARNING, "Settings line contains extra tokens: %s", string);
+    return RET_SUCCESS;
+}
+
+
+ReturnCode parseActionLine(char *string, struct ActionQueue **toWrite, struct YearTimestamp now)
+{
+    unsigned times, every;
+    ReturnCode timesEveryPresent;
+    RETHROW(timesEveryPresent = getActionTimesEveryClause(&string, &times, &every));
+    if(timesEveryPresent != RET_SUCCESS)
+        times = 1;
+    struct Action newAction;
+    ReturnCode parsed;
+    RETHROW(parsed = parseAction(string, &newAction, now));
+    if(parsed == RET_FAILURE) // 29.02
+        return RET_SUCCESS;
+    ENSURE(addAction(toWrite, &newAction, now.timestamp));
+    for(unsigned i = 1; i < times; i++)
+    {
+        newAction.timestamp = addMinutes(deduceYear(newAction.timestamp, now), every).timestamp;
+        ENSURE(addAction(toWrite, &newAction, now.timestamp));
+    }
     return RET_SUCCESS;
 }
 

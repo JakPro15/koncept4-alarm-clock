@@ -1,16 +1,5 @@
 #define important
-    $0 10:00 notify $1
-    $0 12:00 notify $1
-    $0 14:00 notify $1
-    $0 16:00 notify $1
-    $0 18:00 notify $1
-    $0 18:30 notify $1
-    $0 19:00 notify $1
-    $0 19:30 notify $1
-    $0 20:00 notify $1
-    $0 20:30 notify $1
-    $0 21:00 notify $1
-    $0 21:30 notify $1
+    24 times every 30 $0 10:00 notify $1
 #
 
 21:30 notify

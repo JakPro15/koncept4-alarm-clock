@@ -194,10 +194,7 @@ ReturnCode fitDefine(const char *settingsLine, unsigned size, struct ActionQueue
             line += 2;
         }
         ENSURE(appendToSizedString(&substitutedLine, '\0'));
-
-        struct Action newAction;
-        ENSURE(parseAction(substitutedLine.data, &newAction, now));
-        ENSURE(addAction(actions, &newAction, now.timestamp));
+        ENSURE(parseActionLine(substitutedLine.data, actions, now));
     } while((line = strtok_r(NULL, "\r\n", &saveptr)) != NULL);
     return RET_SUCCESS;
 }

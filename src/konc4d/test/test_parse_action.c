@@ -4,6 +4,37 @@
 #include <string.h>
 
 
+static ReturnCode testGetActionTimesEveryClause(void)
+{
+    char *actionLine = "5 times every 3 monthly XD", *savedActionLine = actionLine;
+    unsigned times, every;
+    ASSERT_ENSURE(getActionTimesEveryClause(&actionLine, &times, &every));
+    ASSERT(times == 5);
+    ASSERT(every == 3);
+    ASSERT(actionLine == savedActionLine + strlen("5 times every 3 "));
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode testGetActionTimesEveryClauseFailures(void)
+{
+    unsigned times, every;
+    char *actionLine = "5 times every -1 monthly XD";
+    ASSERT(getActionTimesEveryClause(&actionLine, &times, &every) == RET_ERROR);
+    actionLine = "1 time every 5 monthly XD";
+    ASSERT(getActionTimesEveryClause(&actionLine, &times, &every) == RET_FAILURE);
+    actionLine = "0 times every 5 monthly XD";
+    ASSERT(getActionTimesEveryClause(&actionLine, &times, &every) == RET_ERROR);
+    actionLine = "1 times every 5 monthly XD";
+    ASSERT(getActionTimesEveryClause(&actionLine, &times, &every) == RET_ERROR);
+    actionLine = "5 times every 0 monthly XD";
+    ASSERT(getActionTimesEveryClause(&actionLine, &times, &every) == RET_ERROR);
+    actionLine = "24 times every 60 monthly XD";
+    ASSERT(getActionTimesEveryClause(&actionLine, &times, &every) == RET_ERROR);
+    return RET_SUCCESS;
+}
+
+
 static ReturnCode testNoDateReset(void)
 {
     struct Action parsed;
@@ -254,7 +285,63 @@ static ReturnCode testRepeatSpecifierPeriodFraction(void)
 }
 
 
+static ReturnCode testParseActionLine(void)
+{
+    struct ActionQueue *head = NULL;
+    ASSERT_ENSURE(parseActionLine("\t period 1.5   1.1  15:00 \tnotify  \v \t", &head,
+                  (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
+    ASSERT(head != NULL);
+    ASSERT(AQ_FIRST(head).type == NOTIFY);
+    ASSERT(basicCompareTimestamp(AQ_FIRST(head).timestamp, (struct Timestamp) {{21, 1}, {13, 30}}) == 0);
+    ASSERT(strcmp(AQ_FIRST(head).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
+    ASSERT(AQ_FIRST(head).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
+    ASSERT(AQ_FIRST(head).repeatPeriod == 1.5 * MINUTES_IN_HOUR);
+    ASSERT(head->next == NULL);
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode testParseActionLineWithTimesEvery(void)
+{
+    struct ActionQueue *head = NULL;
+    ASSERT_ENSURE(parseActionLine("\t3 times every 3 period 1.5   1.1  15:00 \tnotify  \v \t", &head,
+                  (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
+    ASSERT(head != NULL);
+    ASSERT(AQ_FIRST(head).type == NOTIFY);
+    ASSERT(basicCompareTimestamp(AQ_FIRST(head).timestamp, (struct Timestamp) {{21, 1}, {13, 30}}) == 0);
+    ASSERT(strcmp(AQ_FIRST(head).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
+    ASSERT(AQ_FIRST(head).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
+    ASSERT(AQ_FIRST(head).repeatPeriod == 1.5 * MINUTES_IN_HOUR);
+    ASSERT(head->next != NULL);
+    ASSERT(AQ_SECOND(head).type == NOTIFY);
+    ASSERT(basicCompareTimestamp(AQ_SECOND(head).timestamp, (struct Timestamp) {{21, 1}, {13, 33}}) == 0);
+    ASSERT(strcmp(AQ_SECOND(head).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
+    ASSERT(AQ_SECOND(head).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
+    ASSERT(AQ_SECOND(head).repeatPeriod == 1.5 * MINUTES_IN_HOUR);
+    ASSERT(head->next->next != NULL);
+    ASSERT(AQ_THIRD(head).type == NOTIFY);
+    ASSERT(basicCompareTimestamp(AQ_THIRD(head).timestamp, (struct Timestamp) {{21, 1}, {13, 36}}) == 0);
+    ASSERT(strcmp(AQ_THIRD(head).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
+    ASSERT(AQ_THIRD(head).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
+    ASSERT(AQ_THIRD(head).repeatPeriod == 1.5 * MINUTES_IN_HOUR);
+    ASSERT(head->next->next->next == NULL);
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode testParseActionLine29February(void)
+{
+    struct ActionQueue *head = NULL;
+    ASSERT_ENSURE(parseActionLine("29.02 11:30 reset", &head,
+                  (struct YearTimestamp) {{{1, 1}, {11, 30}}, 2021}));
+    ASSERT(head == NULL);
+    return RET_SUCCESS;
+}
+
+
 PREPARE_TESTING(parse_action,
+    testGetActionTimesEveryClause,
+    testGetActionTimesEveryClauseFailures,
     testNoDateReset,
     testNoDateShutdown,
     testNoDateNotify,
@@ -272,5 +359,8 @@ PREPARE_TESTING(parse_action,
     testRepeatSpecifierWeekly,
     testRepeatSpecifierMonthly,
     testRepeatSpecifierPeriod,
-    testRepeatSpecifierPeriodFraction
+    testRepeatSpecifierPeriodFraction,
+    testParseActionLine,
+    testParseActionLineWithTimesEvery,
+    testParseActionLine29February
 )

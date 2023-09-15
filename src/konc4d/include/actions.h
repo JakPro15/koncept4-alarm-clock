@@ -45,10 +45,14 @@ struct ActionQueue
 
 ReturnCode addAction(struct ActionQueue **head, struct Action *action, struct Timestamp now) NO_IGNORE;
 ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite) NO_IGNORE;
+ReturnCode getActionTimesEveryClause(char **string, unsigned *times, unsigned *every) NO_IGNORE;
+ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestamp now) NO_IGNORE;
 
 /* Action line format:
- * [[repeat specifier] date] minute type [arguments]
- * repeat specifier := (daily|weekly|monthly|period N)
+ * [times_every_specifier] [[repeat_specifier] date] minute type [arguments]
+ * times_every_specifier := N times every M
+ *      action will be repeated N times every M minutes, beginning from the given minute
+ * repeat_specifier := (daily|weekly|monthly|period N)
  *      period given in hours as floating-point number
  *      default: if date is given, no repeat
  *               if date not given, daily
@@ -65,7 +69,7 @@ ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite) NO_IGNOR
  *              filename must not be longer than MAX_NOTIFY_FILE_NAME_SIZE
  *          repeats is an integer, default is 1 if filename given, DEFAULT_NOTIFY_SOUND_REPEATS if not
  */
-ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestamp now) NO_IGNORE;
+ReturnCode parseActionLine(char *string, struct ActionQueue **toWrite, struct YearTimestamp now) NO_IGNORE;
 
 ReturnCode popActionWithRepeat(struct ActionQueue **head, struct Action *toWrite, struct YearTimestamp now) NO_IGNORE;
 ReturnCode skipUntilTimestamp(struct ActionQueue **head, struct Timestamp time, struct YearTimestamp now) NO_IGNORE;
