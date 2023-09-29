@@ -39,7 +39,7 @@ static ReturnCode testGetLine(void)
 
 static ReturnCode testLoadActionsFromFile(void)
 {
-    struct AllActions results = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
+    struct AllActions results = {.queueHead = NULL};
 #undef RETURN_CALLBACK
 #define RETURN_CALLBACK destroyActionQueue(&results.queueHead);
     ASSERT_ENSURE(loadActionsFromFile(&results, "test/test_settings_reading.txt",
@@ -66,7 +66,7 @@ static ReturnCode testLoadActionsFromFile(void)
 
 static ReturnCode testLoadActionsFromFileWithFeb29(void)
 {
-    struct AllActions results = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
+    struct AllActions results = {.queueHead = NULL};
 #undef RETURN_CALLBACK
 #define RETURN_CALLBACK destroyActionQueue(&results.queueHead);
     ASSERT_ENSURE(loadActionsFromFile(&results, "test/test_settings_reading.txt",
@@ -98,7 +98,7 @@ static ReturnCode testLoadActionsFromFileWithFeb29(void)
 
 static ReturnCode testLoadActionsFromFile29FebLast(void)
 {
-    struct AllActions results = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
+    struct AllActions results = {.queueHead = NULL};
 #undef RETURN_CALLBACK
 #define RETURN_CALLBACK destroyActionQueue(&results.queueHead);
     ASSERT_ENSURE(loadActionsFromFile(&results, "test/test_load_actions_from_file.txt",

@@ -287,7 +287,7 @@ static ReturnCode testRepeatSpecifierPeriodFraction(void)
 
 static ReturnCode testParseActionLine(void)
 {
-    struct AllActions actions = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
+    struct AllActions actions = {.queueHead = NULL};
     ASSERT_ENSURE(parseActionLine("\t period 1.5   1.1  15:00 \tnotify  \v \t", &actions,
                   (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
     ASSERT(actions.queueHead != NULL);
@@ -304,7 +304,7 @@ static ReturnCode testParseActionLine(void)
 
 static ReturnCode testParseActionLineWithTimesEvery(void)
 {
-    struct AllActions actions = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
+    struct AllActions actions = {.queueHead = NULL};
     ASSERT_ENSURE(parseActionLine("\t3 times every 3 period 1.5   1.1  15:00 \tnotify  \v \t", &actions,
                   (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
     ASSERT(actions.queueHead != NULL);
@@ -332,10 +332,54 @@ static ReturnCode testParseActionLineWithTimesEvery(void)
 
 static ReturnCode testParseActionLine29February(void)
 {
-    struct AllActions actions = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
+    struct AllActions actions = {.queueHead = NULL};
     ASSERT_ENSURE(parseActionLine("29.02 11:30 reset", &actions,
                   (struct YearTimestamp) {{{1, 1}, {11, 30}}, 2021}));
     ASSERT(actions.queueHead == NULL);
+    return RET_SUCCESS;
+}
+
+
+#define TOD(h, m) (struct TimeOfDay){h, m}
+
+static ReturnCode testParseActionClockLine(void)
+{
+    struct AllActions actions = {.queueHead = NULL};
+    ASSERT_ENSURE(parseActionClockLine("between 4:30 and 15:15 shutdown", &actions));
+    ASSERT(checkActionsInPeriod(&actions.shutdownClock, TOD(0, 0), TOD(4, 29), 0));
+    ASSERT(checkActionsInPeriod(&actions.shutdownClock, TOD(4, 30), TOD(15, 15), 1));
+    ASSERT(checkActionsInPeriod(&actions.shutdownClock, TOD(15, 16), TOD(23, 59), 0));
+
+    ASSERT_ENSURE(parseActionClockLine("between 5:00 and 15:00 no shutdown", &actions));
+    ASSERT(checkActionsInPeriod(&actions.shutdownClock, TOD(0, 0), TOD(4, 29), 0));
+    ASSERT(checkActionsInPeriod(&actions.shutdownClock, TOD(4, 30), TOD(4, 59), 1));
+    ASSERT(checkActionsInPeriod(&actions.shutdownClock, TOD(5, 0), TOD(15, 0), 0));
+    ASSERT(checkActionsInPeriod(&actions.shutdownClock, TOD(15, 1), TOD(15, 15), 1));
+    ASSERT(checkActionsInPeriod(&actions.shutdownClock, TOD(15, 16), TOD(23, 59), 0));
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode testParseActionClockLineFailuresAndErrors(void)
+{
+    struct AllActions actions = {.queueHead = NULL};
+    ASSERT(parseActionClockLine("beteen 4:30 and 15:15 shutdown", &actions) == RET_FAILURE);
+    ASSERT(parseActionClockLine("between 5:00 and 15:00 no shutown", &actions) == RET_FAILURE);
+    ASSERT_THROW(parseActionClockLine("between 4:60 and 15:15 shutdown", &actions));
+    ASSERT_THROW(parseActionClockLine("between 4:00 and 24:15 shutdown", &actions));
+    ASSERT_THROW(parseActionClockLine("between 4:-1 and 23:15 shutdown", &actions));
+    return RET_SUCCESS;
+}
+
+static ReturnCode testParseActionLineActionClock(void)
+{
+    struct AllActions actions = {.queueHead = NULL};
+    ASSERT_ENSURE(parseActionLine("between 4:30 and 15:15 shutdown", &actions, (struct YearTimestamp){0}));
+    ASSERT(checkActionsInPeriod(&actions.shutdownClock, TOD(0, 0), TOD(4, 29), 0));
+    ASSERT(checkActionsInPeriod(&actions.shutdownClock, TOD(4, 30), TOD(15, 15), 1));
+    ASSERT(checkActionsInPeriod(&actions.shutdownClock, TOD(15, 16), TOD(23, 59), 0));
+
+    ASSERT_THROW(parseActionLine("between 4:60 and 15:15 shutdown", &actions, (struct YearTimestamp){0}));
     return RET_SUCCESS;
 }
 
@@ -363,5 +407,8 @@ PREPARE_TESTING(parse_action,
     testRepeatSpecifierPeriodFraction,
     testParseActionLine,
     testParseActionLineWithTimesEvery,
-    testParseActionLine29February
+    testParseActionLine29February,
+    testParseActionClockLine,
+    testParseActionClockLineFailuresAndErrors,
+    testParseActionLineActionClock
 )

@@ -81,7 +81,7 @@ static ReturnCode testFitDefine(void)
     defines.size = 4;
     defines.defines = definePairs;
     struct YearTimestamp now = {{.date = {1, 1}, .time = {0, 0}}, .currentYear = 2010};
-    struct AllActions actions = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
+    struct AllActions actions = {.queueHead = NULL};
 #undef RETURN_CALLBACK
 #define RETURN_CALLBACK destroyActionQueue(&actions.queueHead);
 
@@ -122,7 +122,7 @@ static ReturnCode testFitDefine(void)
 
 static ReturnCode testLoadActionsFromFileWithPreprocessing(void)
 {
-    struct AllActions results = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
+    struct AllActions results = {.queueHead = NULL};
 #undef RETURN_CALLBACK
 #define RETURN_CALLBACK destroyActionQueue(&results.queueHead);
     ASSERT_ENSURE(loadActionsFromFile(&results, "test/test_preprocessed.txt",

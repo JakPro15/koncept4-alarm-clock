@@ -1,4 +1,5 @@
 #include "action_clock.h"
+#include <stdio.h>
 
 
 static unsigned timeToIndex(struct TimeOfDay time)
@@ -74,4 +75,23 @@ bool checkActionAtTime(struct ActionClock *clock, struct TimeOfDay time)
 {
     unsigned index = timeToIndex(time);
     return (clock->data[index / 32] >> (31 - (index % 32))) & 1;
+}
+
+
+static void incrementTime(struct TimeOfDay *time)
+{
+    if(++time->minute >= 60)
+    {
+        time->minute = 0;
+        ++time->hour;
+    }
+}
+
+
+bool checkActionsInPeriod(struct ActionClock *clock, struct TimeOfDay from, struct TimeOfDay until, bool value)
+{
+    for(struct TimeOfDay t = from; basicCompareTime(t, until) <= 0; incrementTime(&t))
+        if(checkActionAtTime(clock, t) != value)
+            return false;
+    return true;
 }

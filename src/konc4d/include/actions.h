@@ -55,6 +55,7 @@ ReturnCode addAction(struct ActionQueue **head, struct Action *action, struct Ti
 ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite) NO_IGNORE;
 ReturnCode getActionTimesEveryClause(char **string, unsigned *times, unsigned *every) NO_IGNORE;
 ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestamp now) NO_IGNORE;
+ReturnCode parseActionClockLine(char *string, struct AllActions *toWrite) NO_IGNORE;
 
 /* Action line format:
  * [times_every_specifier] [[repeat_specifier] date] minute type [arguments]
@@ -76,6 +77,11 @@ ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestam
  *          filename specifies a file in ASSET_DIRECTORY, default is DEFAULT_NOTIFY_SOUND with DEFAULT_NOTIFY_SOUND_REPEATS
  *              filename must not be longer than MAX_NOTIFY_FILE_NAME_SIZE
  *          repeats is an integer, default is 1 if filename given, DEFAULT_NOTIFY_SOUND_REPEATS if not
+ * Alternative format is usable for setting periodic actions:
+ * between minute and minute [no] type
+ * minute := hh:mm
+ * type := shutdown
+ * if "no" is given, in the given time no
  */
 ReturnCode parseActionLine(char *string, struct AllActions *toWrite, struct YearTimestamp now) NO_IGNORE;
 

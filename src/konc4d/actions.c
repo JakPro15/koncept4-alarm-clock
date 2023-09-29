@@ -290,7 +290,7 @@ static ReturnCode getActionTime(char **string, struct Action *toWrite)
     unsigned hour, minute;
     int size;
     int itemsRead = sscanf(*string, "%u:%u%n", &hour, &minute, &size);
-    if(itemsRead < 2 || hour > 23 || minute > 59)
+    if(itemsRead < 2 || !isTimeValid((struct TimeOfDay) {hour, minute}))
     {
         LOG_LINE(LOG_ERROR, "Failed to parse time in settings line: %s", *string);
         return RET_ERROR;
@@ -482,8 +482,53 @@ ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestam
 }
 
 
+static ReturnCode parseNoActionBetween(char *string, struct AllActions *toWrite)
+{
+    struct TimeOfDay begin, end;
+    char actionName[20];
+    int itemsRead = sscanf(string, "between %u:%u and %u:%u no %19s",
+                           &begin.hour, &begin.minute, &end.hour, &end.minute, actionName);
+    if(itemsRead < 5 || strcmp(actionName, "shutdown") != 0)
+        return RET_FAILURE;
+    if(!isTimeValid(begin) || !isTimeValid(end))
+    {
+        LOG_LINE(LOG_ERROR, "Invalid time value in between clause: %s", string);
+        return RET_ERROR;
+    }
+    setActionClock(&toWrite->shutdownClock, begin, end, 0);
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode parseActionBetween(char *string, struct AllActions *toWrite)
+{
+    struct TimeOfDay begin, end;
+    char actionName[20];
+    int itemsRead = sscanf(string, "between %u:%u and %u:%u %19s",
+                           &begin.hour, &begin.minute, &end.hour, &end.minute, actionName);
+    if(itemsRead < 5 || strcmp(actionName, "shutdown") != 0)
+        return RET_FAILURE;
+    if(!isTimeValid(begin) || !isTimeValid(end))
+    {
+        LOG_LINE(LOG_ERROR, "Invalid time value in between clause: %s", string);
+        return RET_ERROR;
+    }
+    setActionClock(&toWrite->shutdownClock, begin, end, 1);
+    return RET_SUCCESS;
+}
+
+
+ReturnCode parseActionClockLine(char *string, struct AllActions *toWrite)
+{
+    TRY_END_RETHROW(parseNoActionBetween(string, toWrite));
+    TRY_END_RETHROW(parseActionBetween(string, toWrite));
+    return RET_FAILURE;
+}
+
+
 ReturnCode parseActionLine(char *string, struct AllActions *toWrite, struct YearTimestamp now)
 {
+    TRY_END_RETHROW(parseActionClockLine(string, toWrite));
     unsigned times, every;
     ReturnCode timesEveryPresent;
     RETHROW(timesEveryPresent = getActionTimesEveryClause(&string, &times, &every));

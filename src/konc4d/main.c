@@ -68,7 +68,7 @@ ReturnCode actionLoop(struct AllActions *actions, struct SharedMemoryFile shared
 
 int main(void)
 {
-    struct AllActions actions = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
+    struct AllActions actions = {.queueHead = NULL};
     struct SharedMemoryFile sharedMemory;
     while(true)
     {

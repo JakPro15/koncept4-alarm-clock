@@ -7,10 +7,10 @@
 
 struct ActionClock
 {
-    enum ActionType type;
     uint32_t data[45];
 };
 
 
 void setActionClock(struct ActionClock *toWrite, struct TimeOfDay since, struct TimeOfDay until, bool value);
 bool checkActionAtTime(struct ActionClock *clock, struct TimeOfDay time) NO_IGNORE;
+bool checkActionsInPeriod(struct ActionClock *clock, struct TimeOfDay from, struct TimeOfDay until, bool value) NO_IGNORE;

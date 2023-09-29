@@ -1,35 +1,18 @@
 #include "action_clock.h"
 #include "testing.h"
 
-static void increment(struct TimeOfDay *time)
-{
-    if(++time->minute >= 60)
-    {
-        time->minute = 0;
-        ++time->hour;
-    }
-}
-
-static bool checkActionsInPeriod(struct ActionClock *clock, struct TimeOfDay from, struct TimeOfDay until, bool value)
-{
-    for(struct TimeOfDay t = from; basicCompareTime(t, until) <= 0; increment(&t))
-        if(checkActionAtTime(clock, t) != value)
-            return false;
-    return true;
-}
-
 #define TOD(h, m) (struct TimeOfDay){h, m}
 
 static ReturnCode testAll0s(void)
 {
-    struct ActionClock clock = {.type = SHUTDOWN};
+    struct ActionClock clock = {0};
     ASSERT(checkActionsInPeriod(&clock, TOD(0, 0), TOD(23, 59), 0));
     return RET_SUCCESS;
 }
 
 static ReturnCode testSettingInMiddle(void)
 {
-    struct ActionClock clock = {.type = SHUTDOWN};
+    struct ActionClock clock = {0};
     setActionClock(&clock, (struct TimeOfDay){4, 30}, (struct TimeOfDay){15, 15}, 1);
     ASSERT(checkActionsInPeriod(&clock, TOD(0, 0), TOD(4, 29), 0));
     ASSERT(checkActionsInPeriod(&clock, TOD(4, 30), TOD(15, 15), 1));
@@ -46,7 +29,7 @@ static ReturnCode testSettingInMiddle(void)
 
 static ReturnCode testSettingOverMidnight(void)
 {
-    struct ActionClock clock = {.type = SHUTDOWN};
+    struct ActionClock clock = {0};
     setActionClock(&clock, (struct TimeOfDay){15, 15}, (struct TimeOfDay){4, 30}, 1);
     ASSERT(checkActionsInPeriod(&clock, TOD(0, 0), TOD(4, 30), 1));
     ASSERT(checkActionsInPeriod(&clock, TOD(4, 31), TOD(15, 14), 0));
@@ -63,7 +46,7 @@ static ReturnCode testSettingOverMidnight(void)
 
 static ReturnCode testSettingAtEdges(void)
 {
-    struct ActionClock clock = {.type = SHUTDOWN};
+    struct ActionClock clock = {0};
     setActionClock(&clock, (struct TimeOfDay){15, 15}, (struct TimeOfDay){4, 30}, 1);
     setActionClock(&clock, (struct TimeOfDay){15, 0}, (struct TimeOfDay){16, 0}, 0);
     setActionClock(&clock, (struct TimeOfDay){4, 0}, (struct TimeOfDay){5, 0}, 1);
