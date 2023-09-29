@@ -3,8 +3,6 @@
 
 #include "timestamps.h"
 
-#include <stdbool.h>
-
 
 enum ActionType
 {
