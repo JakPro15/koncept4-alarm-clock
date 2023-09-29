@@ -102,7 +102,7 @@ static ReturnCode getNonemptyLine(FILE *settingsFile, struct SizedString *toWrit
 }
 
 
-static ReturnCode analyzeLine(struct SizedString line, struct ActionQueue **actions,
+static ReturnCode analyzeLine(struct SizedString line, struct AllActions *actions,
                               struct GatheredDefines preprocessingDefines, struct YearTimestamp now)
 {
     TRY_END_RETHROW(fitDefine(line.data, line.size, actions, preprocessingDefines, now));
@@ -111,7 +111,7 @@ static ReturnCode analyzeLine(struct SizedString line, struct ActionQueue **acti
 }
 
 
-ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, struct YearTimestamp now)
+ReturnCode loadActionsFromFile(struct AllActions *toWrite, char *fileName, struct YearTimestamp now)
 {
     FILE *settingsFile;
     if((settingsFile = fopen(fileName, "rb")) == NULL)
@@ -158,4 +158,4 @@ ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, str
 }
 
 
-ReturnCode loadActions(struct ActionQueue **toWrite);
+ReturnCode loadActions(struct AllActions *toWrite);

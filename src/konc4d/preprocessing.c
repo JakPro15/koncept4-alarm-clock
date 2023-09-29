@@ -139,7 +139,7 @@ ReturnCode gatherDefines(FILE *settingsFile, struct GatheredDefines *toWrite)
 }
 
 
-ReturnCode fitDefine(const char *settingsLine, unsigned size, struct ActionQueue **actions,
+ReturnCode fitDefine(const char *settingsLine, unsigned size, struct AllActions *actions,
                      struct GatheredDefines defines, struct YearTimestamp now)
 {
     if(size > 2 && settingsLine[0] == '/' && settingsLine[1] == '/')

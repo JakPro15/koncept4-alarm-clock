@@ -81,9 +81,9 @@ static ReturnCode testFitDefine(void)
     defines.size = 4;
     defines.defines = definePairs;
     struct YearTimestamp now = {{.date = {1, 1}, .time = {0, 0}}, .currentYear = 2010};
-    struct ActionQueue *actions = NULL;
+    struct AllActions actions = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
 #undef RETURN_CALLBACK
-#define RETURN_CALLBACK destroyActionQueue(&actions);
+#define RETURN_CALLBACK destroyActionQueue(&actions.queueHead);
 
     ASSERT(fitDefine("muu", sizeof("muu"), &actions, defines, now) == RET_FAILURE);
     ASSERT(fitDefine("hehe xd", sizeof("hehe xd"), &actions, defines, now) == RET_FAILURE);
@@ -92,27 +92,28 @@ static ReturnCode testFitDefine(void)
 
     const char line1[] = "define1";
     ASSERT_ENSURE(fitDefine(line1, sizeof(line1), &actions, defines, now));
-    ASSERT_EQUAL_SHT(AQ_FIRST(actions), ((struct Action) {{{3, 2}, {11, 30}}, SHUTDOWN, .args.shutdown = {35}}));
+    ASSERT_EQUAL_SHT(AQ_FIRST(actions.queueHead), ((struct Action) {{{3, 2}, {11, 30}}, SHUTDOWN, .args.shutdown = {35}}));
 
     const char line2[] = "def2ine(22.07, reset)";
     ASSERT_ENSURE(fitDefine(line2, sizeof(line2), &actions, defines, now));
-    ASSERT_EQUAL_RST(AQ_SECOND(actions), ((struct Action) {{{22, 7}, {10, 00}}, RESET, {{0}}, false}));
-    ASSERT_EQUAL_RST(AQ_THIRD(actions), ((struct Action) {{{22, 7}, {11, 00}}, RESET, {{0}}, false}));
-    ASSERT_EQUAL_RST(AQ_FOURTH(actions), ((struct Action) {{{22, 7}, {12, 00}}, RESET, {{0}}, false}));
+    ASSERT_EQUAL_RST(AQ_SECOND(actions.queueHead), ((struct Action) {{{22, 7}, {10, 00}}, RESET, {{0}}, false}));
+    ASSERT_EQUAL_RST(AQ_THIRD(actions.queueHead), ((struct Action) {{{22, 7}, {11, 00}}, RESET, {{0}}, false}));
+    ASSERT_EQUAL_RST(AQ_FOURTH(actions.queueHead), ((struct Action) {{{22, 7}, {12, 00}}, RESET, {{0}}, false}));
 
-    destroyActionQueue(&actions); actions = NULL;
+    destroyActionQueue(&actions.queueHead); actions.queueHead = NULL;
     const char line3[] = "3define(16)";
     ASSERT_ENSURE(fitDefine(line3, sizeof(line3), &actions, defines, now));
-    ASSERT_EQUAL_RST(AQ_FIRST(actions), ((struct Action) {{{12, 9}, {22, 16}}, RESET, {{0}}, false}));
+    ASSERT_EQUAL_RST(AQ_FIRST(actions.queueHead), ((struct Action) {{{12, 9}, {22, 16}}, RESET, {{0}}, false}));
 
-    destroyActionQueue(&actions); actions = NULL;
+    destroyActionQueue(&actions.queueHead); actions.queueHead = NULL;
     const char line4[] = "4(11, 11, notify, hehe.wav, 5)", line5[] = "4(1.03 11, 12, reset)";
     ASSERT_ENSURE(fitDefine(line4, sizeof(line4), &actions, defines, now));
     ASSERT_ENSURE(fitDefine(line5, sizeof(line5), &actions, defines, now));
-    ASSERT_EQUAL_NFY(AQ_FIRST(actions), ((struct Action) {{{1, 1}, {11, 11}}, NOTIFY, {.notify = {5, "hehe.wav"}}, MINUTES_IN_DAY}));
-    ASSERT_EQUAL_RST(AQ_SECOND(actions), ((struct Action) {{{1, 3}, {11, 12}}, RESET, {{0}}, false}));
+    ASSERT_EQUAL_NFY(AQ_FIRST(actions.queueHead), ((struct Action) {{{1, 1}, {11, 11}}, NOTIFY,
+                     {.notify = {5, "hehe.wav"}}, MINUTES_IN_DAY}));
+    ASSERT_EQUAL_RST(AQ_SECOND(actions.queueHead), ((struct Action) {{{1, 3}, {11, 12}}, RESET, {{0}}, false}));
 
-    destroyActionQueue(&actions);
+    destroyActionQueue(&actions.queueHead);
 #undef RETURN_CALLBACK
 #define RETURN_CALLBACK
     return RET_SUCCESS;
@@ -121,28 +122,28 @@ static ReturnCode testFitDefine(void)
 
 static ReturnCode testLoadActionsFromFileWithPreprocessing(void)
 {
-    struct ActionQueue *results = NULL;
+    struct AllActions results = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
 #undef RETURN_CALLBACK
-#define RETURN_CALLBACK destroyActionQueue(&results);
+#define RETURN_CALLBACK destroyActionQueue(&results.queueHead);
     ASSERT_ENSURE(loadActionsFromFile(&results, "test/test_preprocessed.txt",
                   (struct YearTimestamp) {{{1, 1}, {0, 0}}, 2020}));
 
-    ASSERT_EQUAL_SHT(AQ_FIRST(results), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
+    ASSERT_EQUAL_SHT(AQ_FIRST(results.queueHead), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
                      {.shutdown = {DEFAULT_SHUTDOWN_DELAY}}, MINUTES_IN_DAY}));
-    ASSERT_EQUAL_SHT(AQ_SECOND(results), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
+    ASSERT_EQUAL_SHT(AQ_SECOND(results.queueHead), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
                      {.shutdown = {12}}, MINUTES_IN_DAY}));
-    ASSERT_EQUAL_SHT(AQ_THIRD(results), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
+    ASSERT_EQUAL_SHT(AQ_THIRD(results.queueHead), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
                      {.shutdown = {10}}, MINUTES_IN_DAY}));
-    ASSERT_EQUAL_SHT(AQ_FOURTH(results), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
+    ASSERT_EQUAL_SHT(AQ_FOURTH(results.queueHead), ((struct Action) {{{1, 1}, {0, 20}}, SHUTDOWN,
                      {.shutdown = {9}}, MINUTES_IN_DAY}));
 
-    ASSERT_EQUAL_NFY(AQ_FIFTH(results), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
+    ASSERT_EQUAL_NFY(AQ_FIFTH(results.queueHead), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
                      {.notify = {DEFAULT_NOTIFY_SOUND_REPEATS, DEFAULT_NOTIFY_SOUND}}, MINUTES_IN_DAY}));
-    ASSERT_EQUAL_NFY(AQ_SIXTH(results), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
+    ASSERT_EQUAL_NFY(AQ_SIXTH(results.queueHead), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
                      {.notify = {DEFAULT_NOTIFY_SOUND_REPEATS, DEFAULT_NOTIFY_SOUND}}, MINUTES_IN_DAY}));
-    ASSERT_EQUAL_NFY(AQ_SEVENTH(results), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
+    ASSERT_EQUAL_NFY(AQ_SEVENTH(results.queueHead), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
                      {.notify = {1, "bruh.mp4"}}, MINUTES_IN_DAY}));
-    ASSERT_EQUAL_NFY(AQ_EIGHTH(results), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
+    ASSERT_EQUAL_NFY(AQ_EIGHTH(results.queueHead), ((struct Action) {{{1, 1}, {0, 40}}, NOTIFY,
                      {.notify = {2, "bruh.wav"}}, MINUTES_IN_DAY}));
     return RET_SUCCESS;
 }

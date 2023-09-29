@@ -287,54 +287,55 @@ static ReturnCode testRepeatSpecifierPeriodFraction(void)
 
 static ReturnCode testParseActionLine(void)
 {
-    struct ActionQueue *head = NULL;
-    ASSERT_ENSURE(parseActionLine("\t period 1.5   1.1  15:00 \tnotify  \v \t", &head,
+    struct AllActions actions = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
+    ASSERT_ENSURE(parseActionLine("\t period 1.5   1.1  15:00 \tnotify  \v \t", &actions,
                   (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
-    ASSERT(head != NULL);
-    ASSERT(AQ_FIRST(head).type == NOTIFY);
-    ASSERT(basicCompareTimestamp(AQ_FIRST(head).timestamp, (struct Timestamp) {{21, 1}, {13, 30}}) == 0);
-    ASSERT(strcmp(AQ_FIRST(head).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
-    ASSERT(AQ_FIRST(head).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
-    ASSERT(AQ_FIRST(head).repeatPeriod == 1.5 * MINUTES_IN_HOUR);
-    ASSERT(head->next == NULL);
+    ASSERT(actions.queueHead != NULL);
+    ASSERT(AQ_FIRST(actions.queueHead).type == NOTIFY);
+    ASSERT(basicCompareTimestamp(AQ_FIRST(actions.queueHead).timestamp,
+           (struct Timestamp) {{21, 1}, {13, 30}}) == 0);
+    ASSERT(strcmp(AQ_FIRST(actions.queueHead).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
+    ASSERT(AQ_FIRST(actions.queueHead).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
+    ASSERT(AQ_FIRST(actions.queueHead).repeatPeriod == 1.5 * MINUTES_IN_HOUR);
+    ASSERT(actions.queueHead->next == NULL);
     return RET_SUCCESS;
 }
 
 
 static ReturnCode testParseActionLineWithTimesEvery(void)
 {
-    struct ActionQueue *head = NULL;
-    ASSERT_ENSURE(parseActionLine("\t3 times every 3 period 1.5   1.1  15:00 \tnotify  \v \t", &head,
+    struct AllActions actions = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
+    ASSERT_ENSURE(parseActionLine("\t3 times every 3 period 1.5   1.1  15:00 \tnotify  \v \t", &actions,
                   (struct YearTimestamp) {{.date = {21, 1}, .time = {12, 30}}, .currentYear = 2010}));
-    ASSERT(head != NULL);
-    ASSERT(AQ_FIRST(head).type == NOTIFY);
-    ASSERT(basicCompareTimestamp(AQ_FIRST(head).timestamp, (struct Timestamp) {{21, 1}, {13, 30}}) == 0);
-    ASSERT(strcmp(AQ_FIRST(head).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
-    ASSERT(AQ_FIRST(head).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
-    ASSERT(AQ_FIRST(head).repeatPeriod == 1.5 * MINUTES_IN_HOUR);
-    ASSERT(head->next != NULL);
-    ASSERT(AQ_SECOND(head).type == NOTIFY);
-    ASSERT(basicCompareTimestamp(AQ_SECOND(head).timestamp, (struct Timestamp) {{21, 1}, {13, 33}}) == 0);
-    ASSERT(strcmp(AQ_SECOND(head).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
-    ASSERT(AQ_SECOND(head).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
-    ASSERT(AQ_SECOND(head).repeatPeriod == 1.5 * MINUTES_IN_HOUR);
-    ASSERT(head->next->next != NULL);
-    ASSERT(AQ_THIRD(head).type == NOTIFY);
-    ASSERT(basicCompareTimestamp(AQ_THIRD(head).timestamp, (struct Timestamp) {{21, 1}, {13, 36}}) == 0);
-    ASSERT(strcmp(AQ_THIRD(head).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
-    ASSERT(AQ_THIRD(head).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
-    ASSERT(AQ_THIRD(head).repeatPeriod == 1.5 * MINUTES_IN_HOUR);
-    ASSERT(head->next->next->next == NULL);
+    ASSERT(actions.queueHead != NULL);
+    ASSERT(AQ_FIRST(actions.queueHead).type == NOTIFY);
+    ASSERT(basicCompareTimestamp(AQ_FIRST(actions.queueHead).timestamp, (struct Timestamp) {{21, 1}, {13, 30}}) == 0);
+    ASSERT(strcmp(AQ_FIRST(actions.queueHead).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
+    ASSERT(AQ_FIRST(actions.queueHead).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
+    ASSERT(AQ_FIRST(actions.queueHead).repeatPeriod == 1.5 * MINUTES_IN_HOUR);
+    ASSERT(actions.queueHead->next != NULL);
+    ASSERT(AQ_SECOND(actions.queueHead).type == NOTIFY);
+    ASSERT(basicCompareTimestamp(AQ_SECOND(actions.queueHead).timestamp, (struct Timestamp) {{21, 1}, {13, 33}}) == 0);
+    ASSERT(strcmp(AQ_SECOND(actions.queueHead).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
+    ASSERT(AQ_SECOND(actions.queueHead).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
+    ASSERT(AQ_SECOND(actions.queueHead).repeatPeriod == 1.5 * MINUTES_IN_HOUR);
+    ASSERT(actions.queueHead->next->next != NULL);
+    ASSERT(AQ_THIRD(actions.queueHead).type == NOTIFY);
+    ASSERT(basicCompareTimestamp(AQ_THIRD(actions.queueHead).timestamp, (struct Timestamp) {{21, 1}, {13, 36}}) == 0);
+    ASSERT(strcmp(AQ_THIRD(actions.queueHead).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
+    ASSERT(AQ_THIRD(actions.queueHead).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
+    ASSERT(AQ_THIRD(actions.queueHead).repeatPeriod == 1.5 * MINUTES_IN_HOUR);
+    ASSERT(actions.queueHead->next->next->next == NULL);
     return RET_SUCCESS;
 }
 
 
 static ReturnCode testParseActionLine29February(void)
 {
-    struct ActionQueue *head = NULL;
-    ASSERT_ENSURE(parseActionLine("29.02 11:30 reset", &head,
+    struct AllActions actions = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
+    ASSERT_ENSURE(parseActionLine("29.02 11:30 reset", &actions,
                   (struct YearTimestamp) {{{1, 1}, {11, 30}}, 2021}));
-    ASSERT(head == NULL);
+    ASSERT(actions.queueHead == NULL);
     return RET_SUCCESS;
 }
 

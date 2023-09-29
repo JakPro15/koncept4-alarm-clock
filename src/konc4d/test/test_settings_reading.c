@@ -39,24 +39,24 @@ static ReturnCode testGetLine(void)
 
 static ReturnCode testLoadActionsFromFile(void)
 {
-    struct ActionQueue *results = NULL;
+    struct AllActions results = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
 #undef RETURN_CALLBACK
-#define RETURN_CALLBACK destroyActionQueue(&results);
+#define RETURN_CALLBACK destroyActionQueue(&results.queueHead);
     ASSERT_ENSURE(loadActionsFromFile(&results, "test/test_settings_reading.txt",
                   (struct YearTimestamp) {{{1, 4}, {12, 0}}, 2020}));
 
-    ASSERT(AQ_FIRST(results).type == NOTIFY);
-    ASSERT(basicCompareTimestamp(AQ_FIRST(results).timestamp, (struct Timestamp) {{2, 4}, {11, 30}}) == 0);
-    ASSERT(strcmp(AQ_FIRST(results).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
-    ASSERT(AQ_FIRST(results).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
-    ASSERT(AQ_FIRST(results).repeatPeriod == MINUTES_IN_DAY);
+    ASSERT(AQ_FIRST(results.queueHead).type == NOTIFY);
+    ASSERT(basicCompareTimestamp(AQ_FIRST(results.queueHead).timestamp, (struct Timestamp) {{2, 4}, {11, 30}}) == 0);
+    ASSERT(strcmp(AQ_FIRST(results.queueHead).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
+    ASSERT(AQ_FIRST(results.queueHead).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
+    ASSERT(AQ_FIRST(results.queueHead).repeatPeriod == MINUTES_IN_DAY);
 
-    ASSERT(AQ_SECOND(results).type == RESET);
-    ASSERT(basicCompareTimestamp(AQ_SECOND(results).timestamp, (struct Timestamp) {{12, 4}, {22, 30}}) == 0);
-    ASSERT(AQ_SECOND(results).repeatPeriod == MONTHLY_REPEAT);
+    ASSERT(AQ_SECOND(results.queueHead).type == RESET);
+    ASSERT(basicCompareTimestamp(AQ_SECOND(results.queueHead).timestamp, (struct Timestamp) {{12, 4}, {22, 30}}) == 0);
+    ASSERT(AQ_SECOND(results.queueHead).repeatPeriod == MONTHLY_REPEAT);
 
-    ASSERT(results->next->next == NULL);
-    destroyActionQueue(&results);
+    ASSERT(results.queueHead->next->next == NULL);
+    destroyActionQueue(&results.queueHead);
 
 #undef RETURN_CALLBACK
 #define RETURN_CALLBACK
@@ -66,29 +66,29 @@ static ReturnCode testLoadActionsFromFile(void)
 
 static ReturnCode testLoadActionsFromFileWithFeb29(void)
 {
-    struct ActionQueue *results = NULL;
+    struct AllActions results = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
 #undef RETURN_CALLBACK
-#define RETURN_CALLBACK destroyActionQueue(&results);
+#define RETURN_CALLBACK destroyActionQueue(&results.queueHead);
     ASSERT_ENSURE(loadActionsFromFile(&results, "test/test_settings_reading.txt",
                   (struct YearTimestamp) {{{1, 4}, {12, 0}}, 2019}));
 
-    ASSERT(AQ_FIRST(results).type == NOTIFY);
-    ASSERT(basicCompareTimestamp(AQ_FIRST(results).timestamp, (struct Timestamp) {{2, 4}, {11, 30}}) == 0);
-    ASSERT(strcmp(AQ_FIRST(results).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
-    ASSERT(AQ_FIRST(results).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
-    ASSERT(AQ_FIRST(results).repeatPeriod == MINUTES_IN_DAY);
+    ASSERT(AQ_FIRST(results.queueHead).type == NOTIFY);
+    ASSERT(basicCompareTimestamp(AQ_FIRST(results.queueHead).timestamp, (struct Timestamp) {{2, 4}, {11, 30}}) == 0);
+    ASSERT(strcmp(AQ_FIRST(results.queueHead).args.notify.fileName, DEFAULT_NOTIFY_SOUND) == 0);
+    ASSERT(AQ_FIRST(results.queueHead).args.notify.repeats == DEFAULT_NOTIFY_SOUND_REPEATS);
+    ASSERT(AQ_FIRST(results.queueHead).repeatPeriod == MINUTES_IN_DAY);
 
-    ASSERT(AQ_SECOND(results).type == RESET);
-    ASSERT(basicCompareTimestamp(AQ_SECOND(results).timestamp, (struct Timestamp) {{12, 4}, {22, 30}}) == 0);
-    ASSERT(AQ_SECOND(results).repeatPeriod == MONTHLY_REPEAT);
+    ASSERT(AQ_SECOND(results.queueHead).type == RESET);
+    ASSERT(basicCompareTimestamp(AQ_SECOND(results.queueHead).timestamp, (struct Timestamp) {{12, 4}, {22, 30}}) == 0);
+    ASSERT(AQ_SECOND(results.queueHead).repeatPeriod == MONTHLY_REPEAT);
 
-    ASSERT(AQ_THIRD(results).type == SHUTDOWN);
-    ASSERT(basicCompareTimestamp(AQ_THIRD(results).timestamp, (struct Timestamp) {{29, 2}, {11, 30}}) == 0);
-    ASSERT(AQ_THIRD(results).args.shutdown.delay == 35);
-    ASSERT(AQ_THIRD(results).repeatPeriod == false);
+    ASSERT(AQ_THIRD(results.queueHead).type == SHUTDOWN);
+    ASSERT(basicCompareTimestamp(AQ_THIRD(results.queueHead).timestamp, (struct Timestamp) {{29, 2}, {11, 30}}) == 0);
+    ASSERT(AQ_THIRD(results.queueHead).args.shutdown.delay == 35);
+    ASSERT(AQ_THIRD(results.queueHead).repeatPeriod == false);
 
-    ASSERT(results->next->next->next == NULL);
-    destroyActionQueue(&results);
+    ASSERT(results.queueHead->next->next->next == NULL);
+    destroyActionQueue(&results.queueHead);
 
 #undef RETURN_CALLBACK
 #define RETURN_CALLBACK
@@ -98,14 +98,14 @@ static ReturnCode testLoadActionsFromFileWithFeb29(void)
 
 static ReturnCode testLoadActionsFromFile29FebLast(void)
 {
-    struct ActionQueue *results = NULL;
+    struct AllActions results = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
 #undef RETURN_CALLBACK
-#define RETURN_CALLBACK destroyActionQueue(&results);
+#define RETURN_CALLBACK destroyActionQueue(&results.queueHead);
     ASSERT_ENSURE(loadActionsFromFile(&results, "test/test_load_actions_from_file.txt",
                   (struct YearTimestamp) {{{1, 4}, {12, 0}}, 2020}));
 
-    ASSERT(results == NULL);
-    destroyActionQueue(&results);
+    ASSERT(results.queueHead == NULL);
+    destroyActionQueue(&results.queueHead);
 
 #undef RETURN_CALLBACK
 #define RETURN_CALLBACK

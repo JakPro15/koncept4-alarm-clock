@@ -2,4 +2,4 @@
 #include "shared_memory.h"
 
 
-ReturnCode handleMessages(struct ActionQueue **actions, struct SharedMemoryFile sharedMemory) NO_IGNORE;
+ReturnCode handleMessages(struct AllActions *actions, struct SharedMemoryFile sharedMemory) NO_IGNORE;

@@ -3,6 +3,7 @@
 
 #include "error_handling.h"
 #include "passed_action.h"
+#include "action_clock.h"
 
 #define ASSET_DIRECTORY "asset\\"
 #define DEFAULT_NOTIFY_SOUND "ring.wav"
@@ -43,6 +44,13 @@ struct ActionQueue
 #define AQ_EIGHTH(head) (head)->next->next->next->next->next->next->next->action
 
 
+struct AllActions
+{
+    struct ActionQueue *queueHead;
+    struct ActionClock shutdownClock;
+};
+
+
 ReturnCode addAction(struct ActionQueue **head, struct Action *action, struct Timestamp now) NO_IGNORE;
 ReturnCode popAction(struct ActionQueue **head, struct Action *toWrite) NO_IGNORE;
 ReturnCode getActionTimesEveryClause(char **string, unsigned *times, unsigned *every) NO_IGNORE;
@@ -69,7 +77,7 @@ ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestam
  *              filename must not be longer than MAX_NOTIFY_FILE_NAME_SIZE
  *          repeats is an integer, default is 1 if filename given, DEFAULT_NOTIFY_SOUND_REPEATS if not
  */
-ReturnCode parseActionLine(char *string, struct ActionQueue **toWrite, struct YearTimestamp now) NO_IGNORE;
+ReturnCode parseActionLine(char *string, struct AllActions *toWrite, struct YearTimestamp now) NO_IGNORE;
 
 ReturnCode popActionWithRepeat(struct ActionQueue **head, struct Action *toWrite, struct YearTimestamp now) NO_IGNORE;
 ReturnCode skipUntilTimestamp(struct ActionQueue **head, struct Timestamp time, struct YearTimestamp now) NO_IGNORE;

@@ -20,7 +20,7 @@ struct GatheredDefines
 
 ReturnCode verifyDefineName(const char *name, unsigned *size) NO_IGNORE;
 ReturnCode gatherDefines(FILE *settingsFile, struct GatheredDefines *toWrite) NO_IGNORE;
-ReturnCode fitDefine(const char *settingsLine, unsigned size, struct ActionQueue **actions,
+ReturnCode fitDefine(const char *settingsLine, unsigned size, struct AllActions *actions,
                      struct GatheredDefines defines, struct YearTimestamp now) NO_IGNORE;
 void freeGatheredDefines(struct GatheredDefines defines);
 

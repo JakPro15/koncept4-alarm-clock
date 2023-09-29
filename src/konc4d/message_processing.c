@@ -59,7 +59,7 @@ ReturnCode actionTransfer(struct ActionQueue *actions)
 extern bool message_exit;
 
 
-ReturnCode processMessage(struct ActionQueue **actions, char *message)
+ReturnCode processMessage(struct AllActions *actions, char *message)
 {
     if(strcmp(message, "RESET") == 0)
     {
@@ -78,13 +78,13 @@ ReturnCode processMessage(struct ActionQueue **actions, char *message)
         struct YearTimestamp now = getCurrentTimestamp();
         struct YearTimestamp until = addMinutes(now, minutesToSkip);
         LOG_LINE(LOG_INFO, "SKIP message received, skipping by %u minutes", minutesToSkip);
-        ENSURE(skipUntilTimestamp(actions, until.timestamp, now));
+        ENSURE(skipUntilTimestamp(&actions->queueHead, until.timestamp, now));
         return RET_SUCCESS;
     }
     else if(strcmp(message, "SEND") == 0)
     {
         LOG_LINE(LOG_INFO, "SEND message received, sending");
-        RETHROW(actionTransfer(*actions));
+        RETHROW(actionTransfer(actions->queueHead));
         return RET_SUCCESS;
     }
     else
@@ -95,7 +95,7 @@ ReturnCode processMessage(struct ActionQueue **actions, char *message)
 }
 
 
-ReturnCode handleMessages(struct ActionQueue **actions, struct SharedMemoryFile sharedMemory)
+ReturnCode handleMessages(struct AllActions *actions, struct SharedMemoryFile sharedMemory)
 {
     char message[SHMEM_MESSAGE_LENGTH];
     ReturnCode received;

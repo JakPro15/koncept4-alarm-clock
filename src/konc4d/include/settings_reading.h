@@ -12,9 +12,9 @@
 
 ReturnCode getLine(FILE *file, struct SizedString *toWrite) NO_IGNORE;
 ReturnCode skipPreprocessingDirectives(FILE *settingsFile) NO_IGNORE;
-ReturnCode loadActionsFromFile(struct ActionQueue **toWrite, char *fileName, struct YearTimestamp now) NO_IGNORE;
+ReturnCode loadActionsFromFile(struct AllActions *toWrite, char *fileName, struct YearTimestamp now) NO_IGNORE;
 
-inline ReturnCode loadActions(struct ActionQueue **toWrite)
+inline ReturnCode loadActions(struct AllActions *toWrite)
 {
     return loadActionsFromFile(toWrite, SETTINGS_FILE_NAME, getCurrentTimestamp());
 }

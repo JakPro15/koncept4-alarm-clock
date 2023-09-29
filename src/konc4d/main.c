@@ -16,7 +16,7 @@ bool message_exit;
 
 
 ReturnCode waitUntil(struct Timestamp start, struct Timestamp until,
-                     struct ActionQueue **actions, struct SharedMemoryFile sharedMemory)
+                     struct AllActions *actions, struct SharedMemoryFile sharedMemory)
 {
     struct Timestamp now = getCurrentTimestamp().timestamp;
     LOG_LINE(LOG_INFO, "Sleeping until %02d.%02d %02d:%02d", until.date.day,
@@ -31,7 +31,7 @@ ReturnCode waitUntil(struct Timestamp start, struct Timestamp until,
 }
 
 
-ReturnCode initialize(struct ActionQueue **actions, struct SharedMemoryFile *sharedMemory)
+ReturnCode initialize(struct AllActions *actions, struct SharedMemoryFile *sharedMemory)
 {
     message_exit = false;
     LOG_LINE(LOG_INFO, "konc4d started");
@@ -44,23 +44,23 @@ ReturnCode initialize(struct ActionQueue **actions, struct SharedMemoryFile *sha
 
     struct YearTimestamp now = getCurrentTimestamp();
     struct YearTimestamp until = addMinutes(now, INITIAL_DELAY_MINUTES);
-    ENSURE(skipUntilTimestamp(actions, until.timestamp, now));
+    ENSURE(skipUntilTimestamp(&actions->queueHead, until.timestamp, now));
 
     return RET_SUCCESS;
 }
 
 
-ReturnCode actionLoop(struct ActionQueue **actions, struct SharedMemoryFile sharedMemory)
+ReturnCode actionLoop(struct AllActions *actions, struct SharedMemoryFile sharedMemory)
 {
-    while(*actions != NULL)
+    while(actions->queueHead != NULL)
     {
-        struct Action current = (*actions)->action;
+        struct Action current = (actions->queueHead)->action;
         struct YearTimestamp now = getCurrentTimestamp();
         RETURN_FAIL(waitUntil(now.timestamp, current.timestamp, actions, sharedMemory));
-        if(!actionsEqual(&current, &(*actions)->action))
+        if(!actionsEqual(&current, &(actions->queueHead)->action))
             continue;
         RETURN_FAIL(doAction(&current));
-        ENSURE(popActionWithRepeat(actions, NULL, now));
+        ENSURE(popActionWithRepeat(&actions->queueHead, NULL, now));
     }
     return RET_SUCCESS;
 }
@@ -68,14 +68,14 @@ ReturnCode actionLoop(struct ActionQueue **actions, struct SharedMemoryFile shar
 
 int main(void)
 {
-    struct ActionQueue *actions = NULL;
+    struct AllActions actions = {.queueHead = NULL, .shutdownClock = {.type = SHUTDOWN}};
     struct SharedMemoryFile sharedMemory;
     while(true)
     {
         ENSURE(initialize(&actions, &sharedMemory));
         ReturnCode returned = actionLoop(&actions, sharedMemory);
 
-        destroyActionQueue(&actions);
+        destroyActionQueue(&actions.queueHead);
         closeSharedMemory(sharedMemory);
         if(returned == RET_SUCCESS || message_exit)
         {

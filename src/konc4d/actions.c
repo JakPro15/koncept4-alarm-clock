@@ -482,7 +482,7 @@ ReturnCode parseAction(char *string, struct Action *toWrite, struct YearTimestam
 }
 
 
-ReturnCode parseActionLine(char *string, struct ActionQueue **toWrite, struct YearTimestamp now)
+ReturnCode parseActionLine(char *string, struct AllActions *toWrite, struct YearTimestamp now)
 {
     unsigned times, every;
     ReturnCode timesEveryPresent;
@@ -494,13 +494,13 @@ ReturnCode parseActionLine(char *string, struct ActionQueue **toWrite, struct Ye
     RETHROW(parsed = parseAction(string, &newAction, now));
     if(parsed == RET_FAILURE) // 29.02
         return RET_SUCCESS;
-    ENSURE(addAction(toWrite, &newAction, now.timestamp));
+    ENSURE(addAction(&toWrite->queueHead, &newAction, now.timestamp));
     for(unsigned i = 1; i < times; i++)
     {
         newAction.timestamp = addMinutes(deduceYear(newAction.timestamp, now), every).timestamp;
         if(newAction.repeatPeriod)
             adjustDateForRepeat(&newAction, now);
-        ENSURE(addAction(toWrite, &newAction, now.timestamp));
+        ENSURE(addAction(&toWrite->queueHead, &newAction, now.timestamp));
     }
     return RET_SUCCESS;
 }
