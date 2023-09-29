@@ -38,7 +38,14 @@ TESTING_SRC=$(wildcard $(TESTING_DIR)/*.c)
 TESTING_OBJ_ABS=$(TESTING_SRC:$(TESTING_DIR)/%.c=$(TESTING_DIR)/output/%.o)
 export TESTING_OBJ=$(TESTING_OBJ_ABS:$(SRC_DIR)/%=../%)
 
-export GLOBAL_CFLAGS=-O3 -flto -fuse-linker-plugin -Wall -Wextra -Wpedantic -Werror -fanalyzer -Wno-stringop-overflow -Wno-analyzer-use-of-uninitialized-value -Wno-analyzer-malloc-leak -Wno-maybe-uninitialized
+CFLAGS_EXCEPT_OPTIMIZATION=-Wall -Wextra -Wpedantic -Werror -fanalyzer -Wno-stringop-overflow -Wno-analyzer-use-of-uninitialized-value -Wno-analyzer-malloc-leak -Wno-maybe-uninitialized
+ifdef DEBUG
+export GLOBAL_CFLAGS= -g -Og $(CFLAGS_EXCEPT_OPTIMIZATION)
+$(info DEBUG compilation)
+else
+export GLOBAL_CFLAGS= -O3 -flto -ffat-lto-objects -fuse-linker-plugin $(CFLAGS_EXCEPT_OPTIMIZATION)
+$(info RELEASE compilation)
+endif
 
 all:
 	@$(MAKE) -C $(TESTING_DIR)
