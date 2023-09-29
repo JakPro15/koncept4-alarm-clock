@@ -21,6 +21,12 @@ static bool isLeapYear(unsigned currentYear)
 }
 
 
+bool isTimeValid(struct TimeOfDay toValidate)
+{
+    return toValidate.hour <= 23 && toValidate.minute <= 59;
+}
+
+
 bool isDateValid(struct DateOfYear toValidate, unsigned year)
 {
     return toValidate.day > 0 && toValidate.month > 0 && toValidate.month <= 12 &&

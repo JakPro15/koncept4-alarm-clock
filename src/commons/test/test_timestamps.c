@@ -133,6 +133,18 @@ static ReturnCode testCompareTimestampCurrentBetween(void)
 }
 
 
+static ReturnCode testIsTimeValid(void)
+{
+    ASSERT(isTimeValid((struct TimeOfDay) {23, 59}) == true);
+    ASSERT(isTimeValid((struct TimeOfDay) {0, 0}) == true);
+    ASSERT(isTimeValid((struct TimeOfDay) {12, 0}) == true);
+    ASSERT(isTimeValid((struct TimeOfDay) {24, 0}) == false);
+    ASSERT(isTimeValid((struct TimeOfDay) {4, 60}) == false);
+    ASSERT(isTimeValid((struct TimeOfDay) {25, 71}) == false);
+    return RET_SUCCESS;
+}
+
+
 static ReturnCode testIsDateValid(void)
 {
     ASSERT(isDateValid((struct DateOfYear) {0, 3}, 2020) == false);
@@ -195,6 +207,7 @@ PREPARE_TESTING(timestamps,
     testBasicCompareTimestamp,
     testCompareTimestampRegular,
     testCompareTimestampCurrentBetween,
+    testIsTimeValid,
     testIsDateValid,
     testGetNextDay,
     testAddMinutes
