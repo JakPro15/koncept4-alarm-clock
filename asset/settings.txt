@@ -5,7 +5,7 @@
 21:30 notify
 22:00 notify
 4 times every 30 22:30 shutdown
-360 times every 1 00:01 shutdown
+between 0:00 and 6:00 shutdown
 
 important(24.05)
 important(26.05)

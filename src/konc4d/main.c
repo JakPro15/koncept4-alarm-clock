@@ -11,12 +11,30 @@
 #endif
 #define WAIT_CHECK_PERIOD_SECONDS 1
 
+#define MAX_CLOCK_COOLDOWN_SECONDS 60
+#define MAX_CLOCK_COOLDOWN_TICKS (MAX_CLOCK_COOLDOWN_SECONDS + WAIT_CHECK_PERIOD_SECONDS - 1) / WAIT_CHECK_PERIOD_SECONDS
+
 
 bool message_exit;
 
 
-ReturnCode waitUntil(struct Timestamp start, struct Timestamp until,
-                     struct AllActions *actions, struct SharedMemoryFile sharedMemory)
+static const struct Action clockShutdown = {.type = SHUTDOWN, .args.shutdown.delay = DEFAULT_SHUTDOWN_DELAY};
+
+static ReturnCode checkActionClocks(struct AllActions *actions, struct TimeOfDay now)
+{
+    if(actions->clockCooldown <= 0 && checkActionAtTime(&actions->shutdownClock, now))
+    {
+        ENSURE(doAction(&clockShutdown));
+        actions->clockCooldown = MAX_CLOCK_COOLDOWN_TICKS;
+    }
+    else
+        --actions->clockCooldown;
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode waitUntil(struct Timestamp start, struct Timestamp until,
+                            struct AllActions *actions, struct SharedMemoryFile sharedMemory)
 {
     struct Timestamp now = getCurrentTimestamp().timestamp;
     LOG_LINE(LOG_INFO, "Sleeping until %02d.%02d %02d:%02d", until.date.day,
@@ -24,6 +42,7 @@ ReturnCode waitUntil(struct Timestamp start, struct Timestamp until,
     while(compareTimestamp(now, until, start) < 0)
     {
         RETURN_FAIL(handleMessages(actions, sharedMemory));
+        RETURN_FAIL(checkActionClocks(actions, now.time));
         Sleep(WAIT_CHECK_PERIOD_SECONDS * 1000);
         now = getCurrentTimestamp().timestamp;
     }

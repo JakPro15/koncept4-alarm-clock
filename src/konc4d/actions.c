@@ -40,7 +40,7 @@ static ReturnCode actionShutdown(unsigned delay)
 }
 
 
-static ReturnCode actionNotify(int repeats, char *actionArgument)
+static ReturnCode actionNotify(int repeats, const char *actionArgument)
 {
     if(actionArgument[0] != '\0')
     {
@@ -58,7 +58,7 @@ static ReturnCode actionNotify(int repeats, char *actionArgument)
 }
 
 
-ReturnCode doAction(struct Action *action)
+ReturnCode doAction(const struct Action *action)
 {
     switch(action->type)
     {
@@ -496,6 +496,8 @@ static ReturnCode parseNoActionBetween(char *string, struct AllActions *toWrite)
         return RET_ERROR;
     }
     setActionClock(&toWrite->shutdownClock, begin, end, 0);
+    LOG_LINE(LOG_DEBUG, "Parsed line as action clock line: between %02u:%02u and %02u:%02u %s",
+             begin.hour, begin.minute, end.hour, end.minute, actionName);
     return RET_SUCCESS;
 }
 
@@ -514,6 +516,8 @@ static ReturnCode parseActionBetween(char *string, struct AllActions *toWrite)
         return RET_ERROR;
     }
     setActionClock(&toWrite->shutdownClock, begin, end, 1);
+    LOG_LINE(LOG_DEBUG, "Parsed line as action clock line: between %02u:%02u and %02u:%02u %s",
+             begin.hour, begin.minute, end.hour, end.minute, actionName);
     return RET_SUCCESS;
 }
 
@@ -522,6 +526,7 @@ ReturnCode parseActionClockLine(char *string, struct AllActions *toWrite)
 {
     TRY_END_RETHROW(parseNoActionBetween(string, toWrite));
     TRY_END_RETHROW(parseActionBetween(string, toWrite));
+    LOG_LINE(LOG_DEBUG, "Failed to parse line as action clock line: %s", string);
     return RET_FAILURE;
 }
 

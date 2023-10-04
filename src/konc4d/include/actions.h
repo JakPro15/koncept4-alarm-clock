@@ -25,7 +25,7 @@ struct Action
 };
 
 
-ReturnCode doAction(struct Action *action);
+ReturnCode doAction(const struct Action *action);
 
 
 struct ActionQueue
@@ -48,6 +48,7 @@ struct AllActions
 {
     struct ActionQueue *queueHead;
     struct ActionClock shutdownClock;
+    unsigned clockCooldown;
 };
 
 
@@ -72,7 +73,7 @@ ReturnCode parseActionClockLine(char *string, struct AllActions *toWrite) NO_IGN
  *      if type == shutdown: delay
  *          delay given in seconds, default DEFAULT_SHUTDOWN_DELAY
  *      if type == reset:
- *          no arguments permitted
+ *          reset action takes no arguments
  *      if type == notify: [filename [repeats]]
  *          filename specifies a file in ASSET_DIRECTORY, default is DEFAULT_NOTIFY_SOUND with DEFAULT_NOTIFY_SOUND_REPEATS
  *              filename must not be longer than MAX_NOTIFY_FILE_NAME_SIZE
@@ -81,7 +82,7 @@ ReturnCode parseActionClockLine(char *string, struct AllActions *toWrite) NO_IGN
  * between minute and minute [no] type
  * minute := hh:mm
  * type := shutdown
- * if "no" is given, in the given time no
+ * if "no" is given, in the given time the action is not made.
  */
 ReturnCode parseActionLine(char *string, struct AllActions *toWrite, struct YearTimestamp now) NO_IGNORE;
 
