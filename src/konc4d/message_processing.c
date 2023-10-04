@@ -79,6 +79,8 @@ ReturnCode processMessage(struct AllActions *actions, char *message)
         struct YearTimestamp until = addMinutes(now, minutesToSkip);
         LOG_LINE(LOG_INFO, "SKIP message received, skipping by %u minutes", minutesToSkip);
         ENSURE(skipUntilTimestamp(&actions->queueHead, until.timestamp, now));
+        actions->clockCooldown = difference(now, until) * SECONDS_IN_MINUTE;
+        LOG_LINE(LOG_DEBUG, "Action clock actions disabled for %u seconds", actions->clockCooldown);
         return RET_SUCCESS;
     }
     else if(strcmp(message, "SEND") == 0)

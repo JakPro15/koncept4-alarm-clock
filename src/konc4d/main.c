@@ -12,7 +12,6 @@
 #define WAIT_CHECK_PERIOD_SECONDS 1
 
 #define MAX_CLOCK_COOLDOWN_SECONDS 60
-#define MAX_CLOCK_COOLDOWN_TICKS (MAX_CLOCK_COOLDOWN_SECONDS + WAIT_CHECK_PERIOD_SECONDS - 1) / WAIT_CHECK_PERIOD_SECONDS
 
 
 bool message_exit;
@@ -25,10 +24,10 @@ static ReturnCode checkActionClocks(struct AllActions *actions, struct TimeOfDay
     if(actions->clockCooldown <= 0 && checkActionAtTime(&actions->shutdownClock, now))
     {
         ENSURE(doAction(&clockShutdown));
-        actions->clockCooldown = MAX_CLOCK_COOLDOWN_TICKS;
+        actions->clockCooldown = MAX_CLOCK_COOLDOWN_SECONDS;
     }
     else
-        --actions->clockCooldown;
+        actions->clockCooldown -= WAIT_CHECK_PERIOD_SECONDS;
     return RET_SUCCESS;
 }
 

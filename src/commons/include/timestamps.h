@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#define SECONDS_IN_MINUTE 60
+
 #define MINUTES_IN_HOUR 60
 #define MINUTES_IN_DAY 24 * 60
 #define MINUTES_IN_WEEK 7 * 24 * 60
