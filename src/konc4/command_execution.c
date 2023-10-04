@@ -206,16 +206,13 @@ ReturnCode ensuredOpenSharedMemory(struct SharedMemoryFile *sharedMemory)
 }
 
 
-static_assert(SHMEM_MESSAGE_LENGTH - sizeof(unsigned) > sizeof("SKIP"),
-              "SHMEM_MESSAGE_LENGTH is too small to hold SKIP embedded argument");
-
 void embedArgsInMessage(char *toWrite, const char *message, va_list args)
 {
     strcpy(toWrite, message);
     if(strcmp(message, "SKIP") == 0)
     {
         unsigned minutesToSkip = va_arg(args, unsigned);
-        SHMEM_EMBEDDED_UNSIGNED(toWrite) = minutesToSkip;
+        SHMEM_EMBEDDED_UNSIGNED(toWrite, sizeof("SKIP")) = minutesToSkip;
     }
 }
 
@@ -233,6 +230,10 @@ ReturnCode ensuredSendMessage(struct SharedMemoryFile sharedMemory, char *messag
     return RET_SUCCESS;
 }
 
+
+#define SHMEM_MESSAGE_LENGTH 12
+static_assert(SHMEM_MESSAGE_LENGTH - sizeof(unsigned) > sizeof("SKIP"),
+              "SHMEM_MESSAGE_LENGTH is too small to hold SKIP embedded argument");
 
 ReturnCode fullSendMessage(char *message, ...)
 {

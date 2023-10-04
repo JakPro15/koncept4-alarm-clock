@@ -44,9 +44,11 @@ ReturnCode actionTransfer(struct ActionQueue *actions)
     struct SharedMemoryFile actionTransferQueue;
     ENSURE(openSharedMemory(&actionTransferQueue, SHMEM_FROM_KONC4D));
 
-    char lengthMessage[SHMEM_MESSAGE_LENGTH] = "SIZE";
-    SHMEM_EMBEDDED_UNSIGNED(lengthMessage) = countActions(actions);
-    ENSURE_CALLBACK(sendMessage(actionTransferQueue, lengthMessage, sizeof(lengthMessage)), closeSharedMemory(actionTransferQueue));
+    unsigned lengthMessageSize = sizeof("SIZE") + sizeof(unsigned);
+    char lengthMessage[lengthMessageSize];
+    strcpy(lengthMessage, "SIZE");
+    SHMEM_EMBEDDED_UNSIGNED(lengthMessage, sizeof("SIZE")) = countActions(actions);
+    ENSURE_CALLBACK(sendMessage(actionTransferQueue, lengthMessage, lengthMessageSize), closeSharedMemory(actionTransferQueue));
 
     for(; actions != NULL; actions = actions->next)
         RETURN_FAIL_CALLBACK(sendAction(actionTransferQueue, &actions->action), closeSharedMemory(actionTransferQueue));
@@ -74,7 +76,7 @@ ReturnCode processMessage(struct AllActions *actions, char *message)
     }
     else if(strcmp(message, "SKIP") == 0)
     {
-        unsigned minutesToSkip = SHMEM_EMBEDDED_UNSIGNED(message);
+        unsigned minutesToSkip = SHMEM_EMBEDDED_UNSIGNED(message, sizeof("SKIP"));
         struct YearTimestamp now = getCurrentTimestamp();
         struct YearTimestamp until = addMinutes(now, minutesToSkip);
         LOG_LINE(LOG_INFO, "SKIP message received, skipping by %u minutes", minutesToSkip);
@@ -99,13 +101,15 @@ ReturnCode processMessage(struct AllActions *actions, char *message)
 
 ReturnCode handleMessages(struct AllActions *actions, struct SharedMemoryFile sharedMemory)
 {
-    char message[SHMEM_MESSAGE_LENGTH];
+    char *message;
+    unsigned size;
     ReturnCode received;
-    RETHROW(received = receiveMessage(sharedMemory, message));
+    RETHROW(received = receiveMessage(sharedMemory, &message, &size));
     while(received != RET_FAILURE)
     {
         RETURN_FAIL(processMessage(actions, message));
-        RETHROW(received = receiveMessage(sharedMemory, message));
+        free(message);
+        RETHROW(received = receiveMessage(sharedMemory, &message, &size));
     }
     return RET_SUCCESS;
 }
