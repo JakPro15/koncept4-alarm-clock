@@ -43,13 +43,20 @@ static ReturnCode testOverQueueCapacity(void)
     FILE *receivedStream = popen("output\\receiver.exe 20", "r");
     ASSERT_MESSAGE(receivedStream != NULL, "Failed to launch receiver.exe");
     Sleep(100);
-    ASSERT(system("output\\sender.exe 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19") == 0);
-    char sent[4];
+    char command[600] = "output\\sender.exe";
+    for(int i = 0; i < 20; i++)
+    {
+        char nextMessage[30];
+        sprintf(nextMessage, " messageMessage%d", i);
+        strcpy(&command[strlen(command)], nextMessage);
+    }
+    ASSERT(system(command) == 0);
+    char sent[30];
     char received[100];
 
     for(int i = 0; i < 20; i++)
     {
-        sprintf(sent, "%d\n", i);
+        sprintf(sent, "messageMessage%d\n", i);
         ASSERT(fgets(received, 100, receivedStream) != NULL);
         ASSERT(strcmp(received, sent) == 0);
     }

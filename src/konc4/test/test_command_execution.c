@@ -17,6 +17,8 @@ void embedArgsWrapper(char *toWrite, const char *message, ...)
 }
 
 
+#define SHMEM_MESSAGE_LENGTH 12
+
 static ReturnCode testEmbedArgsInMessageNormal(void)
 {
     const char message[] = "STOP";
@@ -50,9 +52,9 @@ static ReturnCode testEmbedArgsInMessageSkip(void)
 
     embedArgsInMessageWrapper(embedded, message, 233);
     ASSERT(strcmp(embedded, message) == 0);
-    for(unsigned i = sizeof(message); (unsigned) i < SHMEM_MESSAGE_LENGTH - sizeof(unsigned); i++)
+    for(int i = sizeof(message) + sizeof(unsigned); i < SHMEM_MESSAGE_LENGTH; i++)
         ASSERT(embedded[i] == '\xff');
-    ASSERT(SHMEM_EMBEDDED_UNSIGNED(embedded) == 233);
+    ASSERT(SHMEM_EMBEDDED_UNSIGNED(embedded, sizeof(message)) == 233);
     return RET_SUCCESS;
 }
 
@@ -69,7 +71,7 @@ static ReturnCode testEnsuredSendMessage(void)
 
     for(int i = 0; i < 20; i++)
     {
-        SHMEM_EMBEDDED_UNSIGNED(message) = 20 - i;
+        SHMEM_EMBEDDED_UNSIGNED(message, sizeof("SKIP")) = 20 - i;
         ASSERT_ENSURE(ensuredSendMessage(sharedMemory, message, SHMEM_MESSAGE_LENGTH));
     }
 
@@ -77,7 +79,7 @@ static ReturnCode testEnsuredSendMessage(void)
     for(int i = 0; i < 20; i++)
     {
         sprintf(sent, "SKIP %d\n", 20 - i);
-        ASSERT(fgets(received, sizeof(received), receivedStream) != NULL);
+        ASSERT(fgets(received, sizeof(received), receivedStream) != NULL);\
         ASSERT(strcmp(received, sent) == 0);
     }
     ASSERT(pclose(receivedStream) == 0);

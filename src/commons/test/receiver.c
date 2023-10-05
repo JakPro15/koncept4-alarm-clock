@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
     if(!SetPriorityClass(GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS))
         LOG_LINE(LOG_ERROR, "SetPriorityClass failed\n");
 
-    logging_level = LOG_SILENT;
+    logging_level = LOG_DEBUG;
     if(argc < 1)
         return 1;
     int toReceive = atoi(argv[1]);

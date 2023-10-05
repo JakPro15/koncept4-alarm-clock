@@ -174,11 +174,11 @@ static int getNextFreeIndex(struct SharedMemory *shared, unsigned size)
     if(shared->queueFirst == NO_MESSAGE)
     {
         shared->queueFirst = 0;
-        shared->queueLast = (int) size;
+        shared->queueLast = (int) size + 1;
         return 0;
     }
     int first = shared->queueFirst, last = shared->queueLast;
-    int newLast = (shared->queueLast + size) % SHMEM_QUEUE_SIZE;
+    int newLast = (shared->queueLast + size + 1) % SHMEM_QUEUE_SIZE;
     if((first < newLast && newLast < last) || (newLast < last && last < first) || (last < first && first < newLast))
         return NO_MESSAGE;
     shared->queueLast = newLast;
@@ -203,6 +203,8 @@ ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message, unsi
         return RET_FAILURE;
     }
 
+    sharedMemory.shared->messageQueue[begin++] = (unsigned char) size;
+    begin %= SHMEM_QUEUE_SIZE;
     if(end > begin)
         memcpy(&sharedMemory.shared->messageQueue[begin], message, size);
     else
