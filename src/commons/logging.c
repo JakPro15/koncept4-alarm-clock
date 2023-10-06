@@ -9,7 +9,7 @@
 
 
 
-enum LOGGING_LEVEL logging_level = LOG_TRACE;
+enum LOGGING_LEVEL logging_level = LOG_INFO;
 static HANDLE mutex;
 static const char *level_strings[6] = {"TRC", "DEB", "INF", "WAR", "ERR", "SIL"};
 

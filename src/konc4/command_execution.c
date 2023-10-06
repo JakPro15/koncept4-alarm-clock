@@ -95,7 +95,8 @@ ReturnCode executeSkip(unsigned minutesToSkip)
 }
 
 
-struct ShowArgument {
+struct ShowArgument
+{
     int number;
     struct Timestamp until;
 };
@@ -159,6 +160,62 @@ static void printAction(const struct PassedAction *actions, unsigned index)
 }
 
 
+static void printActionVector(struct ShowArgument parsedArgument, struct ReceivedActions *received, struct YearTimestamp now)
+{
+    printf("Actions:\n");
+    unsigned i = 0;
+    if(parsedArgument.number == TIMESTAMP_PRESENT)
+    {
+        while(compareTimestamp(received->actionVector[i].timestamp, parsedArgument.until, now.timestamp) <= 0 &&
+              i < received->actionVectorSize)
+            printAction(received->actionVector, i++);
+    }
+    else
+    {
+        unsigned noActionsToPrint = (received->actionVectorSize < (unsigned) parsedArgument.number) ?
+                                    received->actionVectorSize :
+                                    (unsigned) parsedArgument.number;
+        for(; i < noActionsToPrint; i++)
+            printAction(received->actionVector, i);
+    }
+    if(i == 0)
+        puts("none");
+}
+
+
+static void printAllActionClocks(struct ReceivedActions *received)
+{
+    if(checkActionsInPeriod(&received->shutdownClock, (struct TimeOfDay){0, 0}, (struct TimeOfDay){23, 59}, 0))
+        puts("No further shutdowns will be made");
+    else
+    {
+        puts("Shutdowns will also be made in the following periods:");
+        struct TimeOfDay begin, current = {0, 0};
+        bool lastAction = 0;
+        while(basicCompareTime(current, (struct TimeOfDay){24, 0}) < 0)
+        {
+            bool currentAction = checkActionAtTime(&received->shutdownClock, current);
+            if(lastAction == 0 && currentAction == 1)
+                begin = current;
+            else if(lastAction == 1 && currentAction == 0)
+            {
+                struct TimeOfDay end = decrementedTime(current);
+                printf("between %02u:%02u and %02u:%02u\n", begin.hour, begin.minute, end.hour, end.minute);
+            }
+            lastAction = currentAction;
+            incrementTime(&current);
+        }
+        if(lastAction == 1)
+            printf("between %02u:%02u and 23:59\n", begin.hour, begin.minute);
+    }
+    if(received->clockCooldown / 60 > 0)
+    {
+        printf("No actions will be made for the next %u %s though.\n",
+               received->clockCooldown / 60, (received->clockCooldown / 60 == 1) ? "minute" : "minutes");
+    }
+}
+
+
 ReturnCode executeShow(const char *argument)
 {
     struct YearTimestamp now = getCurrentTimestamp();
@@ -175,52 +232,10 @@ ReturnCode executeShow(const char *argument)
         LOG_LINE(LOG_WARNING, "Failed to obtain actions from konc4d");
         return RET_FAILURE;
     }
-    printf("Actions:\n");
-    unsigned i = 0;
-    if(parsedArgument.number == TIMESTAMP_PRESENT)
-    {
-        while(compareTimestamp(received.actionVector[i].timestamp, parsedArgument.until, now.timestamp) <= 0 &&
-              i < received.actionVectorSize)
-            printAction(received.actionVector, i++);
-    }
-    else
-    {
-        unsigned noActionsToPrint = (received.actionVectorSize < (unsigned) parsedArgument.number) ?
-                                    received.actionVectorSize :
-                                    (unsigned) parsedArgument.number;
-        for(; i < noActionsToPrint; i++)
-            printAction(received.actionVector, i);
-    }
-    if(i == 0)
-        puts("none");
-    putchar('\n');
+    printActionVector(parsedArgument, &received, now);
     free(received.actionVector);
-    if(checkActionsInPeriod(&received.shutdownClock, (struct TimeOfDay){0, 0}, (struct TimeOfDay){23, 59}, 0))
-        puts("No further shutdowns will be made");
-    else
-    {
-        puts("Shutdowns will also be made in the following periods:");
-        struct TimeOfDay begin, current = {0, 0};
-        bool lastAction = 0;
-        while(basicCompareTime(current, (struct TimeOfDay){24, 0}) < 0)
-        {
-            bool currentAction = checkActionAtTime(&received.shutdownClock, current);
-            if(lastAction == 0 && currentAction == 1)
-                begin = current;
-            else if(lastAction == 1 && currentAction == 0)
-            {
-                struct TimeOfDay end = decrementedTime(current);
-                printf("between %02u:%02u and %02u:%02u\n", begin.hour, begin.minute, end.hour, end.minute);
-            }
-            lastAction = currentAction;
-            incrementTime(&current);
-        }
-        if(lastAction == 1)
-            printf("between %02u:%02u and 23:59\n", begin.hour, begin.minute);
-    }
-    if(received.clockCooldown / 60 > 0)
-        printf("No actions will be made for the next %u %s though.\n",
-               received.clockCooldown / 60, (received.clockCooldown / 60 == 1) ? "minute" : "minutes");
+    putchar('\n');
+    printAllActionClocks(&received);
     LOG_LINE(LOG_INFO, "konc4 show command executed successfully");
     return RET_SUCCESS;
 }
