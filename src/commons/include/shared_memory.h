@@ -11,7 +11,7 @@
 #define SHMEM_TO_KONC4D 0
 #define SHMEM_FROM_KONC4D 1
 
-#define SHMEM_QUEUE_SIZE 128
+#define SHMEM_QUEUE_SIZE 256
 
 #define SHMEM_EMBEDDED_UNSIGNED(message, position) *((unsigned*) &message[position])
 #define NO_MESSAGE -1

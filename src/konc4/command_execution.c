@@ -106,7 +106,8 @@ static ReturnCode parseShowArgument(const char *argument, struct ShowArgument *t
 {
     if(argument == NULL)
     {
-        toWrite->number = ULONG_MAX;
+        toWrite->number = INT_MAX;
+        LOG_LINE(LOG_DEBUG, "Determined show argument to be empty");
         return RET_SUCCESS;
     }
     unsigned hour, minute;
@@ -165,10 +166,9 @@ ReturnCode executeShow(const char *argument)
     ENSURE(parseShowArgument(argument, &parsedArgument, now));
 
     printf("Trying to obtain action data from konc4d.\n");
-    struct PassedAction *actions;
-    unsigned size;
+    struct ReceivedActions received;
     ReturnCode obtained;
-    RETHROW(obtained = obtainActions(&actions, &size));
+    RETHROW(obtained = obtainActions(&received));
     if(obtained == RET_FAILURE)
     {
         printf("Failed to obtain action data from konc4d.\n");
@@ -179,17 +179,48 @@ ReturnCode executeShow(const char *argument)
     unsigned i = 0;
     if(parsedArgument.number == TIMESTAMP_PRESENT)
     {
-        while(compareTimestamp(actions[i].timestamp, parsedArgument.until, now.timestamp) <= 0 && i < size)
-            printAction(actions, i++);
+        while(compareTimestamp(received.actionVector[i].timestamp, parsedArgument.until, now.timestamp) <= 0 &&
+              i < received.actionVectorSize)
+            printAction(received.actionVector, i++);
     }
     else
     {
-        for(; i < ((size < (unsigned) parsedArgument.number) ? size : (unsigned) parsedArgument.number); i++)
-            printAction(actions, i);
+        unsigned noActionsToPrint = (received.actionVectorSize < (unsigned) parsedArgument.number) ?
+                                    received.actionVectorSize :
+                                    (unsigned) parsedArgument.number;
+        for(; i < noActionsToPrint; i++)
+            printAction(received.actionVector, i);
     }
     if(i == 0)
         puts("none");
-    free(actions);
+    putchar('\n');
+    free(received.actionVector);
+    if(checkActionsInPeriod(&received.shutdownClock, (struct TimeOfDay){0, 0}, (struct TimeOfDay){23, 59}, 0))
+        puts("No further shutdowns will be made");
+    else
+    {
+        puts("Shutdowns will also be made in the following periods:");
+        struct TimeOfDay begin, current = {0, 0};
+        bool lastAction = 0;
+        while(basicCompareTime(current, (struct TimeOfDay){24, 0}) < 0)
+        {
+            bool currentAction = checkActionAtTime(&received.shutdownClock, current);
+            if(lastAction == 0 && currentAction == 1)
+                begin = current;
+            else if(lastAction == 1 && currentAction == 0)
+            {
+                struct TimeOfDay end = decrementedTime(current);
+                printf("between %02u:%02u and %02u:%02u\n", begin.hour, begin.minute, end.hour, end.minute);
+            }
+            lastAction = currentAction;
+            incrementTime(&current);
+        }
+        if(lastAction == 1)
+            printf("between %02u:%02u and 23:59\n", begin.hour, begin.minute);
+    }
+    if(received.clockCooldown / 60 > 0)
+        printf("No actions will be made for the next %u %s though.\n",
+               received.clockCooldown / 60, (received.clockCooldown / 60 == 1) ? "minute" : "minutes");
     LOG_LINE(LOG_INFO, "konc4 show command executed successfully");
     return RET_SUCCESS;
 }

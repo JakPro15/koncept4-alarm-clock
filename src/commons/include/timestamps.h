@@ -43,6 +43,15 @@ unsigned getMonthLength(unsigned month, unsigned year);
 struct DateOfYear getNextDay(struct YearTimestamp time);
 struct YearTimestamp addMinutes(struct YearTimestamp now, unsigned delay);
 
+
+/* Does not loop the time; it is possible to get {24, 0} */
+void incrementTime(struct TimeOfDay *time);
+
+
+/* Does loop the time; it is not possible to get below {0, 0} */
+struct TimeOfDay decrementedTime(struct TimeOfDay time);
+
+
 /* Returns difference in minutes: second - first */
 unsigned difference(struct YearTimestamp earlier, struct YearTimestamp later);
 struct YearTimestamp deduceYear(struct Timestamp toDeduce, struct YearTimestamp now);

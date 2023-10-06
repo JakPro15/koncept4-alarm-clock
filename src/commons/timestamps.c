@@ -115,6 +115,32 @@ struct YearTimestamp addMinutes(struct YearTimestamp now, unsigned delay)
 }
 
 
+void incrementTime(struct TimeOfDay *time)
+{
+    if(++time->minute >= 60)
+    {
+        time->minute = 0;
+        ++time->hour;
+    }
+}
+
+
+struct TimeOfDay decrementedTime(struct TimeOfDay time)
+{
+    if(time.minute == 0)
+    {
+        if(time.hour == 0)
+            time.hour = 23;
+        else
+            --time.hour;
+        time.minute = 59;
+    }
+    else
+        --time.minute;
+    return time;
+}
+
+
 unsigned difference(struct YearTimestamp earlier, struct YearTimestamp later)
 {
     int diff = 0;

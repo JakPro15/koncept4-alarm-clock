@@ -11,7 +11,10 @@
 #endif
 #define WAIT_CHECK_PERIOD_SECONDS 1
 
-#define MAX_CLOCK_COOLDOWN_SECONDS 60
+#define MAX_CLOCK_COOLDOWN_SECONDS 59
+#if MAX_CLOCK_COOLDOWN_SECONDS >= 60
+    #error("MAX_CLOCK_COOLDOWN_SECONDS mustn't exceed 59")
+#endif
 
 
 bool message_exit;
@@ -27,7 +30,12 @@ static ReturnCode checkActionClocks(struct AllActions *actions, struct TimeOfDay
         actions->clockCooldown = MAX_CLOCK_COOLDOWN_SECONDS;
     }
     else
-        actions->clockCooldown -= WAIT_CHECK_PERIOD_SECONDS;
+    {
+        if(actions->clockCooldown >= WAIT_CHECK_PERIOD_SECONDS)
+            actions->clockCooldown -= WAIT_CHECK_PERIOD_SECONDS;
+        else
+            actions->clockCooldown = 0;
+    }
     return RET_SUCCESS;
 }
 

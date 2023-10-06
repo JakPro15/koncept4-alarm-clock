@@ -5,6 +5,12 @@
 #define DOY(d, m) (struct DateOfYear) {(d), (m)}
 #define TSP(d, mon, h, m) (struct Timestamp) {{(d), (mon)}, {(h), (m)}}
 
+#define TOD_EQUAL(time1, h, m) do { \
+    struct TimeOfDay firstTime = (time1); \
+    ASSERT(firstTime.hour == (unsigned) (h)); \
+    ASSERT(firstTime.minute == (unsigned) (m)); \
+} while(0)
+
 #define YDATE(d, m, y) (struct YearTimestamp) {{{(d), (m)}, {0, 0}}, (y)}
 #define DATE_EQUAL(date1, d, m) do { \
     struct DateOfYear firstDate = (date1); \
@@ -199,6 +205,42 @@ static ReturnCode testAddMinutes(void)
 }
 
 
+static ReturnCode testIncrementTime(void)
+{
+    struct TimeOfDay time = {0, 0};
+    incrementTime(&time);
+    TOD_EQUAL(time, 0, 1);
+    incrementTime(&time);
+    TOD_EQUAL(time, 0, 2);
+    time = TOD(0, 59);
+    incrementTime(&time);
+    TOD_EQUAL(time, 1, 0);
+    time = TOD(23, 59);
+    incrementTime(&time);
+    TOD_EQUAL(time, 24, 0);
+    incrementTime(&time);
+    TOD_EQUAL(time, 24, 1);
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode testDecrementedTime(void)
+{
+    struct TimeOfDay time = {23, 59};
+    time = decrementedTime(time);
+    TOD_EQUAL(time, 23, 58);
+    time = decrementedTime(time);
+    TOD_EQUAL(time, 23, 57);
+    time = TOD(23, 0);
+    time = decrementedTime(time);
+    TOD_EQUAL(time, 22, 59);
+    time = TOD(0, 0);
+    time = decrementedTime(time);
+    TOD_EQUAL(time, 23, 59);
+    return RET_SUCCESS;
+}
+
+
 PREPARE_TESTING(timestamps,
     testBasicCompareTime,
     testCompareTimeRegular,
@@ -210,5 +252,7 @@ PREPARE_TESTING(timestamps,
     testIsTimeValid,
     testIsDateValid,
     testGetNextDay,
-    testAddMinutes
+    testAddMinutes,
+    testIncrementTime,
+    testDecrementedTime
 )

@@ -188,7 +188,8 @@ static int getNextFreeIndex(struct SharedMemory *shared, unsigned size)
 
 ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message, unsigned size)
 {
-    if(size > SHMEM_QUEUE_SIZE)
+    LOG_LINE(LOG_DEBUG, "sendMessage(sharedMemory, %p, %u)", message, size);
+    if(size + 1 > SHMEM_QUEUE_SIZE)
     {
         LOG_LINE(LOG_ERROR, "Message to be sent is too long");
         return RET_ERROR;

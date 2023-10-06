@@ -3,8 +3,18 @@
 
 #include "shared_memory.h"
 #include "command_execution.h"
+#include "action_clock.h"
 
 
-ReturnCode obtainActions(struct PassedAction **toWrite, unsigned *size);
+struct ReceivedActions
+{
+    struct PassedAction *actionVector;
+    unsigned actionVectorSize;
+    struct ActionClock shutdownClock;
+    unsigned clockCooldown;
+};
+
+
+ReturnCode obtainActions(struct ReceivedActions *toWrite) NO_IGNORE;
 
 #endif

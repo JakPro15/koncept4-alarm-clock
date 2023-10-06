@@ -9,7 +9,6 @@ void settings_reading(void);
 void actions(void);
 void parse_action(void);
 void preprocessing(void);
-void action_clock(void);
 
 #define KONC4D_TESTS { \
     sized_string(); \
@@ -17,7 +16,6 @@ void action_clock(void);
     actions(); \
     parse_action(); \
     preprocessing(); \
-    action_clock(); \
 }
 
 #endif

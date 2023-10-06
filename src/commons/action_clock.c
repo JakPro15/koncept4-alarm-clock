@@ -78,16 +78,6 @@ bool checkActionAtTime(struct ActionClock *clock, struct TimeOfDay time)
 }
 
 
-static void incrementTime(struct TimeOfDay *time)
-{
-    if(++time->minute >= 60)
-    {
-        time->minute = 0;
-        ++time->hour;
-    }
-}
-
-
 bool checkActionsInPeriod(struct ActionClock *clock, struct TimeOfDay from, struct TimeOfDay until, bool value)
 {
     for(struct TimeOfDay t = from; basicCompareTime(t, until) <= 0; incrementTime(&t))
