@@ -2,6 +2,7 @@
 #include "settings_reading.h"
 #include "shared_memory.h"
 #include "message_processing.h"
+#include "events.h"
 
 #include <stdio.h>
 
@@ -9,7 +10,7 @@
 #if INITIAL_DELAY_MINUTES < 1
     #error("INITIAL_DELAY_MINUTES should be at least 1")
 #endif
-#define WAIT_CHECK_PERIOD_SECONDS 1
+#define WAIT_CHECK_PERIOD_SECONDS 30
 
 #define MAX_CLOCK_COOLDOWN_SECONDS 59
 #if MAX_CLOCK_COOLDOWN_SECONDS >= 60
@@ -40,7 +41,7 @@ static ReturnCode checkActionClocks(struct AllActions *actions, struct TimeOfDay
 }
 
 
-static ReturnCode waitUntil(struct Timestamp start, struct Timestamp until,
+static ReturnCode waitUntil(struct Timestamp start, struct Timestamp until, HANDLE konc4Event,
                             struct AllActions *actions, struct SharedMemoryFile sharedMemory)
 {
     struct Timestamp now = getCurrentTimestamp().timestamp;
@@ -48,16 +49,18 @@ static ReturnCode waitUntil(struct Timestamp start, struct Timestamp until,
              until.date.month, until.time.hour, until.time.minute);
     while(compareTimestamp(now, until, start) < 0)
     {
-        RETURN_FAIL(handleMessages(actions, sharedMemory));
         RETURN_FAIL(checkActionClocks(actions, now.time));
-        Sleep(WAIT_CHECK_PERIOD_SECONDS * 1000);
+        ReturnCode waitResult;
+        RETHROW(waitResult = waitOnEventObject(konc4Event, WAIT_CHECK_PERIOD_SECONDS * 1000));
+        if(waitResult == RET_SUCCESS)
+            RETURN_FAIL(handleMessages(actions, sharedMemory));
         now = getCurrentTimestamp().timestamp;
     }
     return RET_SUCCESS;
 }
 
 
-ReturnCode initialize(struct AllActions *actions, struct SharedMemoryFile *sharedMemory)
+ReturnCode initialize(struct AllActions *actions, struct SharedMemoryFile *sharedMemory, HANDLE *konc4Event)
 {
     message_exit = false;
     LOG_LINE(LOG_INFO, "konc4d started");
@@ -66,6 +69,7 @@ ReturnCode initialize(struct AllActions *actions, struct SharedMemoryFile *share
     ShowWindow(console, SW_HIDE);
 
     ENSURE(createSharedMemory(sharedMemory, SHMEM_TO_KONC4D));
+    ENSURE(createEventObject(konc4Event, EVENT_TO_KONC4D));
     ENSURE(loadActions(actions));
 
     struct YearTimestamp now = getCurrentTimestamp();
@@ -76,13 +80,13 @@ ReturnCode initialize(struct AllActions *actions, struct SharedMemoryFile *share
 }
 
 
-ReturnCode actionLoop(struct AllActions *actions, struct SharedMemoryFile sharedMemory)
+ReturnCode actionLoop(struct AllActions *actions, struct SharedMemoryFile sharedMemory, HANDLE konc4Event)
 {
     while(actions->queueHead != NULL)
     {
         struct Action current = (actions->queueHead)->action;
         struct YearTimestamp now = getCurrentTimestamp();
-        RETURN_FAIL(waitUntil(now.timestamp, current.timestamp, actions, sharedMemory));
+        RETURN_FAIL(waitUntil(now.timestamp, current.timestamp, konc4Event, actions, sharedMemory));
         if(!actionsEqual(&current, &(actions->queueHead)->action))
             continue;
         RETURN_FAIL(doAction(&current));
@@ -96,13 +100,15 @@ int main(void)
 {
     struct AllActions actions = {.queueHead = NULL};
     struct SharedMemoryFile sharedMemory;
+    HANDLE konc4Event;
     while(true)
     {
-        ENSURE(initialize(&actions, &sharedMemory));
-        ReturnCode returned = actionLoop(&actions, sharedMemory);
+        ENSURE(initialize(&actions, &sharedMemory, &konc4Event));
+        ReturnCode returned = actionLoop(&actions, sharedMemory, konc4Event);
 
         destroyActionQueue(&actions.queueHead);
         closeSharedMemory(sharedMemory);
+        CloseHandle(konc4Event);
         if(returned == RET_SUCCESS || message_exit)
         {
             LOG_LINE(LOG_INFO, "konc4d stopped");

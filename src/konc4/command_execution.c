@@ -5,6 +5,7 @@
 #include "konc4d_starting.h"
 #include "action_receiving.h"
 #include "timestamps.h"
+#include "events.h"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -277,6 +278,16 @@ ReturnCode ensuredSendMessage(struct SharedMemoryFile sharedMemory, char *messag
 }
 
 
+static ReturnCode notifyKonc4d(void)
+{
+    HANDLE event;
+    ENSURE(createEventObject(&event, EVENT_TO_KONC4D));
+    ENSURE(pingEventObject(event));
+    CloseHandle(event);
+    return RET_SUCCESS;
+}
+
+
 #define SHMEM_MESSAGE_LENGTH 12
 static_assert(SHMEM_MESSAGE_LENGTH - sizeof(unsigned) > sizeof("SKIP"),
               "SHMEM_MESSAGE_LENGTH is too small to hold SKIP embedded argument");
@@ -293,6 +304,8 @@ ReturnCode fullSendMessage(char *message, ...)
     va_end(args);
 
     ENSURE_CALLBACK(ensuredSendMessage(sharedMemory, formattedMessage, SHMEM_MESSAGE_LENGTH), closeSharedMemory(sharedMemory));
+    ENSURE_CALLBACK(notifyKonc4d(), closeSharedMemory(sharedMemory));
+
     closeSharedMemory(sharedMemory);
     return RET_SUCCESS;
 }
