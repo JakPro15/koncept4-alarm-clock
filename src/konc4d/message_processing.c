@@ -1,26 +1,24 @@
 #include "message_processing.h"
 #include "logging.h"
 #include "shared_memory.h"
+#include "events.h"
 
-#define SHMEM_DELAY 100
 #define SHMEM_TIMEOUT 5000
-#define SHMEM_TICKS_TIMEOUT SHMEM_TIMEOUT / SHMEM_DELAY
 
 
 ReturnCode sendItem(struct SharedMemoryFile sharedMemory, char *item, unsigned size)
 {
     ReturnCode sent;
     RETHROW(sent = sendMessage(sharedMemory, item, size));
-    unsigned ticks = 0;
-    while(sent == RET_FAILURE && ticks++ < SHMEM_TICKS_TIMEOUT)
+    while(sent == RET_FAILURE)
     {
-        Sleep(SHMEM_DELAY);
+        RETHROW(sent = waitOnEventObject(sharedMemory.readEvent, SHMEM_TIMEOUT));
+        if(sent == RET_FAILURE)
+        {
+            LOG_LINE(LOG_WARNING, "Sending action or action clock timed out");
+            return RET_FAILURE;
+        }
         RETHROW(sent = sendMessage(sharedMemory, item, size));
-    }
-    if(ticks == SHMEM_TICKS_TIMEOUT)
-    {
-        LOG_LINE(LOG_WARNING, "Sending action or action clock timed out");
-        return RET_FAILURE;
     }
     return RET_SUCCESS;
 }

@@ -1,9 +1,12 @@
 #include "shared_memory.h"
 #include "logging.h"
+#include "events.h"
 
 
 static const char *shmemFiles[] = {"konc4d_shared_memory_write", "konc4d_shared_memory_read"};
 static const char *shmemMutexes[] = {"konc4d_shared_memory_write_mutex", "konc4d_shared_memory_read_mutex"};
+static const char *shmemWrittenEvents[] = {"konc4d_shared_memory_write_written_event", "konc4d_shared_memory_read_written_event"};
+static const char *shmemReadEvents[] = {"konc4d_shared_memory_write_read_event", "konc4d_shared_memory_read_read_event"};
 
 
 #define PRINT_INT(x) LOG_LINE(LOG_TRACE, "%s = %d", #x, x)
@@ -46,6 +49,14 @@ static ReturnCode initializeMutex(HANDLE *mutex, unsigned pipeNr)
         LOG_LINE(LOG_ERROR, "Could not create mutex");
         return RET_ERROR;
     }
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode initializeEvents(struct SharedMemoryFile *sharedMemory, unsigned pipeNr)
+{
+    ENSURE(createEventObject(&sharedMemory->writtenEvent, shmemWrittenEvents[pipeNr], false));
+    ENSURE(createEventObject(&sharedMemory->readEvent, shmemReadEvents[pipeNr], false));
     return RET_SUCCESS;
 }
 
@@ -112,6 +123,7 @@ static ReturnCode initializeMapView(struct SharedMemoryFile *sharedMemory)
 ReturnCode createSharedMemory(struct SharedMemoryFile *sharedMemory, unsigned pipeNr)
 {
     ENSURE(initializeMutex(&sharedMemory->mutex, pipeNr));
+    ENSURE(initializeEvents(sharedMemory, pipeNr));
     ENSURE_CALLBACK(initializeMapFile(sharedMemory, pipeNr), CloseHandle(sharedMemory->mutex));
     ENSURE_CALLBACK(initializeMapView(sharedMemory), CloseHandle(sharedMemory->mapFile); CloseHandle(sharedMemory->mutex));
     sharedMemory->shared->queueFirst = NO_MESSAGE;
@@ -122,6 +134,7 @@ ReturnCode createSharedMemory(struct SharedMemoryFile *sharedMemory, unsigned pi
 ReturnCode openSharedMemory(struct SharedMemoryFile *sharedMemory, unsigned pipeNr)
 {
     ENSURE(initializeMutex(&sharedMemory->mutex, pipeNr));
+    ENSURE(initializeEvents(sharedMemory, pipeNr));
     ENSURE_CALLBACK(openMapFile(sharedMemory, pipeNr), CloseHandle(sharedMemory->mutex));
     ENSURE_CALLBACK(initializeMapView(sharedMemory), CloseHandle(sharedMemory->mapFile); CloseHandle(sharedMemory->mutex));
     return RET_SUCCESS;
@@ -135,6 +148,7 @@ ReturnCode receiveMessage(struct SharedMemoryFile sharedMemory, char **buffer, u
     if(received == NO_MESSAGE)
     {
         LOG_LINE(LOG_TRACE, "Recv failed");
+        ENSURE(resetEventObject(sharedMemory.writtenEvent));
         ReleaseMutex(sharedMemory.mutex);
         return RET_FAILURE;
     }
@@ -165,6 +179,7 @@ ReturnCode receiveMessage(struct SharedMemoryFile sharedMemory, char **buffer, u
     LOG_LINE(LOG_TRACE, "Received message: %s", *buffer);
     printSharedMemory(sharedMemory.shared);
     ReleaseMutex(sharedMemory.mutex);
+    ENSURE(pingEventObject(sharedMemory.readEvent));
     return RET_SUCCESS;
 }
 
@@ -188,7 +203,6 @@ static int getNextFreeIndex(struct SharedMemory *shared, unsigned size)
 
 ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message, unsigned size)
 {
-    LOG_LINE(LOG_DEBUG, "sendMessage(sharedMemory, %p, %u)", message, size);
     if(size + 1 > SHMEM_QUEUE_SIZE)
     {
         LOG_LINE(LOG_ERROR, "Message to be sent is too long");
@@ -200,6 +214,7 @@ ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message, unsi
     if(begin == NO_MESSAGE)
     {
         LOG_LINE(LOG_TRACE, "Send failed");
+        ENSURE(resetEventObject(sharedMemory.readEvent));
         ReleaseMutex(sharedMemory.mutex);
         return RET_FAILURE;
     }
@@ -217,6 +232,7 @@ ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message, unsi
     LOG_LINE(LOG_TRACE, "Sent message: %s", message);
     printSharedMemory(sharedMemory.shared);
     ReleaseMutex(sharedMemory.mutex);
+    ENSURE(pingEventObject(sharedMemory.writtenEvent));
     return RET_SUCCESS;
 }
 

@@ -19,7 +19,7 @@
 
 struct SharedMemoryFile
 {
-    HANDLE mapFile, mutex;
+    HANDLE mapFile, mutex, writtenEvent, readEvent;
     struct SharedMemory *shared;
 };
 

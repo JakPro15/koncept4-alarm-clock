@@ -69,7 +69,7 @@ ReturnCode initialize(struct AllActions *actions, struct SharedMemoryFile *share
     ShowWindow(console, SW_HIDE);
 
     ENSURE(createSharedMemory(sharedMemory, SHMEM_TO_KONC4D));
-    ENSURE(createEventObject(konc4Event, EVENT_TO_KONC4D));
+    ENSURE(createEventObject(konc4Event, EVENT_TO_KONC4D, true));
     ENSURE(loadActions(actions));
 
     struct YearTimestamp now = getCurrentTimestamp();

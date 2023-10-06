@@ -12,7 +12,7 @@
 #include <stdarg.h>
 #include <assert.h>
 
-#define SENDING_DELAY_MS 100
+#define SENDING_DELAY_MS 500
 #define KONC4D_WAITING_DELAY_MS 500
 #define KONC4D_MAX_WAITING_MS 5000
 #define KONC4D_MAX_ATTEMPTS KONC4D_MAX_WAITING_MS / KONC4D_WAITING_DELAY_MS
@@ -45,7 +45,6 @@ ReturnCode executeStop(void)
 {
     RETURN_FAIL(fullSendMessage("STOP"));
     printf("Stop message sent. Waiting for konc4d to receive it and shut down.\n");
-
     ReturnCode isOn;
     unsigned attempts = 0;
     do
@@ -119,8 +118,9 @@ static ReturnCode parseShowArgument(const char *argument, struct ShowArgument *t
         long parsed = strtoul(argument, NULL, 0);
         if(parsed == 0 || parsed > INT_MAX)
         {
-            LOG_LINE(LOG_ERROR, "Invalid argument for show command: %s", argument);
-            return RET_ERROR;
+            puts("Invalid argument for show command");
+            LOG_LINE(LOG_WARNING, "Invalid argument for show command: %s", argument);
+            return RET_FAILURE;
         }
         toWrite->number = (int) parsed;
         LOG_LINE(LOG_DEBUG, "Determined show argument to be %d", toWrite->number);
@@ -130,8 +130,9 @@ static ReturnCode parseShowArgument(const char *argument, struct ShowArgument *t
         toWrite->number = TIMESTAMP_PRESENT;
     if(hour > 23 || minute > 59)
     {
-        LOG_LINE(LOG_ERROR, "Invalid argument for show command: %u:%u", hour, minute);
-        return RET_ERROR;
+        puts("Invalid argument for show command");
+        LOG_LINE(LOG_WARNING, "Invalid argument for show command: %u:%u", hour, minute);
+        return RET_FAILURE;
     }
     toWrite->until.time = (struct TimeOfDay){hour, minute};
     if(basicCompareTime(toWrite->until.time, now.timestamp.time) <= 0)
@@ -221,7 +222,7 @@ ReturnCode executeShow(const char *argument)
 {
     struct YearTimestamp now = getCurrentTimestamp();
     struct ShowArgument parsedArgument;
-    ENSURE(parseShowArgument(argument, &parsedArgument, now));
+    RETURN_FAIL(parseShowArgument(argument, &parsedArgument, now));
 
     printf("Trying to obtain action data from konc4d.\n");
     struct ReceivedActions received;
@@ -271,7 +272,7 @@ ReturnCode ensuredSendMessage(struct SharedMemoryFile sharedMemory, char *messag
     RETHROW(sent = sendMessage(sharedMemory, message, length));
     while(sent == RET_FAILURE)
     {
-        Sleep(SENDING_DELAY_MS);
+        RETURN_FAIL(waitOnEventObject(sharedMemory.readEvent, INFINITE));
         RETHROW(sent = sendMessage(sharedMemory, message, length));
     }
     return RET_SUCCESS;
@@ -281,7 +282,7 @@ ReturnCode ensuredSendMessage(struct SharedMemoryFile sharedMemory, char *messag
 static ReturnCode notifyKonc4d(void)
 {
     HANDLE event;
-    ENSURE(createEventObject(&event, EVENT_TO_KONC4D));
+    ENSURE(openEventObject(&event, EVENT_TO_KONC4D));
     ENSURE(pingEventObject(event));
     CloseHandle(event);
     return RET_SUCCESS;

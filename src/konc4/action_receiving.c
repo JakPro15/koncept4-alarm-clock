@@ -1,7 +1,8 @@
 #include "action_receiving.h"
 #include "logging.h"
+#include "events.h"
 
-#define SHMEM_DELAY 100
+#define SHMEM_DELAY 500
 #define SHMEM_TIMEOUT 5000
 #define SHMEM_TICKS_TIMEOUT SHMEM_TIMEOUT / SHMEM_DELAY
 
@@ -10,16 +11,15 @@ ReturnCode timeoutReceive(struct SharedMemoryFile sharedMemory, char **toWrite, 
 {
     ReturnCode received;
     RETHROW(received = receiveMessage(sharedMemory, toWrite, size));
-    unsigned ticks = 0;
-    while(received == RET_FAILURE && ticks++ < SHMEM_TICKS_TIMEOUT)
+    if(received == RET_FAILURE)
     {
-        Sleep(SHMEM_DELAY);
-        RETHROW(received = receiveMessage(sharedMemory, toWrite, size));
-    }
-    if(ticks == SHMEM_TICKS_TIMEOUT)
-    {
-        LOG_LINE(LOG_ERROR, "Receiving timed out");
-        return RET_FAILURE;
+        RETHROW(received = waitOnEventObject(sharedMemory.writtenEvent, SHMEM_TIMEOUT));
+        if(received == RET_FAILURE)
+        {
+            LOG_LINE(LOG_ERROR, "Receiving timed out");
+            return RET_FAILURE;
+        }
+        ENSURE(receiveMessage(sharedMemory, toWrite, size));
     }
     LOG_LINE(LOG_TRACE, "Received message: %s", *toWrite);
     return RET_SUCCESS;
