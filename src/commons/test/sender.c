@@ -3,9 +3,11 @@
 #include "logging.h"
 
 
+const enum LOGGING_LEVEL logging_level = LOG_SILENT;
+
+
 int main(int argc, char *argv[])
 {
-    logging_level = LOG_SILENT;
     struct SharedMemoryFile sharedMemory;
     ENSURE(openSharedMemory(&sharedMemory, SHMEM_TO_KONC4D));
     ReturnCode sentCode;

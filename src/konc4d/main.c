@@ -18,6 +18,7 @@
 #endif
 
 
+const enum LOGGING_LEVEL logging_level = LOG_INFO;
 bool message_exit;
 
 

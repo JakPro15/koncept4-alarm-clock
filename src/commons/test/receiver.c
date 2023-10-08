@@ -4,12 +4,14 @@
 #include <stdio.h>
 
 
+const enum LOGGING_LEVEL logging_level = LOG_SILENT;
+
+
 int main(int argc, char *argv[])
 {
     if(!SetPriorityClass(GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS))
         LOG_LINE(LOG_ERROR, "SetPriorityClass failed\n");
 
-    logging_level = LOG_SILENT;
     if(argc < 1)
         return 1;
     int toReceive = atoi(argv[1]);

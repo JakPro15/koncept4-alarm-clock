@@ -9,12 +9,11 @@ enum LOGGING_LEVEL
     LOG_ERROR,
     LOG_SILENT
 };
-extern enum LOGGING_LEVEL logging_level;
+const enum LOGGING_LEVEL logging_level = LOG_SILENT;
 
 
 void doTesting(char *fileName, unsigned numberOfFunctions, ...)
 {
-    logging_level = LOG_SILENT;
     printf("Testing of file %s\n", fileName);
     va_list functions;
     va_start(functions, numberOfFunctions);

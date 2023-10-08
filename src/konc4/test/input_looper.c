@@ -1,7 +1,11 @@
 #include "input_loop.h"
+#include "logging.h"
 
 #include <stdio.h>
 #include <string.h>
+
+
+const enum LOGGING_LEVEL logging_level = LOG_SILENT;
 
 
 enum CallbackReturn handler(char *lineRead)

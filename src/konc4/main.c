@@ -7,6 +7,9 @@
 #include <stdbool.h>
 
 
+const enum LOGGING_LEVEL logging_level = LOG_INFO;
+
+
 int main(void)
 {
     LOG_LINE(LOG_INFO, "konc4 started");
