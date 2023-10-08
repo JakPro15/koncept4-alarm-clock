@@ -2,6 +2,10 @@
     24 times every 30 $0 10:00 notify $1
 #
 
+weekly 7.10 16:30 notify
+weekly 7.10 16:55 notify
+weekly 7.10 17:00 notify
+
 21:30 notify
 22:00 notify
 4 times every 30 22:30 shutdown
