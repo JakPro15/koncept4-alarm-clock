@@ -2,7 +2,7 @@
 #include "logging.h"
 #include "shared_memory.h"
 #include "input_loop.h"
-#include "konc4d_starting.h"
+#include "konc4d_ipc.h"
 #include "action_receiving.h"
 #include "timestamps.h"
 #include "events.h"

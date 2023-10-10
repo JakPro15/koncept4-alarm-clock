@@ -1,4 +1,4 @@
-#include "konc4d_starting.h"
+#include "konc4d_ipc.h"
 #include "logging.h"
 #include "input_loop.h"
 #include "shared_memory.h"

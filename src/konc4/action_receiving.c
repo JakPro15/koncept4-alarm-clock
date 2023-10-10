@@ -1,7 +1,7 @@
 #include "action_receiving.h"
 #include "logging.h"
 #include "events.h"
-#include "konc4d_starting.h"
+#include "konc4d_ipc.h"
 
 #define SHMEM_TIMEOUT 5000
 

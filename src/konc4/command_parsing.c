@@ -2,7 +2,7 @@
 #include "command_execution.h"
 #include "shared_memory.h"
 #include "logging.h"
-#include "konc4d_starting.h"
+#include "konc4d_ipc.h"
 
 #include <string.h>
 #include <stdio.h>
