@@ -1,3 +1,5 @@
+#include <inttypes.h>
+
 #include "shared_memory.h"
 #include "logging.h"
 #include "events.h"
@@ -55,8 +57,8 @@ static ReturnCode initializeMutex(HANDLE *mutex, unsigned pipeNr)
 
 static ReturnCode initializeEvents(struct SharedMemoryFile *sharedMemory, unsigned pipeNr)
 {
-    ENSURE(createEventObject(&sharedMemory->writtenEvent, shmemWrittenEvents[pipeNr], false));
-    ENSURE(createEventObject(&sharedMemory->readEvent, shmemReadEvents[pipeNr], false));
+    ENSURE(createEventObject(&sharedMemory->writtenEvent, shmemWrittenEvents[pipeNr]));
+    ENSURE(createEventObject(&sharedMemory->readEvent, shmemReadEvents[pipeNr]));
     return RET_SUCCESS;
 }
 
@@ -141,7 +143,7 @@ ReturnCode openSharedMemory(struct SharedMemoryFile *sharedMemory, unsigned pipe
 }
 
 
-ReturnCode receiveMessage(struct SharedMemoryFile sharedMemory, char **buffer, unsigned *size)
+ReturnCode receiveSizedMessage(struct SharedMemoryFile sharedMemory, char **buffer, unsigned *size)
 {
     ENSURE(waitMutex(sharedMemory));
     int received = sharedMemory.shared->queueFirst;
@@ -201,7 +203,7 @@ static int getNextFreeIndex(struct SharedMemory *shared, unsigned size)
 }
 
 
-ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, char *message, unsigned size)
+ReturnCode sendSizedMessage(struct SharedMemoryFile sharedMemory, const char *message, unsigned size)
 {
     if(size + 1 > SHMEM_QUEUE_SIZE)
     {
@@ -242,4 +244,104 @@ void closeSharedMemory(struct SharedMemoryFile sharedMemory)
     UnmapViewOfFile(sharedMemory.shared);
     CloseHandle(sharedMemory.mapFile);
     CloseHandle(sharedMemory.mutex);
+}
+
+
+ReturnCode timeoutSendSizedMessage(struct SharedMemoryFile sharedMemory, const char *message,
+                                   unsigned size, unsigned timeout)
+{
+    ReturnCode sent;
+    RETHROW(sent = sendSizedMessage(sharedMemory, message, size));
+    while(sent == RET_FAILURE)
+    {
+        RETHROW(sent = waitOnEventObject(sharedMemory.readEvent, timeout));
+        if(sent == RET_FAILURE)
+        {
+            LOG_LINE(LOG_WARNING, "Timed out");
+            return RET_FAILURE;
+        }
+        RETHROW(sent = sendSizedMessage(sharedMemory, message, size));
+    }
+    return RET_SUCCESS;
+}
+
+
+ReturnCode sendMessage(struct SharedMemoryFile sharedMemory, const char *message, unsigned timeout)
+{
+    unsigned length = strlen(message) + 1;
+    LOG_LINE(LOG_DEBUG, "Sending message \"%s\" with length %u", message, length);
+    return timeoutSendSizedMessage(sharedMemory, message, length, timeout);
+}
+
+
+ReturnCode sendMessageWithArgument(struct SharedMemoryFile sharedMemory, const char *message, uint64_t argument, unsigned timeout)
+{
+    unsigned length = strlen(message) + 1;
+    unsigned size = length + sizeof(argument);
+    char fullMessage[size];
+    strcpy(fullMessage, message);
+    SHMEM_EMBEDDED_UINT64(fullMessage, length) = argument;
+    LOG_LINE(LOG_DEBUG, "Sending message \"%s\" with length %u and argument %"PRIu64" (total size: %u)",
+             message, length, argument, size);
+    return timeoutSendSizedMessage(sharedMemory, fullMessage, size, timeout);
+}
+
+
+ReturnCode timeoutReceiveSizedMessage(struct SharedMemoryFile sharedMemory, char **toWrite,
+                                      unsigned *size, unsigned timeout)
+{
+    ReturnCode received;
+    RETHROW(received = receiveSizedMessage(sharedMemory, toWrite, size));
+    if(received == RET_FAILURE)
+    {
+        RETHROW(received = waitOnEventObject(sharedMemory.writtenEvent, timeout));
+        if(received == RET_FAILURE)
+        {
+            LOG_LINE(LOG_WARNING, "Timed out");
+            return RET_FAILURE;
+        }
+        ENSURE(receiveSizedMessage(sharedMemory, toWrite, size));
+    }
+    return RET_SUCCESS;
+}
+
+
+ReturnCode receiveMessage(struct SharedMemoryFile sharedMemory, char **message, unsigned timeout)
+{
+    unsigned size;
+    RETURN_FAIL(timeoutReceiveSizedMessage(sharedMemory, message, &size, timeout));
+    unsigned length = strlen(*message) + 1;
+    if(size != length)
+    {
+        LOG_LINE(LOG_ERROR, "Expected argumentless message with length %u, received message of size %u: \"%s\"",
+                 length, size, *message);
+        return RET_ERROR;
+    }
+    LOG_LINE(LOG_DEBUG, "Received message \"%s\" with length %u", *message, length);
+    return RET_SUCCESS;
+}
+
+
+ReturnCode receiveMessageWithArgument(struct SharedMemoryFile sharedMemory, char **message, uint64_t *argument, unsigned timeout)
+{
+    unsigned size;
+    RETURN_FAIL(timeoutReceiveSizedMessage(sharedMemory, message, &size, timeout));
+    unsigned length = strlen(*message) + 1;
+    if(size == length + sizeof(*argument))
+    {
+        *argument = SHMEM_EMBEDDED_UINT64(*message, length);
+        LOG_LINE(LOG_DEBUG, "Received message \"%s\" with length %u and argument %"PRIu64" (total size %u)",
+                 *message, length, *argument, size);
+        return RET_SUCCESS;
+    }
+    else if(size != length)
+    {
+        LOG_LINE(LOG_ERROR, "Message with invalid size received: \"%s\" of length %u, with size %u", *message, length, size);
+        return RET_ERROR;
+    }
+    else
+    {
+        LOG_LINE(LOG_DEBUG, "Received message \"%s\" with length %u", *message, length);
+        return RET_SUCCESS;
+    }
 }

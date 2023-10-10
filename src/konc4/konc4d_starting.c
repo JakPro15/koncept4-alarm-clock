@@ -2,6 +2,7 @@
 #include "logging.h"
 #include "input_loop.h"
 #include "shared_memory.h"
+#include "events.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -80,5 +81,15 @@ ReturnCode promptForKonc4dStart(void)
 {
     LOG_LINE(LOG_WARNING, "konc4d is off when trying to send message");
     RETURN_FAIL(parseInput(20, "konc4d is off - do you want to launch it? [Y/n]: ", parseLaunchAnswer));
+    return RET_SUCCESS;
+}
+
+
+ReturnCode notifyKonc4d(void)
+{
+    HANDLE event;
+    ENSURE(openEventObject(&event, EVENT_TO_KONC4D));
+    ENSURE(pingEventObject(event));
+    CloseHandle(event);
     return RET_SUCCESS;
 }

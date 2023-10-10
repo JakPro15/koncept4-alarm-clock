@@ -6,5 +6,6 @@
 
 ReturnCode startKonc4d(void) NO_IGNORE;
 ReturnCode promptForKonc4dStart(void) NO_IGNORE;
+ReturnCode notifyKonc4d(void) NO_IGNORE;
 
 #endif

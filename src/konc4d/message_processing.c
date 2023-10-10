@@ -9,7 +9,7 @@
 ReturnCode sendItem(struct SharedMemoryFile sharedMemory, char *item, unsigned size)
 {
     ReturnCode sent;
-    RETHROW(sent = sendMessage(sharedMemory, item, size));
+    RETHROW(sent = sendSizedMessage(sharedMemory, item, size));
     while(sent == RET_FAILURE)
     {
         RETHROW(sent = waitOnEventObject(sharedMemory.readEvent, SHMEM_TIMEOUT));
@@ -18,7 +18,7 @@ ReturnCode sendItem(struct SharedMemoryFile sharedMemory, char *item, unsigned s
             LOG_LINE(LOG_WARNING, "Sending action or action clock timed out");
             return RET_FAILURE;
         }
-        RETHROW(sent = sendMessage(sharedMemory, item, size));
+        RETHROW(sent = sendSizedMessage(sharedMemory, item, size));
     }
     return RET_SUCCESS;
 }
@@ -50,11 +50,8 @@ ReturnCode actionTransfer(struct AllActions *actions)
 
     unsigned noActions = countActions(actions->queueHead);
     LOG_LINE(LOG_DEBUG, "Sending SIZE %d message", noActions);
-    unsigned sizeMessageSize = sizeof("SIZE") + sizeof(unsigned);
-    char sizeMessage[sizeMessageSize];
-    strcpy(sizeMessage, "SIZE");
-    SHMEM_EMBEDDED_UNSIGNED(sizeMessage, sizeof("SIZE")) = noActions;
-    ENSURE_CALLBACK(sendMessage(actionTransferQueue, sizeMessage, sizeMessageSize), closeSharedMemory(actionTransferQueue));
+    ENSURE_CALLBACK(sendMessageWithArgument(actionTransferQueue, "SIZE", noActions, NO_WAIT),
+                    closeSharedMemory(actionTransferQueue));
 
     LOG_LINE(LOG_DEBUG, "Sending actions");
     struct ActionQueue *queue = actions->queueHead;
@@ -66,12 +63,8 @@ ReturnCode actionTransfer(struct AllActions *actions)
                          closeSharedMemory(actionTransferQueue));
 
     LOG_LINE(LOG_DEBUG, "Sending action clock cooldown: %u", actions->clockCooldown);
-    unsigned cooldownMessageSize = sizeof("COOLDOWN") + sizeof(unsigned);
-    char cooldownMessage[cooldownMessageSize];
-    strcpy(cooldownMessage, "COOLDOWN");
-    SHMEM_EMBEDDED_UNSIGNED(cooldownMessage, sizeof("COOLDOWN")) = actions->clockCooldown;
-    RETURN_FAIL_CALLBACK(sendItem(actionTransferQueue, cooldownMessage, cooldownMessageSize),
-                         closeSharedMemory(actionTransferQueue));
+    ENSURE_CALLBACK(sendMessageWithArgument(actionTransferQueue, "COOLDOWN", actions->clockCooldown, NO_WAIT),
+                    closeSharedMemory(actionTransferQueue));
 
     LOG_LINE(LOG_INFO, "Successfully finished actions transfer");
     closeSharedMemory(actionTransferQueue);
@@ -82,7 +75,7 @@ ReturnCode actionTransfer(struct AllActions *actions)
 extern bool message_exit;
 
 
-ReturnCode processMessage(struct AllActions *actions, char *message)
+ReturnCode processMessage(struct AllActions *actions, char *message, uint64_t argument)
 {
     if(strcmp(message, "RESET") == 0)
     {
@@ -97,7 +90,7 @@ ReturnCode processMessage(struct AllActions *actions, char *message)
     }
     else if(strcmp(message, "SKIP") == 0)
     {
-        unsigned minutesToSkip = SHMEM_EMBEDDED_UNSIGNED(message, sizeof("SKIP"));
+        unsigned minutesToSkip = (unsigned) argument;
         struct YearTimestamp now = getCurrentTimestamp();
         struct YearTimestamp until = addMinutes(now, minutesToSkip);
         LOG_LINE(LOG_INFO, "SKIP message received, skipping by %u minutes", minutesToSkip);
@@ -123,14 +116,14 @@ ReturnCode processMessage(struct AllActions *actions, char *message)
 ReturnCode handleMessages(struct AllActions *actions, struct SharedMemoryFile sharedMemory)
 {
     char *message;
-    unsigned size;
+    uint64_t argument;
     ReturnCode received;
-    RETHROW(received = receiveMessage(sharedMemory, &message, &size));
+    RETHROW(received = receiveMessageWithArgument(sharedMemory, &message, &argument, NO_WAIT));
     while(received != RET_FAILURE)
     {
-        RETURN_FAIL(processMessage(actions, message));
+        RETURN_FAIL(processMessage(actions, message, argument));
         free(message);
-        RETHROW(received = receiveMessage(sharedMemory, &message, &size));
+        RETHROW(received = receiveMessageWithArgument(sharedMemory, &message, &argument, NO_WAIT));
     }
     return RET_SUCCESS;
 }

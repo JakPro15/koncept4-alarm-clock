@@ -1,7 +1,9 @@
 #include "shared_memory.h"
 #include "logging.h"
+
 #include <windows.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 
 const enum LOGGING_LEVEL logging_level = LOG_SILENT;
@@ -20,28 +22,18 @@ int main(int argc, char *argv[])
     struct SharedMemoryFile sharedMemory;
     ENSURE(createSharedMemory(&sharedMemory, SHMEM_TO_KONC4D));
     char *received;
-    unsigned receivedSize;
-    ReturnCode receivedCode;
-
+    uint64_t receivedArgument;
     for(int i = 0; i < toReceive; i++)
     {
-        RETHROW_CALLBACK(receivedCode = receiveMessage(sharedMemory, &received, &receivedSize), closeSharedMemory(sharedMemory));
-        int j = 0;
-        while(receivedCode == RET_FAILURE && j++ < 40)
-        {
-            Sleep(50);
-            RETHROW_CALLBACK(receivedCode = receiveMessage(sharedMemory, &received, &receivedSize), closeSharedMemory(sharedMemory));
-        }
-        if(j >= 40)
-            return 1;
+        ENSURE_CALLBACK(receiveMessageWithArgument(sharedMemory, &received, &receivedArgument, 2000), closeSharedMemory(sharedMemory));
 
         if(strcmp(received, "SKIP") == 0)
-            printf("%s %u\n", received, SHMEM_EMBEDDED_UNSIGNED(received, sizeof("SKIP")));
+            printf("%s %"PRIu64"\n", received, receivedArgument);
         else
             printf("%s\n", received);
 
         if(strcmp(received, "SKIP") == 0)
-            LOG_LINE(LOG_DEBUG, "%s %u\n", received, SHMEM_EMBEDDED_UNSIGNED(received, sizeof("SKIP")));
+            LOG_LINE(LOG_DEBUG, "%s %"PRIu64"\n", received, receivedArgument);
         else
             LOG_LINE(LOG_DEBUG, "%s\n", received);
         free(received);

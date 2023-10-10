@@ -2,9 +2,9 @@
 #include "logging.h"
 
 
-ReturnCode createEventObject(HANDLE *toWrite, const char *name, bool manual)
+ReturnCode createEventObject(HANDLE *toWrite, const char *name)
 {
-    *toWrite = CreateEvent(NULL, manual, FALSE, name);
+    *toWrite = CreateEvent(NULL, FALSE, FALSE, name);
     if(*toWrite == NULL)
     {
         LOG_LINE(LOG_ERROR, "CreateEvent failed");
@@ -54,10 +54,7 @@ ReturnCode waitOnEventObject(HANDLE event, unsigned timeoutMs)
 {
     DWORD returned = WaitForSingleObject(event, timeoutMs);
     if(returned == WAIT_OBJECT_0)
-    {
-        ENSURE(resetEventObject(event));
         return RET_SUCCESS;
-    }
     else if(returned == WAIT_TIMEOUT)
         return RET_FAILURE;
     else

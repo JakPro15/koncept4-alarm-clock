@@ -44,6 +44,7 @@ ReturnCode executeStart(void)
 ReturnCode executeStop(void)
 {
     RETURN_FAIL(fullSendMessage("STOP"));
+    ENSURE(notifyKonc4d());
     printf("Stop message sent. Waiting for konc4d to receive it and shut down.\n");
     ReturnCode isOn;
     unsigned attempts = 0;
@@ -68,6 +69,7 @@ ReturnCode executeReset(void)
 {
     printf("Beware that reset of konc4d will cancel any further pending messages to konc4d.\n");
     RETHROW(fullSendMessage("RESET"));
+    ENSURE(notifyKonc4d());
     printf("Reset message sent.\n");
     LOG_LINE(LOG_INFO, "konc4 reset command executed successfully");
     return RET_SUCCESS;
@@ -88,7 +90,8 @@ ReturnCode executeSkip(unsigned minutesToSkip)
         LOG_LINE(LOG_WARNING, "skip command received invalid argument: %d", minutesToSkip);
         return RET_FAILURE;
     }
-    RETHROW(fullSendMessage("SKIP", minutesToSkip));
+    RETHROW(fullSendMessageWithArgument("SKIP", minutesToSkip));
+    ENSURE(notifyKonc4d());
     printf("Skip %d message sent.\n", minutesToSkip);
     LOG_LINE(LOG_INFO, "konc4 skip command executed successfully");
     return RET_SUCCESS;
@@ -254,59 +257,23 @@ ReturnCode ensuredOpenSharedMemory(struct SharedMemoryFile *sharedMemory)
 }
 
 
-void embedArgsInMessage(char *toWrite, const char *message, va_list args)
-{
-    strcpy(toWrite, message);
-    if(strcmp(message, "SKIP") == 0)
-    {
-        unsigned minutesToSkip = va_arg(args, unsigned);
-        SHMEM_EMBEDDED_UNSIGNED(toWrite, sizeof("SKIP")) = minutesToSkip;
-    }
-}
-
-
-ReturnCode ensuredSendMessage(struct SharedMemoryFile sharedMemory, char *message, unsigned length)
-{
-    LOG_LINE(LOG_DEBUG, "Sending message: %s", message);
-    ReturnCode sent;
-    RETHROW(sent = sendMessage(sharedMemory, message, length));
-    while(sent == RET_FAILURE)
-    {
-        RETURN_FAIL(waitOnEventObject(sharedMemory.readEvent, INFINITE));
-        RETHROW(sent = sendMessage(sharedMemory, message, length));
-    }
-    return RET_SUCCESS;
-}
-
-
-static ReturnCode notifyKonc4d(void)
-{
-    HANDLE event;
-    ENSURE(openEventObject(&event, EVENT_TO_KONC4D));
-    ENSURE(pingEventObject(event));
-    CloseHandle(event);
-    return RET_SUCCESS;
-}
-
-
-#define SHMEM_MESSAGE_LENGTH 12
-static_assert(SHMEM_MESSAGE_LENGTH - sizeof(unsigned) > sizeof("SKIP"),
-              "SHMEM_MESSAGE_LENGTH is too small to hold SKIP embedded argument");
-
-ReturnCode fullSendMessage(char *message, ...)
+ReturnCode fullSendMessage(const char *message)
 {
     struct SharedMemoryFile sharedMemory;
     RETURN_FAIL(ensuredOpenSharedMemory(&sharedMemory));
-
-    va_list args;
-    va_start(args, message);
-    char formattedMessage[SHMEM_MESSAGE_LENGTH];
-    embedArgsInMessage(formattedMessage, message, args);
-    va_end(args);
-
-    ENSURE_CALLBACK(ensuredSendMessage(sharedMemory, formattedMessage, SHMEM_MESSAGE_LENGTH), closeSharedMemory(sharedMemory));
-    ENSURE_CALLBACK(notifyKonc4d(), closeSharedMemory(sharedMemory));
-
+    ENSURE_CALLBACK(sendMessage(sharedMemory, message, INFINITE_WAIT), closeSharedMemory(sharedMemory));
     closeSharedMemory(sharedMemory);
+    ENSURE(notifyKonc4d());
+    return RET_SUCCESS;
+}
+
+
+ReturnCode fullSendMessageWithArgument(const char *message, unsigned argument)
+{
+    struct SharedMemoryFile sharedMemory;
+    RETURN_FAIL(ensuredOpenSharedMemory(&sharedMemory));
+    ENSURE_CALLBACK(sendMessageWithArgument(sharedMemory, message, argument, INFINITE_WAIT), closeSharedMemory(sharedMemory));
+    closeSharedMemory(sharedMemory);
+    ENSURE(notifyKonc4d());
     return RET_SUCCESS;
 }
