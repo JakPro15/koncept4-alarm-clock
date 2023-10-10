@@ -144,8 +144,9 @@ struct TimeOfDay decrementedTime(struct TimeOfDay time)
 unsigned difference(struct YearTimestamp earlier, struct YearTimestamp later)
 {
     int diff = 0;
-    while(later.currentYear > earlier.currentYear)
-        diff += getYearLength(--later.currentYear) * MINUTES_IN_DAY;
+    unsigned laterYear = later.currentYear;
+    while(laterYear > earlier.currentYear)
+        diff += getYearLength(--laterYear) * MINUTES_IN_DAY;
 
     unsigned earlierDayOfYear = getDayOfYear(earlier.timestamp.date, earlier.currentYear);
     unsigned laterDayOfYear = getDayOfYear(later.timestamp.date, later.currentYear);
@@ -163,6 +164,18 @@ struct YearTimestamp deduceYear(struct Timestamp toDeduce, struct YearTimestamp 
         return (struct YearTimestamp) {toDeduce, now.currentYear + 1};
     else
         return (struct YearTimestamp) {toDeduce, now.currentYear};
+}
+
+
+struct YearTimestamp deduceTimestamp(struct TimeOfDay toDeduce, struct YearTimestamp now)
+{
+    struct Timestamp timestamp;
+    timestamp.time = toDeduce;
+    if(basicCompareTime(timestamp.time, now.timestamp.time) <= 0)
+        timestamp.date = getNextDay(now);
+    else
+        timestamp.date = now.timestamp.date;
+    return deduceYear(timestamp, now);
 }
 
 

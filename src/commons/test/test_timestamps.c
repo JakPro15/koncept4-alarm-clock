@@ -139,6 +139,19 @@ static ReturnCode testCompareTimestampCurrentBetween(void)
 }
 
 
+static ReturnCode testCompareYearTimestamp(void)
+{
+    ASSERT(compareYearTimestamp(YTS(1, 1, 12, 30, 2022), YTS(1, 1, 12, 40, 2021)) == 1);
+    ASSERT(compareYearTimestamp(YTS(14, 2, 23, 59, 2021), YTS(14, 2, 0, 0, 2023)) == -1);
+    ASSERT(compareYearTimestamp(YTS(31, 12, 0, 0, 2023), YTS(31, 12, 0, 0, 2023)) == 0);
+
+    ASSERT(compareYearTimestamp(YTS(22, 3, 12, 30, 2022), YTS(22, 3, 12, 30, 2021)) == 1);
+    ASSERT(compareYearTimestamp(YTS(30, 5, 12, 30, 2019), YTS(30, 5, 12, 32, 2021)) == -1);
+    ASSERT(compareYearTimestamp(YTS(30, 6, 12, 30, 2020), YTS(30, 6, 12, 28, 2021)) == -1);
+    return RET_SUCCESS;
+}
+
+
 static ReturnCode testIsTimeValid(void)
 {
     ASSERT(isTimeValid((struct TimeOfDay) {23, 59}) == true);
@@ -241,6 +254,52 @@ static ReturnCode testDecrementedTime(void)
 }
 
 
+static ReturnCode testDifference(void)
+{
+    struct YearTimestamp timestamp = YTS(15, 10, 12, 0, 2023);
+    ASSERT(difference(YTS(15, 10, 12, 0, 2022), timestamp) == 525600);
+    ASSERT(difference(YTS(2, 9, 12, 0, 2023), timestamp) == 61920);
+    ASSERT(difference(YTS(14, 10, 11, 15, 2023), timestamp) == 1485);
+    ASSERT(difference(YTS(15, 10, 10, 0, 2023), timestamp) == 120);
+    ASSERT(difference(YTS(15, 10, 11, 15, 2023), timestamp) == 45);
+    ASSERT(difference(YTS(15, 10, 12, 0, 2023), timestamp) == 0);
+    ASSERT(difference(timestamp, YTS(15, 10, 12, 0, 2023)) == 0);
+    ASSERT(difference(timestamp, YTS(15, 10, 12, 45, 2023)) == 45);
+    ASSERT(difference(timestamp, YTS(15, 10, 14, 0, 2023)) == 120);
+    ASSERT(difference(timestamp, YTS(16, 10, 12, 45, 2023)) == 1485);
+    ASSERT(difference(timestamp, YTS(28, 11, 12, 0, 2023)) == 63360);
+    ASSERT(difference(timestamp, YTS(15, 10, 12, 0, 2024)) == 527040);
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode testDeduceYear(void)
+{
+    YTS_EQUAL(deduceYear(TSP(23, 10, 11, 30), YTS(23, 10, 11, 0, 2023)), 23, 10, 11, 30, 2023);
+    YTS_EQUAL(deduceYear(TSP(23, 10, 10, 30), YTS(23, 10, 11, 0, 2023)), 23, 10, 10, 30, 2024);
+    YTS_EQUAL(deduceYear(TSP(1, 1, 0, 0), YTS(23, 10, 11, 0, 2020)), 1, 1, 0, 0, 2021);
+    YTS_EQUAL(deduceYear(TSP(31, 12, 23, 59), YTS(23, 10, 11, 0, 2020)), 31, 12, 23, 59, 2020);
+    // can return an invalid date
+    YTS_EQUAL(deduceYear(TSP(29, 2, 10, 0), YTS(23, 10, 11, 0, 2020)), 29, 2, 10, 0, 2021);
+    YTS_EQUAL(deduceYear(TSP(29, 2, 10, 0), YTS(23, 1, 11, 0, 2020)), 29, 2, 10, 0, 2020);
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode testDeduceTimestamp(void)
+{
+    YTS_EQUAL(deduceTimestamp(TOD(11, 30), YTS(23, 10, 11, 0, 2023)), 23, 10, 11, 30, 2023);
+    YTS_EQUAL(deduceTimestamp(TOD(10, 30), YTS(23, 10, 11, 0, 2023)), 24, 10, 10, 30, 2023);
+    YTS_EQUAL(deduceTimestamp(TOD(10, 30), YTS(31, 10, 11, 0, 2023)), 1, 11, 10, 30, 2023);
+    YTS_EQUAL(deduceTimestamp(TOD(10, 30), YTS(31, 12, 11, 0, 2023)), 1, 1, 10, 30, 2024);
+
+    YTS_EQUAL(deduceTimestamp(TOD(11, 30), YTS(29, 2, 11, 0, 2024)), 29, 2, 11, 30, 2024);
+    YTS_EQUAL(deduceTimestamp(TOD(10, 30), YTS(28, 2, 11, 0, 2023)), 1, 3, 10, 30, 2023);
+    YTS_EQUAL(deduceTimestamp(TOD(10, 30), YTS(28, 2, 11, 0, 2024)), 29, 2, 10, 30, 2024);
+    return RET_SUCCESS;
+}
+
+
 PREPARE_TESTING(timestamps,
     testBasicCompareTime,
     testCompareTimeRegular,
@@ -249,10 +308,14 @@ PREPARE_TESTING(timestamps,
     testBasicCompareTimestamp,
     testCompareTimestampRegular,
     testCompareTimestampCurrentBetween,
+    testCompareYearTimestamp,
     testIsTimeValid,
     testIsDateValid,
     testGetNextDay,
     testAddMinutes,
     testIncrementTime,
-    testDecrementedTime
+    testDecrementedTime,
+    testDifference,
+    testDeduceYear,
+    testDeduceTimestamp
 )

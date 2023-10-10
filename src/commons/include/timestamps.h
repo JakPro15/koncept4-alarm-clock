@@ -55,6 +55,7 @@ struct TimeOfDay decrementedTime(struct TimeOfDay time);
 /* Returns difference in minutes: second - first */
 unsigned difference(struct YearTimestamp earlier, struct YearTimestamp later);
 struct YearTimestamp deduceYear(struct Timestamp toDeduce, struct YearTimestamp now);
+struct YearTimestamp deduceTimestamp(struct TimeOfDay toDeduce, struct YearTimestamp now);
 
 
 /* Returns 1 if first is later, -1 if first is earlier, 0 if they're equal,
