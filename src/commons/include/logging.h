@@ -15,6 +15,7 @@ enum LOGGING_LEVEL
 };
 
 extern const enum LOGGING_LEVEL logging_level;
+extern const char logging_exe[7];
 ReturnCode logLine(enum LOGGING_LEVEL level, char *format, ...) __attribute__((format(printf, 2, 3)));
 
 #define LOG_LINE(level, format, ...) \

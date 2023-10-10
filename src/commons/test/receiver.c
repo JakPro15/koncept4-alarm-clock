@@ -5,6 +5,7 @@
 
 
 const enum LOGGING_LEVEL logging_level = LOG_SILENT;
+const char logging_exe[7] = "recver";
 
 
 int main(int argc, char *argv[])

@@ -36,15 +36,16 @@ static char* getMessage(enum LOGGING_LEVEL level, SYSTEMTIME currentTime, int *m
     va_list args2;
     va_copy(args2, args);
 
-    int len = vsnprintf(NULL, 0, format, args) + 21; // 6 chars for "[ERR] ", 14 chars for the time, 1 for \n
+    // 8 chars for "konc4d: " 6 chars for "[ERR] ", 14 chars for the time, 1 for \n
+    int len = vsnprintf(NULL, 0, format, args) + 29;
     char *buffer = malloc(len * sizeof(char));
     if(!buffer)
         return (char*) NULL;
     *messageLength = len;
 
-    sprintf(buffer, "[%3s] %02d:%02d:%02d.%03d: ", level_strings[level], currentTime.wHour,
+    sprintf(buffer, "%6s: [%3s] %02d:%02d:%02d.%03d: ", logging_exe, level_strings[level], currentTime.wHour,
             currentTime.wMinute, currentTime.wSecond, currentTime.wMilliseconds);
-    vsprintf(buffer + 20, format, args2);
+    vsprintf(buffer + 28, format, args2);
     buffer[len - 1] = '\n';
 
     va_end(args2);

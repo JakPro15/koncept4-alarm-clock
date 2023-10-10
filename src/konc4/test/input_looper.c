@@ -6,6 +6,7 @@
 
 
 const enum LOGGING_LEVEL logging_level = LOG_SILENT;
+const char logging_exe[7] = "looper";
 
 
 enum CallbackReturn handler(char *lineRead)

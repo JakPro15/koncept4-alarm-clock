@@ -10,6 +10,7 @@ enum LOGGING_LEVEL
     LOG_SILENT
 };
 const enum LOGGING_LEVEL logging_level = LOG_SILENT;
+const char logging_exe[7] = "tester";
 
 
 void doTesting(char *fileName, unsigned numberOfFunctions, ...)
