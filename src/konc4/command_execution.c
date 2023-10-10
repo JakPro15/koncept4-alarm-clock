@@ -78,13 +78,13 @@ ReturnCode executeSkip(unsigned minutesToSkip)
 {
     if(minutesToSkip == 0)
     {
-        fprintf(stderr, "Skip command expects a positive integer argument.\n");
+        printf("Skip command expects a positive integer argument.\n");
         LOG_LINE(LOG_WARNING, "skip command received invalid argument: %d", minutesToSkip);
         return RET_FAILURE;
     }
     if(minutesToSkip > 7200)
     {
-        fprintf(stderr, "Skipping more than five days at once is not supported.\n");
+        printf("Skipping more than five days at once is not supported.\n");
         LOG_LINE(LOG_WARNING, "skip command received invalid argument: %d", minutesToSkip);
         return RET_FAILURE;
     }

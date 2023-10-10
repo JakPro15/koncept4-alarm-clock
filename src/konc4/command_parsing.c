@@ -8,6 +8,51 @@
 #include <stdio.h>
 
 
+static ReturnCode getMinutesToSkip(const char *argument, unsigned *toWrite, struct YearTimestamp now)
+{
+    if(argument == NULL)
+    {
+        LOG_LINE(LOG_WARNING, "Skip command given with no argument");
+        puts("skip command must take an argument (time until which to skip, or minutes to skip)");
+        return RET_FAILURE;
+    }
+    unsigned hour, minute;
+    int itemsRead = sscanf(argument, "%u:%u", &hour, &minute);
+    if(itemsRead < 2)
+    {
+        unsigned long parsed = strtoul(argument, NULL, 0);
+        if(parsed == 0 || parsed > UINT_MAX)
+        {
+            puts("Invalid argument for skip command");
+            LOG_LINE(LOG_WARNING, "Invalid argument for skip command: %s", argument);
+            return RET_FAILURE;
+        }
+        *toWrite = (unsigned) parsed;
+        LOG_LINE(LOG_DEBUG, "Determined skip argument to be %u", *toWrite);
+        return RET_SUCCESS;
+    }
+    struct TimeOfDay untilTime = {hour, minute};
+    if(!isTimeValid(untilTime))
+    {
+        puts("Invalid argument for skip command");
+        LOG_LINE(LOG_WARNING, "Invalid argument for skip command: %02u:%02u", hour, minute);
+        return RET_FAILURE;
+    }
+    struct YearTimestamp until;
+    until.timestamp.time = untilTime;
+    if(basicCompareTime(untilTime, now.timestamp.time) <= 0)
+        until.timestamp.date = getNextDay(now);
+    else
+        until.timestamp.date = now.timestamp.date;
+    until = deduceYear(until.timestamp, now);
+
+    *toWrite = difference(now, until);
+    LOG_LINE(LOG_DEBUG, "Determined skip argument to be (until) %02u:%02u, equivalent to %u minutes",
+             hour, minute, *toWrite);
+    return RET_SUCCESS;
+}
+
+
 ReturnCode parseCommand(char *command)
 {
     LOG_LINE(LOG_DEBUG, "Parsing command: %s", command);
@@ -26,19 +71,20 @@ ReturnCode parseCommand(char *command)
     }
     else if(stricmp(token, "skip") == 0)
     {
-        char *minutesToSkipStr = strtok_r(NULL, " \t", &saveptr);
-        unsigned minutesToSkip = strtoul(minutesToSkipStr, NULL, 0);
+        char *toSkipStr = strtok_r(NULL, " \t", &saveptr);
+        unsigned minutesToSkip;
+        RETURN_FAIL(getMinutesToSkip(toSkipStr, &minutesToSkip, getCurrentTimestamp()));
         return executeSkip(minutesToSkip);
     }
     else
     {
-        fprintf(stderr, "Unrecognized command\n");
+        puts("Unrecognized command");
         LOG_LINE(LOG_WARNING, "Unrecognized command received: %s", command);
         return RET_FAILURE;
     }
     if(strtok_r(NULL, " \t", &saveptr) != NULL)
     {
-        fprintf(stderr, "Extra tokens in command detected\n");
+        puts("Extra tokens in command detected");
         LOG_LINE(LOG_WARNING, "Extra tokens in command detected");
     }
     return RET_SUCCESS;
@@ -55,6 +101,7 @@ enum CallbackReturn parseCommandLine(char *commandLine)
     {
         if(parseCommand(command) == RET_ERROR)
             return END_SPINNING_ERROR;
-    } while(command = strtok_r(NULL, ";\n", &saveptr), command != NULL);
+        command = strtok_r(NULL, ";\n", &saveptr);
+    } while(command != NULL);
     return KEEP_SPINNING;
 }
