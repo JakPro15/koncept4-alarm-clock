@@ -18,7 +18,7 @@
 #endif
 
 
-const enum LOGGING_LEVEL logging_level = LOG_INFO;
+const enum LOGGING_LEVEL logging_level = LOG_TRACE;
 const char logging_exe[7] = "konc4d";
 bool message_exit;
 
@@ -51,6 +51,7 @@ static ReturnCode waitUntil(struct Timestamp start, struct Timestamp until, HAND
              until.date.month, until.time.hour, until.time.minute);
     while(compareTimestamp(now, until, start) < 0)
     {
+        LOG_LINE(LOG_TRACE, "konc4d tick");
         RETURN_FAIL(checkActionClocks(actions, now.time));
         ReturnCode waitResult;
         RETHROW(waitResult = waitOnEventObject(konc4Event, WAIT_CHECK_PERIOD_SECONDS * 1000));

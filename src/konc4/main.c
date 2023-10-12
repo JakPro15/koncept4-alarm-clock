@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 
-const enum LOGGING_LEVEL logging_level = LOG_INFO;
+const enum LOGGING_LEVEL logging_level = LOG_TRACE;
 const char logging_exe[7] = " konc4";
 
 

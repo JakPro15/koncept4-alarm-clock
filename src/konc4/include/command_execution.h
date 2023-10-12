@@ -15,6 +15,6 @@ ReturnCode executeShow(const char *argument) NO_IGNORE;
 ReturnCode ensuredOpenSharedMemory(struct SharedMemoryFile *sharedMemory) NO_IGNORE;
 ReturnCode ensuredSendMessage(struct SharedMemoryFile sharedMemory, char *message, unsigned length) NO_IGNORE;
 ReturnCode fullSendMessage(const char *message) NO_IGNORE;
-ReturnCode fullSendMessageWithArgument(const char *message, unsigned argument) NO_IGNORE;
+ReturnCode fullSendMessageWithArgument(const char *message, uint64_t argument) NO_IGNORE;
 
 #endif

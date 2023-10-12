@@ -101,12 +101,12 @@ ReturnCode executeSkip(unsigned minutesToSkip)
 struct ShowArgument
 {
     int number;
-    struct Timestamp until;
+    struct TimeOfDay until;
 };
 #define TIMESTAMP_PRESENT -1
 
 
-static ReturnCode parseShowArgument(const char *argument, struct ShowArgument *toWrite, struct YearTimestamp now)
+static ReturnCode parseShowArgument(const char *argument, struct ShowArgument *toWrite)
 {
     if(argument == NULL)
     {
@@ -137,110 +137,50 @@ static ReturnCode parseShowArgument(const char *argument, struct ShowArgument *t
         LOG_LINE(LOG_WARNING, "Invalid argument for show command: %u:%u", hour, minute);
         return RET_FAILURE;
     }
-    toWrite->until.time = (struct TimeOfDay){hour, minute};
-    if(basicCompareTime(toWrite->until.time, now.timestamp.time) <= 0)
-        toWrite->until.date = getNextDay(now);
-    else
-        toWrite->until.date = now.timestamp.date;
-    LOG_LINE(LOG_DEBUG, "Determined show argument to be (until) %u.%u %u:%u",
-             toWrite->until.date.day, toWrite->until.date.month,
-             toWrite->until.time.hour, toWrite->until.time.minute);
+    toWrite->until = (struct TimeOfDay) {hour, minute};
+    LOG_LINE(LOG_DEBUG, "Determined show argument to be (until) %u:%u",
+             toWrite->until.hour, toWrite->until.minute);
     return RET_SUCCESS;
-}
-
-
-static const char* actionType[3] = {"shutdown", "notify", "reset"};
-
-
-static void printAction(const struct PassedAction *actions, unsigned index)
-{
-    printf("%2d) {%02d.%02d %02d:%02d, type: %8s, ", index + 1,
-           actions[index].timestamp.date.day, actions[index].timestamp.date.month,
-           actions[index].timestamp.time.hour, actions[index].timestamp.time.minute,
-           actionType[actions[index].type]);
-    if(actions[index].repeatPeriod)
-        printf("repeated with period: %d minutes}\n", actions[index].repeatPeriod);
-    else
-        puts("not repeated}");
-}
-
-
-static void printActionVector(struct ShowArgument parsedArgument, struct ReceivedActions *received, struct YearTimestamp now)
-{
-    printf("Actions:\n");
-    unsigned i = 0;
-    if(parsedArgument.number == TIMESTAMP_PRESENT)
-    {
-        while(compareTimestamp(received->actionVector[i].timestamp, parsedArgument.until, now.timestamp) <= 0 &&
-              i < received->actionVectorSize)
-            printAction(received->actionVector, i++);
-    }
-    else
-    {
-        unsigned noActionsToPrint = (received->actionVectorSize < (unsigned) parsedArgument.number) ?
-                                    received->actionVectorSize :
-                                    (unsigned) parsedArgument.number;
-        for(; i < noActionsToPrint; i++)
-            printAction(received->actionVector, i);
-    }
-    if(i == 0)
-        puts("none");
-}
-
-
-static void printAllActionClocks(struct ReceivedActions *received)
-{
-    if(checkActionsInPeriod(&received->shutdownClock, (struct TimeOfDay){0, 0}, (struct TimeOfDay){23, 59}, 0))
-        puts("No further shutdowns will be made");
-    else
-    {
-        puts("Shutdowns will also be made in the following periods:");
-        struct TimeOfDay begin, current = {0, 0};
-        bool lastAction = 0;
-        while(basicCompareTime(current, (struct TimeOfDay){24, 0}) < 0)
-        {
-            bool currentAction = checkActionAtTime(&received->shutdownClock, current);
-            if(lastAction == 0 && currentAction == 1)
-                begin = current;
-            else if(lastAction == 1 && currentAction == 0)
-            {
-                struct TimeOfDay end = decrementedTime(current);
-                printf("between %02u:%02u and %02u:%02u\n", begin.hour, begin.minute, end.hour, end.minute);
-            }
-            lastAction = currentAction;
-            incrementTime(&current);
-        }
-        if(lastAction == 1)
-            printf("between %02u:%02u and 23:59\n", begin.hour, begin.minute);
-    }
-    if(received->clockCooldown / 60 > 0)
-    {
-        printf("No actions will be made for the next %u %s though.\n",
-               received->clockCooldown / 60, (received->clockCooldown / 60 == 1) ? "minute" : "minutes");
-    }
 }
 
 
 ReturnCode executeShow(const char *argument)
 {
-    struct YearTimestamp now = getCurrentTimestamp();
     struct ShowArgument parsedArgument;
-    RETURN_FAIL(parseShowArgument(argument, &parsedArgument, now));
+    RETURN_FAIL(parseShowArgument(argument, &parsedArgument));
 
-    printf("Trying to obtain action data from konc4d.\n");
-    struct ReceivedActions received;
-    ReturnCode obtained;
-    RETHROW(obtained = obtainActions(&received));
-    if(obtained == RET_FAILURE)
+    HANDLE stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE), duplicatedStdout;
+    if(stdoutHandle == INVALID_HANDLE_VALUE)
     {
-        printf("Failed to obtain action data from konc4d.\n");
-        LOG_LINE(LOG_WARNING, "Failed to obtain actions from konc4d");
-        return RET_FAILURE;
+        LOG_LINE(LOG_ERROR, "GetStdHandle failed");
+        return RET_ERROR;
     }
-    printActionVector(parsedArgument, &received, now);
-    free(received.actionVector);
-    putchar('\n');
-    printAllActionClocks(&received);
+    ReturnCode duplicated;
+    RETHROW(duplicated = duplicateHandleForKonc4d(stdoutHandle, &duplicatedStdout));
+    if(duplicated == RET_FAILURE)
+        RETURN_FAIL(promptForKonc4dStart());
+
+    HANDLE confirmEvent;
+    ENSURE(createEventObject(&confirmEvent, EVENT_COMMAND_CONFIRM));
+
+    struct SharedMemoryFile sharedMemory;
+    ENSURE(openSharedMemory(&sharedMemory, SHMEM_TO_KONC4D));
+    ENSURE_CALLBACK(sendMessageWithArgument(sharedMemory, "SHOW", (uint64_t) duplicatedStdout, KONC4D_MAX_WAITING_MS),
+                    closeSharedMemory(sharedMemory));
+    ENSURE_CALLBACK(timeoutSendSizedMessage(sharedMemory, (char*) &parsedArgument, sizeof(parsedArgument), KONC4D_MAX_WAITING_MS),
+                    closeSharedMemory(sharedMemory));
+    closeSharedMemory(sharedMemory);
+    ENSURE(notifyKonc4d());
+
+    ReturnCode received;
+    RETHROW(received = waitOnEventObject(confirmEvent, KONC4D_MAX_WAITING_MS));
+    if(received == RET_FAILURE)
+    {
+        LOG_LINE(LOG_ERROR, "Did not receive confirmation event from konc4d in show command");
+        printf("Show command failed. Check logs for more information.");
+        return RET_ERROR;
+    }
+    CloseHandle(confirmEvent);
     LOG_LINE(LOG_INFO, "konc4 show command executed successfully");
     return RET_SUCCESS;
 }
@@ -261,18 +201,20 @@ ReturnCode fullSendMessage(const char *message)
 {
     struct SharedMemoryFile sharedMemory;
     RETURN_FAIL(ensuredOpenSharedMemory(&sharedMemory));
-    ENSURE_CALLBACK(sendMessage(sharedMemory, message, INFINITE_WAIT), closeSharedMemory(sharedMemory));
+    ENSURE_CALLBACK(sendMessage(sharedMemory, message, KONC4D_MAX_WAITING_MS),
+                    closeSharedMemory(sharedMemory));
     closeSharedMemory(sharedMemory);
     ENSURE(notifyKonc4d());
     return RET_SUCCESS;
 }
 
 
-ReturnCode fullSendMessageWithArgument(const char *message, unsigned argument)
+ReturnCode fullSendMessageWithArgument(const char *message, uint64_t argument)
 {
     struct SharedMemoryFile sharedMemory;
     RETURN_FAIL(ensuredOpenSharedMemory(&sharedMemory));
-    ENSURE_CALLBACK(sendMessageWithArgument(sharedMemory, message, argument, INFINITE_WAIT), closeSharedMemory(sharedMemory));
+    ENSURE_CALLBACK(sendMessageWithArgument(sharedMemory, message, argument, KONC4D_MAX_WAITING_MS),
+                    closeSharedMemory(sharedMemory));
     closeSharedMemory(sharedMemory);
     ENSURE(notifyKonc4d());
     return RET_SUCCESS;
