@@ -5,6 +5,7 @@
 #include "events.h"
 
 #include <stdio.h>
+#include <time.h>
 
 #define INITIAL_DELAY_MINUTES 1
 #if INITIAL_DELAY_MINUTES < 1
@@ -25,17 +26,19 @@ bool message_exit;
 
 static const struct Action clockShutdown = {.type = SHUTDOWN, .args.shutdown.delay = DEFAULT_SHUTDOWN_DELAY};
 
-static ReturnCode checkActionClocks(struct AllActions *actions, struct TimeOfDay now)
+// Also updates clockCooldown - should be done at the end of a tick
+static ReturnCode checkActionClocks(struct AllActions *actions, struct TimeOfDay now, time_t tickBeginning)
 {
-    if(actions->clockCooldown <= 0 && checkActionAtTime(&actions->shutdownClock, now))
+    if(actions->clockCooldown == 0 && checkActionAtTime(&actions->shutdownClock, now))
     {
         ENSURE(doAction(&clockShutdown));
         actions->clockCooldown = MAX_CLOCK_COOLDOWN_SECONDS;
     }
     else
     {
-        if(actions->clockCooldown >= WAIT_CHECK_PERIOD_SECONDS)
-            actions->clockCooldown -= WAIT_CHECK_PERIOD_SECONDS;
+        time_t timeElapsed = time(NULL) - tickBeginning;
+        if(actions->clockCooldown >= timeElapsed)
+            actions->clockCooldown -= timeElapsed;
         else
             actions->clockCooldown = 0;
     }
@@ -49,10 +52,12 @@ static ReturnCode waitUntil(struct Timestamp start, struct Timestamp until, HAND
     struct Timestamp now = getCurrentTimestamp().timestamp;
     LOG_LINE(LOG_INFO, "Sleeping until %02d.%02d %02d:%02d", until.date.day,
              until.date.month, until.time.hour, until.time.minute);
+    time_t tickBeginning = time(NULL);
     while(compareTimestamp(now, until, start) < 0)
     {
         LOG_LINE(LOG_TRACE, "konc4d tick");
-        RETURN_FAIL(checkActionClocks(actions, now.time));
+        RETURN_FAIL(checkActionClocks(actions, now.time, tickBeginning));
+        tickBeginning = time(NULL);
         ReturnCode waitResult;
         RETHROW(waitResult = waitOnEventObject(konc4Event, WAIT_CHECK_PERIOD_SECONDS * 1000));
         if(waitResult == RET_SUCCESS)
