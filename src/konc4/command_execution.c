@@ -44,7 +44,6 @@ ReturnCode executeStart(void)
 ReturnCode executeStop(void)
 {
     RETURN_FAIL(fullSendMessage("STOP"));
-    ENSURE(notifyKonc4d());
     printf("Stop message sent. Waiting for konc4d to receive it and shut down.\n");
     ReturnCode isOn;
     unsigned attempts = 0;
@@ -69,7 +68,6 @@ ReturnCode executeReset(void)
 {
     printf("Beware that reset of konc4d will cancel any further pending messages to konc4d.\n");
     RETHROW(fullSendMessage("RESET"));
-    ENSURE(notifyKonc4d());
     printf("Reset message sent.\n");
     LOG_LINE(LOG_INFO, "konc4 reset command executed successfully");
     return RET_SUCCESS;
@@ -91,7 +89,6 @@ ReturnCode executeSkip(unsigned minutesToSkip)
         return RET_FAILURE;
     }
     RETHROW(fullSendMessageWithArgument("SKIP", minutesToSkip));
-    ENSURE(notifyKonc4d());
     printf("Skip %d message sent.\n", minutesToSkip);
     LOG_LINE(LOG_INFO, "konc4 skip command executed successfully");
     return RET_SUCCESS;
