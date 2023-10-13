@@ -18,7 +18,7 @@
 #endif
 
 
-const enum LOGGING_LEVEL logging_level = LOG_TRACE;
+const enum LOGGING_LEVEL logging_level = LOG_DEBUG;
 const char logging_exe[7] = "konc4d";
 bool message_exit;
 

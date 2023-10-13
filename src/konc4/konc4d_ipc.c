@@ -6,8 +6,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <tlhelp32.h>
-#include <inttypes.h>
 
 
 #define OPENING_DELAY_MS 200
@@ -93,51 +91,5 @@ ReturnCode notifyKonc4d(void)
     ENSURE(openEventObject(&event, EVENT_TO_KONC4D));
     ENSURE(pingEventObject(event));
     CloseHandle(event);
-    return RET_SUCCESS;
-}
-
-
-ReturnCode getKonc4dHandle(HANDLE *toWrite)
-{
-    PROCESSENTRY32 entry;
-    entry.dwSize = sizeof(PROCESSENTRY32);
-    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-
-    if(!Process32First(snapshot, &entry))
-    {
-        LOG_LINE(LOG_ERROR, "Process32First failed");
-        return RET_ERROR;
-    }
-    do
-    {
-        if (stricmp(entry.szExeFile, "konc4d.exe") == 0)
-        {
-            *toWrite = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
-            if(*toWrite == NULL)
-            {
-                LOG_LINE(LOG_ERROR, "Failed to open konc4d.exe process");
-                return RET_ERROR;
-            }
-            CloseHandle(snapshot);
-            return RET_SUCCESS;
-        }
-    } while(Process32Next(snapshot, &entry));
-
-    CloseHandle(snapshot);
-    return RET_FAILURE;
-}
-
-
-ReturnCode duplicateHandleForKonc4d(HANDLE toDuplicate, HANDLE *toWrite)
-{
-    HANDLE ownHandle = GetCurrentProcess();
-    HANDLE konc4dHandle;
-    RETURN_FAIL(getKonc4dHandle(&konc4dHandle));
-    if(!DuplicateHandle(ownHandle, toDuplicate, konc4dHandle, toWrite, 0, FALSE, DUPLICATE_SAME_ACCESS))
-    {
-        LOG_LINE(LOG_ERROR, "DuplicateHandle failed");
-        return RET_ERROR;
-    }
-    LOG_LINE(LOG_TRACE, "Duplicated handle %p into handle %p for process %p", ownHandle, *toWrite, konc4dHandle);
     return RET_SUCCESS;
 }
