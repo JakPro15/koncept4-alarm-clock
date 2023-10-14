@@ -98,10 +98,12 @@ static ReturnCode processMessage(struct AllActions *actions, char *message, uint
         unsigned minutesToSkip = (unsigned) argument;
         struct YearTimestamp until = addMinutes(now, minutesToSkip);
         LOG_LINE(LOG_INFO, "SKIP message received, skipping by %u minutes", minutesToSkip);
-        ENSURE(skipUntilTimestamp(&actions->queueHead, until.timestamp, now));
+        ENSURE_CALLBACK(skipUntilTimestamp(&actions->queueHead, until.timestamp, now),
+                        sendNotification(EVENT_COMMAND_ERROR));
         unsigned newCooldown = difference(now, until) * SECONDS_IN_MINUTE;
         actions->clockCooldown = max(actions->clockCooldown, newCooldown);
         LOG_LINE(LOG_DEBUG, "Action clock actions disabled for %u seconds", actions->clockCooldown);
+        ENSURE(sendNotification(EVENT_COMMAND_ERROR));
         return RET_SUCCESS;
     }
     else if(strcmp(message, "SEND") == 0)
@@ -126,7 +128,8 @@ ReturnCode handleMessages(struct AllActions *actions, struct SharedMemoryFile sh
     RETHROW(received = receiveMessageWithArgument(sharedMemory, &message, &argument, NO_WAIT));
     while(received != RET_FAILURE)
     {
-        RETURN_FAIL(processMessage(actions, message, argument));
+        RETURN_FAIL_CALLBACK(processMessage(actions, message, argument),
+                             free(message); sendNotification(EVENT_COMMAND_ERROR));
         free(message);
         RETHROW(received = receiveMessageWithArgument(sharedMemory, &message, &argument, NO_WAIT));
     }

@@ -19,8 +19,8 @@ ReturnCode openEventObject(HANDLE *toWrite, const char *name)
     *toWrite = OpenEvent(SYNCHRONIZE | EVENT_ALL_ACCESS, FALSE, name);
     if(*toWrite == NULL)
     {
-        LOG_LINE(LOG_ERROR, "OpenEvent failed");
-        return RET_ERROR;
+        LOG_LINE(LOG_DEBUG, "OpenEvent failed");
+        return RET_FAILURE;
     }
     return RET_SUCCESS;
 }
@@ -62,4 +62,30 @@ ReturnCode waitOnEventObject(HANDLE event, unsigned timeoutMs)
         LOG_LINE(LOG_ERROR, "WaitForSingleObject on event failed");
         return RET_ERROR;
     }
+}
+
+
+ReturnCode waitOnEventObjects(HANDLE *events, unsigned count, unsigned timeoutMs, unsigned *pingedIndex)
+{
+    DWORD returned = WaitForMultipleObjects(count, events, false, timeoutMs);
+    if(returned == WAIT_TIMEOUT)
+        return RET_FAILURE;
+    if(returned == WAIT_FAILED)
+    {
+        LOG_LINE(LOG_ERROR, "WaitForMultipleObjects on events failed");
+        return RET_ERROR;
+    }
+    *pingedIndex = returned - WAIT_OBJECT_0;
+    return RET_SUCCESS;
+}
+
+
+ReturnCode sendNotification(const char *eventName)
+{
+    HANDLE event;
+    if(openEventObject(&event, eventName) != RET_SUCCESS)
+        return RET_FAILURE;
+    ENSURE(pingEventObject(event));
+    CloseHandle(event);
+    return RET_SUCCESS;
 }

@@ -74,6 +74,37 @@ ReturnCode executeReset(void)
 }
 
 
+ReturnCode checkKonc4dResponse(HANDLE *events, const char *commandName)
+{
+    ReturnCode responseReceived;
+    unsigned response;
+    RETHROW(response = waitOnEventObjects(events, 2, KONC4D_MAX_WAITING_MS, &response));
+    if(responseReceived == RET_FAILURE)
+    {
+        puts("Command not received by konc4d - see logs for more information.");
+        LOG_LINE(LOG_WARNING, "%s command timed out", commandName);
+        return RET_FAILURE;
+    }
+    else if(response == 0)
+    {
+        printf("%s command executed successfully.\n", commandName);
+        LOG_LINE(LOG_INFO, "%s command executed successfully", commandName);
+        return RET_SUCCESS;
+    }
+    else if(response == 1)
+    {
+        puts("Command failed in konc4d - see logs for more information.");
+        LOG_LINE(LOG_WARNING, "%s command failed in konc4d", commandName);
+        return RET_FAILURE;
+    }
+    else
+    {
+        LOG_LINE(LOG_ERROR, "Unreachable");
+        return RET_ERROR;
+    }
+}
+
+
 ReturnCode executeSkip(unsigned minutesToSkip)
 {
     if(minutesToSkip == 0)
@@ -88,10 +119,11 @@ ReturnCode executeSkip(unsigned minutesToSkip)
         LOG_LINE(LOG_WARNING, "skip command received invalid argument: %d", minutesToSkip);
         return RET_FAILURE;
     }
+    HANDLE events[2];
+    ENSURE(createEventObject(&events[0], EVENT_COMMAND_CONFIRM));
+    ENSURE(createEventObject(&events[1], EVENT_COMMAND_ERROR));
     RETHROW(fullSendMessageWithArgument("SKIP", minutesToSkip));
-    printf("Skip %d message sent.\n", minutesToSkip);
-    LOG_LINE(LOG_INFO, "konc4 skip command executed successfully");
-    return RET_SUCCESS;
+    return checkKonc4dResponse(events, "skip");
 }
 
 
@@ -258,7 +290,7 @@ ReturnCode fullSendMessage(const char *message)
     ENSURE_CALLBACK(sendMessage(sharedMemory, message, KONC4D_MAX_WAITING_MS),
                     closeSharedMemory(sharedMemory));
     closeSharedMemory(sharedMemory);
-    ENSURE(notifyKonc4d());
+    ENSURE(sendNotification(EVENT_NOTIFY_KONC4D));
     return RET_SUCCESS;
 }
 
@@ -270,6 +302,6 @@ ReturnCode fullSendMessageWithArgument(const char *message, uint64_t argument)
     ENSURE_CALLBACK(sendMessageWithArgument(sharedMemory, message, argument, KONC4D_MAX_WAITING_MS),
                     closeSharedMemory(sharedMemory));
     closeSharedMemory(sharedMemory);
-    ENSURE(notifyKonc4d());
+    ENSURE(sendNotification(EVENT_NOTIFY_KONC4D));
     return RET_SUCCESS;
 }

@@ -83,13 +83,3 @@ ReturnCode promptForKonc4dStart(void)
     RETURN_FAIL(parseInput(20, "konc4d is off - do you want to launch it? [Y/n]: ", parseLaunchAnswer));
     return RET_SUCCESS;
 }
-
-
-ReturnCode notifyKonc4d(void)
-{
-    HANDLE event;
-    ENSURE(openEventObject(&event, EVENT_TO_KONC4D));
-    ENSURE(pingEventObject(event));
-    CloseHandle(event);
-    return RET_SUCCESS;
-}
