@@ -12,30 +12,21 @@
 #include <stdarg.h>
 #include <assert.h>
 
-#define SENDING_DELAY_MS 500
-#define KONC4D_WAITING_DELAY_MS 500
-#define KONC4D_MAX_WAITING_MS 5000
-#define KONC4D_MAX_ATTEMPTS KONC4D_MAX_WAITING_MS / KONC4D_WAITING_DELAY_MS
-
 
 ReturnCode executeStart(void)
 {
+    HANDLE startupEvent;
+    ENSURE(createEventObject(&startupEvent, EVENT_KONC4D_STARTUP));
     RETURN_FAIL(startKonc4d());
-    printf("konc4d starting command executed, waiting for actual konc4d startup.\n");
-    ReturnCode isOn;
-    unsigned attempts = 0;
-    do
+    ReturnCode done;
+    RETHROW(done = waitOnEventObject(startupEvent, EVENT_TIMEOUT));
+    if(done == RET_FAILURE)
     {
-        Sleep(KONC4D_WAITING_DELAY_MS);
-        RETHROW(isOn = isKonc4dOn());
-        if(++attempts >= KONC4D_MAX_ATTEMPTS)
-        {
-            LOG_LINE(LOG_WARNING, "Failed to start konc4d");
-            printf("Failed to start konc4d. Check konc4log.txt for more information.\n");
-            return RET_FAILURE;
-        }
-    } while(isOn == RET_FAILURE);
-    printf("konc4d successfully started.\n");
+        puts("konc4d did not start up - see logs for more information.");
+        LOG_LINE(LOG_WARNING, "konc4 start command timed out; no startup detected");
+        return RET_FAILURE;
+    }
+    puts("start command executed successfully.");
     LOG_LINE(LOG_INFO, "konc4 start command executed successfully");
     return RET_SUCCESS;
 }
@@ -43,22 +34,23 @@ ReturnCode executeStart(void)
 
 ReturnCode executeStop(void)
 {
-    RETURN_FAIL(fullSendMessage("STOP"));
-    printf("Stop message sent. Waiting for konc4d to receive it and shut down.\n");
-    ReturnCode isOn;
-    unsigned attempts = 0;
-    do
+    if(isKonc4dOn() != RET_SUCCESS)
     {
-        Sleep(KONC4D_WAITING_DELAY_MS);
-        RETHROW(isOn = isKonc4dOn());
-        if(++attempts >= KONC4D_MAX_ATTEMPTS)
-        {
-            LOG_LINE(LOG_WARNING, "Failed to stop konc4d");
-            printf("Failed to stop konc4d. Check konc4log.txt for more information.\n");
-            return RET_FAILURE;
-        }
-    } while(isOn == RET_SUCCESS);
-    printf("konc4d successfully stopped.\n");
+        puts("konc4d is off.");
+        return RET_FAILURE;
+    }
+    HANDLE shutdownEvent;
+    ENSURE(createEventObject(&shutdownEvent, EVENT_KONC4D_SHUTDOWN));
+    RETURN_FAIL(fullSendMessage("STOP"));
+    ReturnCode done;
+    RETHROW(done = waitOnEventObject(shutdownEvent, EVENT_TIMEOUT));
+    if(done == RET_FAILURE)
+    {
+        puts("konc4d did not shut down - see logs for more information.");
+        LOG_LINE(LOG_WARNING, "konc4 stop command timed out; no shutdown detected");
+        return RET_FAILURE;
+    }
+    puts("stop command executed successfully.");
     LOG_LINE(LOG_INFO, "konc4 stop command executed successfully");
     return RET_SUCCESS;
 }
@@ -66,42 +58,33 @@ ReturnCode executeStop(void)
 
 ReturnCode executeReset(void)
 {
-    printf("Beware that reset of konc4d will cancel any further pending messages to konc4d.\n");
-    RETHROW(fullSendMessage("RESET"));
-    printf("Reset message sent.\n");
+    if(isKonc4dOn() != RET_SUCCESS)
+    {
+        puts("konc4d is off.");
+        return RET_FAILURE;
+    }
+    HANDLE shutdownEvent, startupEvent;
+    ENSURE(createEventObject(&shutdownEvent, EVENT_KONC4D_SHUTDOWN));
+    ENSURE(createEventObject(&startupEvent, EVENT_KONC4D_STARTUP));
+    RETURN_FAIL(fullSendMessage("RESET"));
+    ReturnCode done;
+    RETHROW(done = waitOnEventObject(shutdownEvent, EVENT_TIMEOUT));
+    if(done == RET_FAILURE)
+    {
+        puts("konc4d did not shut down - see logs for more information.");
+        LOG_LINE(LOG_WARNING, "konc4 reset command timed out; no shutdown detected");
+        return RET_FAILURE;
+    }
+    RETHROW(done = waitOnEventObject(startupEvent, EVENT_TIMEOUT));
+    if(done == RET_FAILURE)
+    {
+        puts("konc4d shut down, but did not start up again - see logs for more information.");
+        LOG_LINE(LOG_WARNING, "konc4 reset command failed in konc4d; no startup detected after shutdown");
+        return RET_FAILURE;
+    }
+    puts("reset command executed successfully.");
     LOG_LINE(LOG_INFO, "konc4 reset command executed successfully");
     return RET_SUCCESS;
-}
-
-
-ReturnCode checkKonc4dResponse(HANDLE *events, const char *commandName)
-{
-    ReturnCode responseReceived;
-    unsigned response;
-    RETHROW(response = waitOnEventObjects(events, 2, KONC4D_MAX_WAITING_MS, &response));
-    if(responseReceived == RET_FAILURE)
-    {
-        puts("Command not received by konc4d - see logs for more information.");
-        LOG_LINE(LOG_WARNING, "%s command timed out", commandName);
-        return RET_FAILURE;
-    }
-    else if(response == 0)
-    {
-        printf("%s command executed successfully.\n", commandName);
-        LOG_LINE(LOG_INFO, "%s command executed successfully", commandName);
-        return RET_SUCCESS;
-    }
-    else if(response == 1)
-    {
-        puts("Command failed in konc4d - see logs for more information.");
-        LOG_LINE(LOG_WARNING, "%s command failed in konc4d", commandName);
-        return RET_FAILURE;
-    }
-    else
-    {
-        LOG_LINE(LOG_ERROR, "Unreachable");
-        return RET_ERROR;
-    }
 }
 
 
@@ -122,8 +105,8 @@ ReturnCode executeSkip(unsigned minutesToSkip)
     HANDLE events[2];
     ENSURE(createEventObject(&events[0], EVENT_COMMAND_CONFIRM));
     ENSURE(createEventObject(&events[1], EVENT_COMMAND_ERROR));
-    RETHROW(fullSendMessageWithArgument("SKIP", minutesToSkip));
-    return checkKonc4dResponse(events, "skip");
+    RETURN_FAIL(fullSendMessageWithArgument("SKIP", minutesToSkip));
+    return checkKonc4dResponse(events, "skip", EVENT_TIMEOUT);
 }
 
 
@@ -216,7 +199,7 @@ static void printActionVector(struct ShowArgument parsedArgument, struct Receive
 static void printAllActionClocks(struct ReceivedActions *received)
 {
     if(checkActionsInPeriod(&received->shutdownClock, (struct TimeOfDay){0, 0}, (struct TimeOfDay){23, 59}, 0))
-        puts("No further shutdowns will be made");
+        puts("No further shutdowns will be made.");
     else
     {
         puts("Shutdowns will also be made in the following periods:");
@@ -252,16 +235,8 @@ ReturnCode executeShow(const char *argument)
     struct ShowArgument parsedArgument;
     RETURN_FAIL(parseShowArgument(argument, &parsedArgument));
 
-    printf("Trying to obtain action data from konc4d.\n");
     struct ReceivedActions received;
-    ReturnCode obtained;
-    RETHROW(obtained = obtainActions(&received));
-    if(obtained == RET_FAILURE)
-    {
-        printf("Failed to obtain action data from konc4d.\n");
-        LOG_LINE(LOG_WARNING, "Failed to obtain actions from konc4d");
-        return RET_FAILURE;
-    }
+    RETURN_FAIL(obtainActions(&received));
     printActionVector(parsedArgument, &received, now);
     free(received.actionVector);
     putchar('\n');
@@ -287,7 +262,7 @@ ReturnCode fullSendMessage(const char *message)
 {
     struct SharedMemoryFile sharedMemory;
     RETURN_FAIL(ensuredOpenSharedMemory(&sharedMemory));
-    ENSURE_CALLBACK(sendMessage(sharedMemory, message, KONC4D_MAX_WAITING_MS),
+    ENSURE_CALLBACK(sendMessage(sharedMemory, message, SHMEM_TIMEOUT),
                     closeSharedMemory(sharedMemory));
     closeSharedMemory(sharedMemory);
     ENSURE(sendNotification(EVENT_NOTIFY_KONC4D));
@@ -299,7 +274,7 @@ ReturnCode fullSendMessageWithArgument(const char *message, uint64_t argument)
 {
     struct SharedMemoryFile sharedMemory;
     RETURN_FAIL(ensuredOpenSharedMemory(&sharedMemory));
-    ENSURE_CALLBACK(sendMessageWithArgument(sharedMemory, message, argument, KONC4D_MAX_WAITING_MS),
+    ENSURE_CALLBACK(sendMessageWithArgument(sharedMemory, message, argument, SHMEM_TIMEOUT),
                     closeSharedMemory(sharedMemory));
     closeSharedMemory(sharedMemory);
     ENSURE(sendNotification(EVENT_NOTIFY_KONC4D));

@@ -40,6 +40,7 @@ void closeSharedMemory(struct SharedMemoryFile sharedMemory);
 
 #define NO_WAIT 0
 #define INFINITE_WAIT UINT_MAX
+#define SHMEM_TIMEOUT 5000
 
 ReturnCode timeoutSendSizedMessage(struct SharedMemoryFile sharedMemory, const char *message,
                                    unsigned size, unsigned timeout) NO_IGNORE;

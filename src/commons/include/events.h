@@ -9,6 +9,8 @@
 #define EVENT_KONC4D_SHUTDOWN "konc4d_event_shutdown"
 #define EVENT_KONC4D_STARTUP "konc4d_event_startup"
 
+#define EVENT_TIMEOUT 5000
+
 
 ReturnCode createEventObject(HANDLE *toWrite, const char *name) NO_IGNORE;
 ReturnCode openEventObject(HANDLE *toWrite, const char *name) NO_IGNORE;

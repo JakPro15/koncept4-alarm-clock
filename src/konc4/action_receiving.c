@@ -91,7 +91,7 @@ ReturnCode obtainActions(struct ReceivedActions *toWrite)
 {
     struct SharedMemoryFile actionTransferQueue;
     ENSURE(createSharedMemory(&actionTransferQueue, SHMEM_FROM_KONC4D));
-    ENSURE(fullSendMessage("SEND"));
+    RETURN_FAIL(fullSendMessage("SEND"));
 
     ENSURE_CALLBACK(obtainActionVectorSize(actionTransferQueue, &toWrite->actionVectorSize), closeSharedMemory(actionTransferQueue));
     ENSURE_CALLBACK(obtainActionVector(actionTransferQueue, &toWrite->actionVector, toWrite->actionVectorSize),

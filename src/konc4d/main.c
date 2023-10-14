@@ -84,6 +84,7 @@ ReturnCode initialize(struct AllActions *actions, struct SharedMemoryFile *share
     struct YearTimestamp until = addMinutes(now, INITIAL_DELAY_MINUTES);
     ENSURE(skipUntilTimestamp(&actions->queueHead, until.timestamp, now));
 
+    RETHROW(sendNotification(EVENT_KONC4D_STARTUP));
     return RET_SUCCESS;
 }
 
@@ -106,17 +107,19 @@ ReturnCode actionLoop(struct AllActions *actions, struct SharedMemoryFile shared
 
 int main(void)
 {
-    struct AllActions actions = {.queueHead = NULL};
-    struct SharedMemoryFile sharedMemory;
-    HANDLE konc4Event;
     while(true)
     {
+        struct AllActions actions = {.queueHead = NULL};
+        struct SharedMemoryFile sharedMemory;
+        HANDLE konc4Event;
+
         ENSURE(initialize(&actions, &sharedMemory, &konc4Event));
         ReturnCode returned = actionLoop(&actions, sharedMemory, konc4Event);
 
         destroyActionQueue(&actions.queueHead);
         closeSharedMemory(sharedMemory);
         CloseHandle(konc4Event);
+        sendNotification(EVENT_KONC4D_SHUTDOWN);
         if(returned == RET_SUCCESS || message_exit)
         {
             LOG_LINE(LOG_INFO, "konc4d stopped");
