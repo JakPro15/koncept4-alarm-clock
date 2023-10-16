@@ -1,5 +1,5 @@
-#ifndef KONC4D_TIMESTAMPS_H
-#define KONC4D_TIMESTAMPS_H
+#ifndef TIMESTAMPS_H
+#define TIMESTAMPS_H
 
 #include <stdbool.h>
 

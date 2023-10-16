@@ -1,3 +1,6 @@
+#ifndef EVENTS_H
+#define EVENTS_H
+
 #include <windows.h>
 #include <stdbool.h>
 
@@ -19,3 +22,5 @@ ReturnCode resetEventObject(HANDLE event) NO_IGNORE;
 ReturnCode waitOnEventObject(HANDLE event, unsigned timeoutMs) NO_IGNORE;
 ReturnCode waitOnEventObjects(HANDLE *events, unsigned count, unsigned timeoutMs, unsigned *pingedIndex) NO_IGNORE;
 ReturnCode sendNotification(const char *eventName);
+
+#endif

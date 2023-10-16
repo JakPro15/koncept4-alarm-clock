@@ -87,7 +87,7 @@ ReturnCode checkKonc4dResponse(HANDLE *events, const char *commandName, unsigned
     }
     else if(response == 0)
     {
-        printf("konc4 %s command executed successfully.\n", commandName);
+        printf("%s command executed successfully.\n", commandName);
         LOG_LINE(LOG_INFO, "%s command executed successfully", commandName);
         return RET_SUCCESS;
     }
@@ -102,4 +102,39 @@ ReturnCode checkKonc4dResponse(HANDLE *events, const char *commandName, unsigned
         LOG_LINE(LOG_ERROR, "Unreachable");
         return RET_ERROR;
     }
+}
+
+
+ReturnCode ensuredOpenSharedMemory(struct SharedMemoryFile *sharedMemory)
+{
+    ReturnCode isOn;
+    RETHROW(isOn = isKonc4dOn());
+    if(isOn == RET_FAILURE)
+        RETURN_FAIL(promptForKonc4dStart());
+    ENSURE(openSharedMemory(sharedMemory, SHMEM_TO_KONC4D));
+    return RET_SUCCESS;
+}
+
+
+ReturnCode fullSendMessage(const char *message)
+{
+    struct SharedMemoryFile sharedMemory;
+    RETURN_FAIL(ensuredOpenSharedMemory(&sharedMemory));
+    ENSURE_CALLBACK(sendMessage(sharedMemory, message, SHMEM_TIMEOUT),
+                    closeSharedMemory(sharedMemory));
+    closeSharedMemory(sharedMemory);
+    ENSURE(sendNotification(EVENT_NOTIFY_KONC4D));
+    return RET_SUCCESS;
+}
+
+
+ReturnCode fullSendMessageWithArgument(const char *message, uint64_t argument)
+{
+    struct SharedMemoryFile sharedMemory;
+    RETURN_FAIL(ensuredOpenSharedMemory(&sharedMemory));
+    ENSURE_CALLBACK(sendMessageWithArgument(sharedMemory, message, argument, SHMEM_TIMEOUT),
+                    closeSharedMemory(sharedMemory));
+    closeSharedMemory(sharedMemory);
+    ENSURE(sendNotification(EVENT_NOTIFY_KONC4D));
+    return RET_SUCCESS;
 }

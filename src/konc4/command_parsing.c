@@ -3,9 +3,65 @@
 #include "shared_memory.h"
 #include "logging.h"
 #include "konc4d_ipc.h"
+#include "action_printing.h"
 
 #include <string.h>
 #include <stdio.h>
+
+
+static ReturnCode getNumberShowArgument(const char *argument, struct ShowArgument *toWrite)
+{
+    unsigned long parsed = strtoul(argument, NULL, 0);
+    if(parsed == 0 || parsed > INT_MAX)
+    {
+        puts("Invalid argument for show command");
+        LOG_LINE(LOG_WARNING, "Invalid argument for show command: %s", argument);
+        return RET_FAILURE;
+    }
+    toWrite->number = (int) parsed;
+    LOG_LINE(LOG_DEBUG, "Determined show argument to be %d", toWrite->number);
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode parseShowArgument(const char *argument, struct ShowArgument *toWrite)
+{
+    if(argument == NULL)
+    {
+        toWrite->number = INT_MAX;
+        LOG_LINE(LOG_DEBUG, "Determined show argument to be empty");
+        return RET_SUCCESS;
+    }
+    int itemsRead = sscanf(argument, "%u:%u", &toWrite->until.hour, &toWrite->until.minute);
+    if(itemsRead < 2)
+        return getNumberShowArgument(argument, toWrite);
+    else
+        toWrite->number = TIMESTAMP_PRESENT;
+    if(!isTimeValid(toWrite->until))
+    {
+        puts("Invalid argument for show command");
+        LOG_LINE(LOG_WARNING, "Invalid argument for show command: %u:%u", toWrite->until.hour, toWrite->until.minute);
+        return RET_FAILURE;
+    }
+    LOG_LINE(LOG_DEBUG, "Determined show argument to be (until) %u:%u",
+             toWrite->until.hour, toWrite->until.minute);
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode getNumberSkipArgument(const char *argument, unsigned *toWrite)
+{
+    unsigned long parsed = strtoul(argument, NULL, 0);
+    if(parsed == 0 || parsed > UINT_MAX)
+    {
+        puts("Invalid argument for skip command");
+        LOG_LINE(LOG_WARNING, "Invalid argument for skip command: %s", argument);
+        return RET_FAILURE;
+    }
+    *toWrite = (unsigned) parsed;
+    LOG_LINE(LOG_DEBUG, "Determined skip argument to be %u", *toWrite);
+    return RET_SUCCESS;
+}
 
 
 static ReturnCode getMinutesToSkip(const char *argument, unsigned *toWrite, struct YearTimestamp now)
@@ -16,39 +72,19 @@ static ReturnCode getMinutesToSkip(const char *argument, unsigned *toWrite, stru
         puts("skip command must take an argument (time until which to skip, or minutes to skip)");
         return RET_FAILURE;
     }
-    unsigned hour, minute;
-    int itemsRead = sscanf(argument, "%u:%u", &hour, &minute);
+    struct TimeOfDay untilTime;
+    int itemsRead = sscanf(argument, "%u:%u", &untilTime.hour, &untilTime.minute);
     if(itemsRead < 2)
-    {
-        unsigned long parsed = strtoul(argument, NULL, 0);
-        if(parsed == 0 || parsed > UINT_MAX)
-        {
-            puts("Invalid argument for skip command");
-            LOG_LINE(LOG_WARNING, "Invalid argument for skip command: %s", argument);
-            return RET_FAILURE;
-        }
-        *toWrite = (unsigned) parsed;
-        LOG_LINE(LOG_DEBUG, "Determined skip argument to be %u", *toWrite);
-        return RET_SUCCESS;
-    }
-    struct TimeOfDay untilTime = {hour, minute};
+        return getNumberSkipArgument(argument, toWrite);
     if(!isTimeValid(untilTime))
     {
         puts("Invalid argument for skip command");
-        LOG_LINE(LOG_WARNING, "Invalid argument for skip command: %02u:%02u", hour, minute);
+        LOG_LINE(LOG_WARNING, "Invalid argument for skip command: %02u:%02u", untilTime.hour, untilTime.minute);
         return RET_FAILURE;
     }
-    struct YearTimestamp until;
-    until.timestamp.time = untilTime;
-    if(basicCompareTime(untilTime, now.timestamp.time) <= 0)
-        until.timestamp.date = getNextDay(now);
-    else
-        until.timestamp.date = now.timestamp.date;
-    until = deduceYear(until.timestamp, now);
-
-    *toWrite = difference(now, until);
+    *toWrite = difference(now, deduceTimestamp(untilTime, now));
     LOG_LINE(LOG_DEBUG, "Determined skip argument to be (until) %02u:%02u, equivalent to %u minutes",
-             hour, minute, *toWrite);
+             untilTime.hour, untilTime.minute, *toWrite);
     return RET_SUCCESS;
 }
 
@@ -67,7 +103,9 @@ ReturnCode parseCommand(char *command)
     else if(stricmp(token, "show") == 0)
     {
         char *argument = strtok_r(NULL, " \t", &saveptr);
-        return executeShow(argument);
+        struct ShowArgument parsedArgument;
+        RETURN_FAIL(parseShowArgument(argument, &parsedArgument));
+        return executeShow(parsedArgument);
     }
     else if(stricmp(token, "skip") == 0)
     {
