@@ -23,14 +23,15 @@ static ReturnCode checkKonc4dOff(void)
 }
 
 
+static const char *const startCommand = "explorer \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\konc4d.exe.lnk\"";
+
+
 ReturnCode startKonc4d(void)
 {
     RETURN_FAIL(checkKonc4dOff());
-
-    LOG_LINE(LOG_DEBUG, "Launching konc4d");
-    system("cd /d \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\\" && explorer konc4d.exe.lnk");
-
-    LOG_LINE(LOG_DEBUG, "konc4d launched properly");
+    LOG_LINE(LOG_DEBUG, "Launching konc4d with command '%s'", startCommand);
+    system(startCommand);
+    LOG_LINE(LOG_DEBUG, "konc4d launched");
     return RET_SUCCESS;
 }
 

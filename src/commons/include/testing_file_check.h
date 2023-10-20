@@ -7,7 +7,7 @@
 #include <string.h>
 
 
-ReturnCode checkFileContent(const char *fileName, const char *proper)
+static inline ReturnCode checkFileContent(const char *fileName, const char *proper)
 {
     FILE *looperOutFile = fopen(fileName, "rb");
     if(looperOutFile == NULL)
