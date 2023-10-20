@@ -3,6 +3,7 @@
 #include "input_loop.h"
 #include "shared_memory.h"
 #include "events.h"
+#include "konc4_locations.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -23,7 +24,7 @@ static ReturnCode checkKonc4dOff(void)
 }
 
 
-static const char *const startCommand = "explorer \"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\konc4d.exe.lnk\"";
+static const char *const startCommand = "explorer "KONC4D_LOCATION;
 
 
 ReturnCode startKonc4d(void)
