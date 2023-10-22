@@ -11,6 +11,8 @@ typedef enum _ReturnCodeEnum
     RET_FAILURE,
     RET_ERROR
 } ReturnCode;
+
+#define SAFE(x) do { x } while(0)
 #endif
 
 #define COLOR_RESET "\x1B[0m"
@@ -32,30 +34,30 @@ void doTesting(char *fileName, unsigned numberOfFunctions, ...);
 }
 
 #define RETURN_CALLBACK
-#define ASSERT(expression) do { if(!(expression)) { \
+#define ASSERT(expression) SAFE(if(!(expression)) { \
     printf(COLOR_RED "%s(%s:%d) Assertion failed\n" COLOR_RESET, __func__, __FILE__, __LINE__); \
     RETURN_CALLBACK \
     return RET_ERROR; \
-} } while(0)
-#define ASSERT_MESSAGE(expression, message) do { if(!(expression)) { \
+})
+#define ASSERT_MESSAGE(expression, message) SAFE(if(!(expression)) { \
     printf(COLOR_RED "%s(%s:%d) Assertion failed: %s\n" COLOR_RESET, __func__, __FILE__, __LINE__, (message)); \
     RETURN_CALLBACK \
     return RET_ERROR; \
-} } while(0)
-#define ASSERT_ENSURE(expression) do { if((expression) != RET_SUCCESS) { \
+})
+#define ASSERT_ENSURE(expression) SAFE(if((expression) != RET_SUCCESS) { \
     printf(COLOR_RED "%s(%s:%d) Function %s failed\n" COLOR_RESET, __func__, __FILE__, __LINE__, #expression); \
     RETURN_CALLBACK \
     return RET_ERROR; \
-} } while(0)
-#define ASSERT_NOTHROW(expression) do { if((expression) == RET_ERROR) { \
+})
+#define ASSERT_NOTHROW(expression) SAFE(if((expression) == RET_ERROR) { \
     printf(COLOR_RED "%s(%s:%d) Function %s threw error\n" COLOR_RESET, __func__, __FILE__, __LINE__, #expression); \
     RETURN_CALLBACK \
     return RET_ERROR; \
-} } while(0)
-#define ASSERT_THROW(expression) do { if((expression) != RET_ERROR) { \
+})
+#define ASSERT_THROW(expression) SAFE(if((expression) != RET_ERROR) { \
     printf(COLOR_RED "%s(%s:%d) Function %s did not throw error\n" COLOR_RESET, __func__, __FILE__, __LINE__, #expression); \
     RETURN_CALLBACK \
     return RET_ERROR; \
-} } while(0)
+})
 
 #endif

@@ -8,9 +8,10 @@ typedef enum
     RET_FAILURE,
     RET_ERROR
 } ReturnCode;
-#endif
 
 #define SAFE(x) do { x } while(0)
+#endif
+
 #define NO_IGNORE                            __attribute__((warn_unused_result))
 #define ENSURE(expr)                         SAFE(if((expr) != RET_SUCCESS) return RET_ERROR;)
 #define RETHROW(expr)                        SAFE(if((expr) == RET_ERROR) return RET_ERROR;)
