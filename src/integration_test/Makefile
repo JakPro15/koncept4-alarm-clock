@@ -5,7 +5,7 @@ LDFLAGS=-lwinmm
 TEST_SRC=$(wildcard test/*.c)
 TEST_OBJ=$(TEST_SRC:test/%.c=output/%.o)
 TEST_DEPENDS=$(TEST_SRC:test/%.c=output/%.d)
-TEST_EXE=output/test_konc4d.exe
+TEST_EXE=output/test_integration.exe
 
 all: $(TEST_EXE)
 
