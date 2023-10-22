@@ -72,18 +72,21 @@ clean:
 	@$(MAKE) -C $(KONC4_DIR) clean
 	@$(MAKE) -C $(INTEGRATION_DIR) clean
 
-test_commons: all
+stop_konc4d: all
+	src\konc4\output\konc4.exe < stop_command.txt
+
+test_commons: stop_konc4d
 	@$(MAKE) -C $(COMMONS_DIR) test
 
-test_konc4d: all
+test_konc4d: stop_konc4d
 	@$(MAKE) -C $(KONC4D_DIR) test
 
-test_konc4: all
+test_konc4: stop_konc4d
 	@$(MAKE) -C $(KONC4_DIR) test
 
 test: test_commons test_konc4d test_konc4
 
-active: all
+active: stop_konc4d
 	powershell.exe rm -Recurse -Force active; mkdir $(ACTIVE_DIR); cp $(KONC4D_DIR)/output/konc4d.exe active/; cp $(KONC4_DIR)/output/konc4.exe active/; cp -Recurse asset/ active/
 
 test_integration: active
