@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-Iinclude -I$(COMMONS_INCLUDE) -I$(TESTING_INCLUDE) -I$(KONC4_INCLUDE) -I$(KONC4D_INCLUDE) $(GLOBAL_CFLAGS)
-LDFLAGS=-lwinmm
+LDFLAGS=-lwinmm -lstdc++
 
 TEST_SRC=$(wildcard test/*.c)
 TEST_OBJ=$(TEST_SRC:test/%.c=output/%.o)

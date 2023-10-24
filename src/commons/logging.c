@@ -31,7 +31,7 @@ static ReturnCode outputLogMessage(char *message, unsigned int length)
 }
 
 
-static char* getMessage(enum LOGGING_LEVEL level, SYSTEMTIME currentTime, int *messageLength, char *format, va_list args)
+static char* getMessage(enum LOGGING_LEVEL level, SYSTEMTIME currentTime, int *messageLength, const char *format, va_list args)
 {
     va_list args2;
     va_copy(args2, args);
@@ -53,7 +53,7 @@ static char* getMessage(enum LOGGING_LEVEL level, SYSTEMTIME currentTime, int *m
 }
 
 
-static ReturnCode writeLog(enum LOGGING_LEVEL level, char *format, va_list args)
+static ReturnCode writeLog(enum LOGGING_LEVEL level, const char *format, va_list args)
 {
     SYSTEMTIME currentTime;
     GetLocalTime(&currentTime);
@@ -70,7 +70,7 @@ static ReturnCode writeLog(enum LOGGING_LEVEL level, char *format, va_list args)
 }
 
 
-ReturnCode logLine(enum LOGGING_LEVEL level, char *format, ...)
+ReturnCode logLine(enum LOGGING_LEVEL level, const char *format, ...)
 {
     if(level < logging_level)
         return RET_SUCCESS;

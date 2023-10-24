@@ -41,7 +41,7 @@ export KONC4D_OBJ=$(KONC4D_OBJ_ABS:$(SRC_DIR)/%=../%)
 
 export COMMONS_INCLUDE=$(COMMONS_DIR:$(SRC_DIR)/%=../%)/include
 COMMONS_SRC=$(wildcard $(COMMONS_DIR)/*.c)
-COMMONS_OBJ_ABS=$(COMMONS_SRC:$(COMMONS_DIR)/%.c=$(COMMONS_DIR)/output/%.o)
+COMMONS_OBJ_ABS=$(COMMONS_SRC:$(COMMONS_DIR)/%.c=$(COMMONS_DIR)/output/%.o) $(COMMONS_DIR)/output/regex.o
 export COMMONS_OBJ=$(COMMONS_OBJ_ABS:$(SRC_DIR)/%=../%)
 
 export TESTING_INCLUDE=$(TESTING_DIR:$(SRC_DIR)/%=../%)/include

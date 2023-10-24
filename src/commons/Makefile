@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Iinclude -I$(TESTING_INCLUDE) $(GLOBAL_CFLAGS)
 SRC=$(wildcard *.c)
-OBJ=$(SRC:%.c=output/%.o)
+OBJ=$(SRC:%.c=output/%.o) output/regex.o
 DEPENDS=$(SRC:%.c=output/%.d)
 
 TEST_SRC=$(wildcard test/*.c)
@@ -10,6 +10,9 @@ TEST_DEPENDS=$(TEST_SRC:test/%.c=output/%.d)
 TEST_EXE=output/test_commons.exe
 
 all: $(OBJ)
+
+output/regex.o: regex.cpp include/regex.h include/error_handling.h include/logging.h
+	g++ $(CFLAGS) -c -o $@ regex.cpp
 
 clean:
 	$(call remove,$(OBJ) $(TEST_OBJ) $(DEPENDS) $(TEST_DEPENDS) $(TEST_EXE) output/sender.exe output/receiver.exe)

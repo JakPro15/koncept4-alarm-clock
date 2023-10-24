@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <re.h>
+#include <regex.h>
 
 
 static inline ReturnCode checkFileContent(const char *fileName, const char *proper)
@@ -67,17 +67,15 @@ static inline ReturnCode checkFileContentRegex(const char *fileName, const char 
     long fileSize = ftell(file);
     rewind(file);
 
-    long properSize = strlen(proper);
-    ASSERT(fileSize == properSize);
+    // long properSize = strlen(proper);
+    // ASSERT(fileSize == properSize);
 
     char fileContent[fileSize];
     ASSERT(fread(fileContent, fileSize, 1, file) == 1);
     fclose(file);
 #undef RETURN_CALLBACK
 #define RETURN_CALLBACK
-    int matchSize;
-    ASSERT(re_match(proper, fileContent, &matchSize) == 0);
-    ASSERT(fileSize == matchSize);
+    ASSERT_ENSURE(regexValidate(fileContent, proper));
     return RET_SUCCESS;
 }
 
