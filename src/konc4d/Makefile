@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-Iinclude -I$(COMMONS_INCLUDE) -I$(TESTING_INCLUDE) $(GLOBAL_CFLAGS)
-LDFLAGS=-lwinmm
+LDFLAGS=-lwinmm -lstdc++
 SRC=$(wildcard *.c)
 OBJ=$(SRC:%.c=output/%.o)
 EXE=output/konc4d.exe

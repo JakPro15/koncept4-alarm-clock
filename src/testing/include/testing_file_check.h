@@ -67,15 +67,14 @@ static inline ReturnCode checkFileContentRegex(const char *fileName, const char 
     long fileSize = ftell(file);
     rewind(file);
 
-    // long properSize = strlen(proper);
-    // ASSERT(fileSize == properSize);
-
     char fileContent[fileSize];
     ASSERT(fread(fileContent, fileSize, 1, file) == 1);
     fclose(file);
 #undef RETURN_CALLBACK
 #define RETURN_CALLBACK
-    ASSERT_ENSURE(regexValidate(fileContent, proper));
+    ReturnCode valid = regexValidate(fileContent, proper);
+    ASSERT_MESSAGE(valid != RET_ERROR, "Invalid regex given to checkFileContentRegex");
+    ASSERT_MESSAGE(valid != RET_FAILURE, "checkFileContentRegex validation failed");
     return RET_SUCCESS;
 }
 

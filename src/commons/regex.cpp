@@ -9,7 +9,7 @@ ReturnCode regexValidate(const char *text, const char *pattern)
 {
     try
     {
-        std::regex regex(pattern);
+        std::regex regex(pattern, std::regex::ECMAScript);
         if(std::regex_match(text, regex))
             return RET_SUCCESS;
         else

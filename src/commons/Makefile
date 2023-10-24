@@ -3,6 +3,7 @@ CFLAGS=-Iinclude -I$(TESTING_INCLUDE) $(GLOBAL_CFLAGS)
 SRC=$(wildcard *.c)
 OBJ=$(SRC:%.c=output/%.o) output/regex.o
 DEPENDS=$(SRC:%.c=output/%.d)
+LDFLAGS=-lstdc++
 
 TEST_SRC=$(wildcard test/*.c)
 TEST_OBJ=$(TEST_SRC:test/%.c=output/%.o)
