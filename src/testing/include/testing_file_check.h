@@ -33,28 +33,6 @@ static inline ReturnCode checkFileContent(const char *fileName, const char *prop
 }
 
 
-static inline ReturnCode checkStringInFile(const char *toRead, FILE *stream)
-{
-    char buffer[strlen(toRead) + 1];
-    ASSERT(fread(buffer, strlen(toRead), 1, stream) == 1);
-    buffer[strlen(toRead)] = '\0';
-    ASSERT(strcmp(buffer, toRead) == 0);
-    return RET_SUCCESS;
-}
-
-
-static inline ReturnCode skipUntilNextLine(FILE *stream)
-{
-    int read;
-    do
-    {
-        read = fgetc(stream);
-        ASSERT(read != EOF);
-    } while(read != '\n');
-    return RET_SUCCESS;
-}
-
-
 static inline ReturnCode checkFileContentRegex(const char *fileName, const char *proper)
 {
     FILE *file = fopen(fileName, "rb");
@@ -67,14 +45,37 @@ static inline ReturnCode checkFileContentRegex(const char *fileName, const char 
     long fileSize = ftell(file);
     rewind(file);
 
-    char fileContent[fileSize];
+    char fileContent[fileSize + 1];
     ASSERT(fread(fileContent, fileSize, 1, file) == 1);
     fclose(file);
+    fileContent[fileSize] = '\0';
 #undef RETURN_CALLBACK
 #define RETURN_CALLBACK
     ReturnCode valid = regexValidate(fileContent, proper);
     ASSERT_MESSAGE(valid != RET_ERROR, "Invalid regex given to checkFileContentRegex");
     ASSERT_MESSAGE(valid != RET_FAILURE, "checkFileContentRegex validation failed");
+    return RET_SUCCESS;
+}
+
+
+static inline ReturnCode checkStringInFile(const char *toRead, FILE *stream)
+{
+    long toReadSize = strlen(toRead);
+    char buffer[toReadSize];
+    ASSERT(fread(buffer, toReadSize, 1, stream) == 1);
+    ASSERT(strncmp(buffer, toRead, toReadSize) == 0);
+    return RET_SUCCESS;
+}
+
+
+static inline ReturnCode skipUntilNextLine(FILE *stream)
+{
+    int read;
+    do
+    {
+        read = fgetc(stream);
+        ASSERT(read != EOF);
+    } while(read != '\n');
     return RET_SUCCESS;
 }
 

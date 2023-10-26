@@ -7,11 +7,13 @@
 void shared_memory(void);
 void timestamps(void);
 void action_clock(void);
+void regex(void);
 
 #define COMMONS_TESTS { \
     shared_memory(); \
     timestamps(); \
     action_clock(); \
+    regex(); \
 }
 
 #endif

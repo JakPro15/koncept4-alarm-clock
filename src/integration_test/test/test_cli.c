@@ -23,7 +23,7 @@ static ReturnCode testStartingAndStopping(void)
     FILE *konc4Stream = popen(KONC4_COMMAND, "w");
     write("start\nstop\n", konc4Stream);
     ASSERT(pclose(konc4Stream) == 0);
-    ASSERT_ENSURE(checkFileContent(OUTPUT_FILE,
+    ASSERT_ENSURE(checkFileContentRegex(OUTPUT_FILE,
         "konc4> start command executed successfully.\r\n"
         "konc4> stop command executed successfully.\r\n"
         "konc4> "
@@ -41,6 +41,10 @@ static ReturnCode testStoppingWhileOff(void)
         "konc4> konc4d is off.\r\n"
         "konc4> "
     ));
+    ASSERT_ENSURE(checkFileContentRegex(OUTPUT_FILE,
+        "konc4> konc4d is off.\r\n"
+        "konc4> "
+    ));
     return RET_SUCCESS;
 }
 
@@ -50,7 +54,7 @@ static ReturnCode testStartingWhileOn(void)
     FILE *konc4Stream = popen(KONC4_COMMAND, "w");
     write("start; start\n", konc4Stream);
     ASSERT(pclose(konc4Stream) == 0);
-    ASSERT_ENSURE(checkFileContent(OUTPUT_FILE,
+    ASSERT_ENSURE(checkFileContentRegex(OUTPUT_FILE,
         "konc4> start command executed successfully.\r\n"
         "konc4d is already on.\r\n"
         "konc4> "
@@ -64,29 +68,15 @@ static ReturnCode testShow(void)
     FILE *konc4Stream = popen(KONC4_COMMAND, "w");
     write("show 5\n", konc4Stream);
     pclose(konc4Stream);
-
-    FILE *outputFile = fopen(OUTPUT_FILE, "rb");
-    ASSERT(outputFile != NULL);
-#undef RETURN_CALLBACK
-#define RETURN_CALLBACK fclose(outputFile);
-    ASSERT_ENSURE(checkStringInFile("konc4> Actions:\r\n", outputFile));
-
-#define CHECK_LINE(i) SAFE( \
-    ASSERT_ENSURE(checkStringInFile(" "#i") {", outputFile)); \
-    ASSERT_ENSURE(skipUntilNextLine(outputFile)); \
-)
-    CHECK_LINE(1);
-    CHECK_LINE(2);
-    CHECK_LINE(3);
-    CHECK_LINE(4);
-    CHECK_LINE(5);
-#undef CHECK_LINE
-    ASSERT_ENSURE(skipUntilNextLine(outputFile));
-    ASSERT_ENSURE(checkStringInFile("Shutdowns will also be made in the following periods:\r\n", outputFile));
-
-#undef RETURN_CALLBACK
-#define RETURN_CALLBACK
-    fclose(outputFile);
+    ASSERT_ENSURE(checkFileContentRegex(OUTPUT_FILE,
+        "konc4> Actions:\r\n"
+        "( \\d\\) \\{\\d{2}\\.\\d{2} \\d{2}:\\d{2}, type: (  notify|shutdown|   reset), "
+        "(repeated with period: \\d+ minutes|not repeated)\\}\r\n){5}"
+        "\r\n"
+        "(Shutdowns will also be made in the following periods:\r\n"
+        "(between \\d{2}:\\d{2} and \\d{2}:\\d{2}\r\n)+|No further shutdowns will be made.\r\n)"
+        "konc4> "
+    ));
     return RET_SUCCESS;
 }
 
