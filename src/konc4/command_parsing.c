@@ -91,6 +91,11 @@ static ReturnCode getMinutesToSkip(const char *argument, unsigned *toWrite, stru
 
 ReturnCode parseCommand(char *command)
 {
+    if(command == NULL)
+    {
+        LOG_LINE(LOG_DEBUG, "Parsing command: (null)");
+        return RET_SUCCESS;
+    }
     LOG_LINE(LOG_DEBUG, "Parsing command: %s", command);
     char *saveptr;
     char *token = strtok_r(command, " \t", &saveptr);

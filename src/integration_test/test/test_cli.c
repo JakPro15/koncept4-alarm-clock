@@ -81,6 +81,53 @@ static ReturnCode testShow(void)
 }
 
 
+static ReturnCode testSkip(void)
+{
+    FILE *konc4Stream = popen(KONC4_COMMAND, "w");
+    write("skip 15; show 5\n", konc4Stream);
+    pclose(konc4Stream);
+    ASSERT_ENSURE(checkFileContentRegex(OUTPUT_FILE,
+        "konc4> skip command executed successfully.\r\n"
+        "Actions:\r\n"
+        "( \\d\\) \\{\\d{2}\\.\\d{2} \\d{2}:\\d{2}, type: (  notify|shutdown|   reset), "
+        "(repeated with period: \\d+ minutes|not repeated)\\}\r\n){5}"
+        "\r\n"
+        "(Shutdowns will also be made in the following periods:\r\n"
+        "(between \\d{2}:\\d{2} and \\d{2}:\\d{2}\r\n)+|No further shutdowns will be made\\.\r\n)"
+        "No actions will be made for the next 15 minutes though.\r\n"
+        "konc4> "
+    ));
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode testEmptyCommands(void)
+{
+    FILE *konc4Stream = popen(KONC4_COMMAND, "w");
+    write("\n;;;\n", konc4Stream);
+    pclose(konc4Stream);
+    ASSERT_ENSURE(checkFileContent(OUTPUT_FILE,
+        "konc4> konc4> konc4> "
+    ));
+    return RET_SUCCESS;
+}
+
+
+static ReturnCode testInvalidCommands(void)
+{
+    FILE *konc4Stream = popen(KONC4_COMMAND, "w");
+    write("abc\nhehe; xd\n", konc4Stream);
+    pclose(konc4Stream);
+    ASSERT_ENSURE(checkFileContent(OUTPUT_FILE,
+        "konc4> Unrecognized command\r\n"
+        "konc4> Unrecognized command\r\n"
+        "Unrecognized command\r\n"
+        "konc4> "
+    ));
+    return RET_SUCCESS;
+}
+
+
 static ReturnCode teardownShutdown(void)
 {
     FILE *konc4Stream = popen(KONC4_COMMAND, "w");
@@ -96,5 +143,8 @@ PREPARE_TESTING(cli,
     testStoppingWhileOff,
     testStartingWhileOn,
     testShow,
+    testSkip,
+    testEmptyCommands,
+    testInvalidCommands,
     teardownShutdown
 )
