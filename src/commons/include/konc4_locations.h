@@ -3,5 +3,6 @@
 
 #define KONC4D_LOCATION "\"%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\konc4d.exe.lnk\""
 #define KONC4_LOCATION "\"%USERPROFILE%\\Desktop\\konc4\\active\\konc4.exe\""
+#define KONC4LOG_LOCATION "\"%USERPROFILE%\\Desktop\\konc4\\active\\konc4log.txt\""
 
 #endif

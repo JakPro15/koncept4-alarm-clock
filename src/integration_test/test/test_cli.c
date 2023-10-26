@@ -3,6 +3,7 @@
 #include "testing_file_check.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 
 #define write(message, stream) fwrite(message, strlen(message), 1, stream)
@@ -128,11 +129,13 @@ static ReturnCode testInvalidCommands(void)
 }
 
 
-static ReturnCode teardownShutdown(void)
+static ReturnCode teardown(void)
 {
     FILE *konc4Stream = popen(KONC4_COMMAND, "w");
     write("stop\n", konc4Stream);
     ASSERT(pclose(konc4Stream) == 0);
+    ASSERT(system("del konc4log.txt") == 0);
+    ASSERT(system("del "KONC4LOG_LOCATION) == 0);
     return RET_FAILURE;
 }
 
@@ -146,5 +149,5 @@ PREPARE_TESTING(cli,
     testSkip,
     testEmptyCommands,
     testInvalidCommands,
-    teardownShutdown
+    teardown
 )
