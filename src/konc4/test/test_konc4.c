@@ -7,5 +7,5 @@
 int main(void)
 {
     KONC4_TESTS
-    system("powershell.exe rm " LOOPER_OUT);
+    system("del "LOOPER_OUT);
 }

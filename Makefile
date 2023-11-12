@@ -81,7 +81,7 @@ test_commons: stop_konc4d
 test_konc4d: stop_konc4d
 	@$(MAKE) -C $(KONC4D_DIR) test
 
-test_konc4: stop_konc4d
+test_konc4: stop_konc4d test_commons
 	@$(MAKE) -C $(KONC4_DIR) test
 
 test: test_commons test_konc4d test_konc4

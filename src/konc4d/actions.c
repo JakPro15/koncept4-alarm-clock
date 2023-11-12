@@ -30,13 +30,9 @@ static ReturnCode actionShutdown(unsigned delay)
     char command[] = "C:\\WINDOWS\\System32\\shutdown /s /t %d";
     char commandBuffer[sizeof(command) + 26];
     sprintf(commandBuffer, command, delay);
-    if(system(commandBuffer) == 0)
-        return RET_SUCCESS;
-    else
-    {
-        LOG_LINE(LOG_ERROR, "Failed to shut down the machine.");
-        return RET_ERROR;
-    }
+    system(commandBuffer);
+    Sleep((delay + 10) * 1000);
+    LOG_LINE(LOG_WARNING, "Machine did not shut down.")
 }
 
 
