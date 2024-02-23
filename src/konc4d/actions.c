@@ -32,7 +32,8 @@ static ReturnCode actionShutdown(unsigned delay)
     sprintf(commandBuffer, command, delay);
     system(commandBuffer);
     Sleep((delay + 10) * 1000);
-    LOG_LINE(LOG_WARNING, "Machine did not shut down.")
+    LOG_LINE(LOG_WARNING, "Machine did not shut down.");
+    return RET_SUCCESS;
 }
 
 
